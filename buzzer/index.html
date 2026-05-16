@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cipher — Buzzer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #f0ede8; font-family: 'DM Sans', sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+  
+  .room-info { font-size: 12px; color: #888; letter-spacing: 2px; text-transform: uppercase; }
+  .team-name { font-size: 20px; font-weight: 600; }
+  .round { font-size: 13px; color: #888; }
+  
+  /* Big buzzer button */
+  .buzzer { width: 220px; height: 220px; border-radius: 50%; border: none; cursor: pointer; font-size: 22px; font-weight: 700; letter-spacing: 2px; transition: all 0.1s; box-shadow: 0 8px 32px #0006; }
+  .buzzer.ready   { background: #e53935; color: #fff; }
+  .buzzer.ready:hover { transform: scale(1.04); box-shadow: 0 12px 40px #e5393566; }
+  .buzzer.ready:active { transform: scale(0.97); }
+  .buzzer.winner  { background: #43a047; color: #fff; animation: pulse 0.6s ease; }
+  .buzzer.late    { background: #333; color: #666; cursor: not-allowed; }
+  .buzzer.locked  { background: #1a1a2e; color: #444; cursor: not-allowed; border: 2px solid #333; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+
+  .status { font-size: 16px; color: #888; min-height: 24px; text-align: center; }
+  .status.winner-text { color: #43a047; font-weight: 600; font-size: 20px; }
+  .status.late-text   { color: #e53935; }
+
+  /* Timer */
+  .timer { font-size: 48px; font-weight: 700; font-family: monospace; color: #f0c040; min-height: 60px; }
+  .timer.urgent { color: #e53935; animation: blink 0.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Scoreboard */
+  .scoreboard { width: 340px; background: #111118; border: 1px solid #2a2a3a; border-radius: 12px; padding: 16px; }
+  .sb-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-bottom: 12px; font-family: monospace; }
+  .sb-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #1a1a24; font-size: 13px; }
+  .sb-row:last-child { border-bottom: none; }
+  .sb-rank { font-family: monospace; color: #555; min-width: 20px; }
+  .sb-rank.gold { color: #f0c040; }
+  .sb-name { flex: 1; font-weight: 500; }
+  .sb-name.me { color: #40c0f0; }
+  .sb-buzz { font-size: 10px; color: #555; min-width: 30px; }
+  .sb-buzz.first { color: #43a047; font-weight: 700; }
+  .sb-score { font-family: monospace; font-size: 14px; font-weight: 700; color: #f0c040; min-width: 32px; text-align: right; }
+
+  /* Join screen */
+  .join-screen { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .join-title { font-size: 28px; font-weight: 700; letter-spacing: 4px; color: #f0c040; font-family: monospace; }
+  .join-sub { font-size: 13px; color: #888; }
+  input { background: #1a1a24; border: 1px solid #2a2a3a; color: #f0ede8; font-size: 16px; padding: 12px 16px; border-radius: 8px; width: 280px; outline: none; text-align: center; }
+  input:focus { border-color: #f0c040; }
+  .join-btn { background: #f0c040; color: #000; border: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; width: 280px; }
+  .join-btn:hover { background: #ffd060; }
+  .error { color: #e53935; font-size: 12px; }
+
+  .game-screen { display: none; flex-direction: column; align-items: center; gap: 20px; }
+</style>
+</head>
+<body>
+
+<!-- Join screen -->
+<div class="join-screen" id="join-screen">
+  <div class="join-title">CIPHER</div>
+  <div class="join-sub">Enter your team name to join</div>
+  <input id="team-input" placeholder="Team name" maxlength="30" />
+  <button class="join-btn" onclick="joinGame()">Join</button>
+  <div class="error" id="join-error"></div>
+</div>
+
+<!-- Game screen -->
+<div class="game-screen" id="game-screen">
+  <div class="room-info">CIPHER — BUZZER ROUND</div>
+  <div style="display:flex;gap:16px;align-items:center;">
+    <div class="team-name" id="my-team-display"></div>
+    <div class="round" id="round-display">Round 1</div>
+  </div>
+
+  <div class="timer" id="timer-display"></div>
+
+  <button class="buzzer locked" id="buzzer-btn" onclick="buzz()">BUZZ</button>
+  <div class="status" id="status-text">Waiting for host...</div>
+
+  <div class="scoreboard">
+    <div class="sb-title">Scoreboard</div>
+    <div id="scoreboard-rows"></div>
+  </div>
+</div>
+
+<script>
+  let ws;
+  let myTeam = null;
+  let gameState = null;
+  let timerInterval = null;
+  let timerLeft = 0;
+
+  // ── JOIN GAME ──
+  function joinGame() {
+    const name = document.getElementById('team-input').value.trim();
+    if (!name) {
+      document.getElementById('join-error').textContent = 'Enter a team name';
+      return;
+    }
+    myTeam = name;
+    connectWebSocket();
+  }
+
+  // Allow Enter key on input
+  document.getElementById('team-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') joinGame();
+  });
+
+  // ── WEBSOCKET ──
+  function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+    ws.onopen = () => {
+      // Send join message
+      ws.send(JSON.stringify({ type: 'join', team: myTeam }));
+      // Switch screens
+      document.getElementById('join-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'flex';
+      document.getElementById('my-team-display').textContent = myTeam;
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'state') {
+        gameState = data.state;
+        updateUI();
+      }
+    };
+
+    ws.onclose = () => {
+      setTimeout(connectWebSocket, 2000); // auto reconnect
+    };
+  }
+
+  // ── BUZZ ──
+  function buzz() {
+    if (!gameState || gameState.locked) return;
+    if (gameState.buzz_order.includes(myTeam)) return;
+    ws.send(JSON.stringify({ type: 'buzz', team: myTeam }));
+  }
+
+  // ── UPDATE UI ──
+  function updateUI() {
+    if (!gameState) return;
+    const btn = document.getElementById('buzzer-btn');
+    const status = document.getElementById('status-text');
+    const myData = gameState.teams[myTeam];
+
+    // Round
+    document.getElementById('round-display').textContent = `Round ${gameState.round}`;
+
+    // Buzzer state
+    if (myData && myData.rank === 1) {
+      // I was first!
+      btn.className = 'buzzer winner';
+      btn.textContent = '1st!';
+      status.className = 'status winner-text';
+      status.textContent = '🎉 You buzzed first!';
+    } else if (myData && myData.rank > 1) {
+      // I buzzed but wasn't first
+      btn.className = 'buzzer late';
+      btn.textContent = `#${myData.rank}`;
+      status.className = 'status late-text';
+      status.textContent = `You were #${myData.rank} — ${gameState.buzz_order[0]} was first`;
+    } else if (gameState.locked && gameState.buzz_order.length > 0) {
+      // Someone else buzzed first, I didn't
+      btn.className = 'buzzer late';
+      btn.textContent = 'BUZZ';
+      status.className = 'status late-text';
+      status.textContent = `${gameState.buzz_order[0]} buzzed first!`;
+    } else if (gameState.locked) {
+      // Locked, no one buzzed yet
+      btn.className = 'buzzer locked';
+      btn.textContent = 'BUZZ';
+      status.className = 'status';
+      status.textContent = 'Waiting for host...';
+    } else {
+      // OPEN — buzz now!
+      btn.className = 'buzzer ready';
+      btn.textContent = 'BUZZ!';
+      status.className = 'status';
+      status.textContent = 'Go!';
+    }
+
+    // Timer
+    if (gameState.timer > 0 && !gameState.locked) {
+      startTimer(gameState.timer);
+    } else if (gameState.locked) {
+      clearInterval(timerInterval);
+      document.getElementById('timer-display').textContent = '';
+    }
+
+    // Scoreboard
+    renderScoreboard();
+  }
+
+  // ── TIMER ──
+  function startTimer(seconds) {
+    clearInterval(timerInterval);
+    timerLeft = seconds;
+    const el = document.getElementById('timer-display');
+    el.textContent = timerLeft;
+    timerInterval = setInterval(() => {
+      timerLeft--;
+      el.textContent = timerLeft;
+      el.className = timerLeft <= 5 ? 'timer urgent' : 'timer';
+      if (timerLeft <= 0) {
+        clearInterval(timerInterval);
+        el.textContent = "Time's up!";
+      }
+    }, 1000);
+  }
+
+  // ── SCOREBOARD ──
+  function renderScoreboard() {
+    const teams = Object.entries(gameState.teams)
+      .sort((a, b) => b[1].score - a[1].score);
+    
+    const el = document.getElementById('scoreboard-rows');
+    el.innerHTML = teams.map(([name, data], i) => {
+      const buzzed = gameState.buzz_order.indexOf(name);
+      return `<div class="sb-row">
+        <div class="sb-rank ${i === 0 ? 'gold' : ''}">${i + 1}</div>
+        <div class="sb-name ${name === myTeam ? 'me' : ''}">${name}</div>
+        <div class="sb-buzz ${buzzed === 0 ? 'first' : ''}">${buzzed >= 0 ? `#${buzzed + 1}` : ''}</div>
+        <div class="sb-score">${data.score}</div>
+      </div>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>
