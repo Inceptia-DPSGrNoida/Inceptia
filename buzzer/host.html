@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cipher — Host Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #f0ede8; font-family: 'DM Sans', sans-serif; padding: 20px; }
+  
+  .topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #2a2a3a; }
+  .logo { font-family: monospace; font-size: 18px; color: #f0c040; letter-spacing: 3px; font-weight: 700; }
+  .round-badge { font-family: monospace; font-size: 12px; background: #1a1a24; border: 1px solid #2a2a3a; padding: 4px 10px; border-radius: 4px; color: #888; }
+  .conn-badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-family: monospace; }
+  .conn-badge.live { background: #43a04722; border: 1px solid #43a047; color: #43a047; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: #111118; border: 1px solid #2a2a3a; border-radius: 10px; padding: 16px; }
+  .card-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #555; font-family: monospace; margin-bottom: 12px; }
+
+  /* Buzz result */
+  .buzz-result { text-align: center; padding: 20px 0; }
+  .buzz-winner { font-size: 28px; font-weight: 700; color: #43a047; margin-bottom: 6px; }
+  .buzz-order { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .buzz-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #1a1a24; border-radius: 6px; font-size: 13px; }
+  .buzz-num { font-family: monospace; font-size: 11px; color: #555; min-width: 20px; }
+  .buzz-num.first { color: #f0c040; font-weight: 700; }
+  .buzz-name { flex: 1; font-weight: 500; }
+  .no-buzz { color: #555; font-size: 13px; text-align: center; padding: 20px 0; }
+
+  /* Controls */
+  .controls { display: flex; flex-direction: column; gap: 8px; }
+  .btn { padding: 10px 16px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; }
+  .btn-green  { background: #43a047; color: #fff; }
+  .btn-green:hover { background: #56c45a; }
+  .btn-yellow { background: #f0c040; color: #000; }
+  .btn-yellow:hover { background: #ffd060; }
+  .btn-red    { background: #e5393522; border: 1px solid #e53935; color: #e53935; }
+  .btn-red:hover { background: #e5393544; }
+  .btn-gray   { background: #1a1a24; border: 1px solid #2a2a3a; color: #888; }
+  .btn-gray:hover { border-color: #888; color: #f0ede8; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Timer control */
+  .timer-row { display: flex; gap: 8px; align-items: center; }
+  .timer-input { background: #1a1a24; border: 1px solid #2a2a3a; color: #f0ede8; padding: 8px 12px; border-radius: 6px; font-size: 14px; width: 80px; font-family: monospace; text-align: center; outline: none; }
+  .timer-input:focus { border-color: #f0c040; }
+  .timer-display { font-family: monospace; font-size: 32px; font-weight: 700; color: #f0c040; text-align: center; margin: 8px 0; }
+  .timer-display.urgent { color: #e53935; }
+
+  /* Teams & scores */
+  .team-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #1a1a24; }
+  .team-row:last-child { border-bottom: none; }
+  .team-rank { font-family: monospace; font-size: 11px; color: #555; min-width: 20px; }
+  .team-rank.gold { color: #f0c040; }
+  .team-name-label { flex: 1; font-size: 13px; font-weight: 500; }
+  .team-score { font-family: monospace; font-size: 16px; font-weight: 700; color: #f0c040; min-width: 36px; text-align: center; }
+  .score-btns { display: flex; gap: 4px; }
+  .score-btn { width: 28px; height: 28px; border-radius: 4px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .score-btn.plus  { background: #43a04722; color: #43a047; border: 1px solid #43a04766; }
+  .score-btn.minus { background: #e5393522; color: #e53935; border: 1px solid #e5393566; }
+  .score-btn.plus:hover  { background: #43a04744; }
+  .score-btn.minus:hover { background: #e5393544; }
+  .remove-btn { background: none; border: none; color: #333; cursor: pointer; font-size: 16px; padding: 2px 6px; }
+  .remove-btn:hover { color: #e53935; }
+
+  /* Status bar */
+  .status-bar { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #888; margin-bottom: 16px; display: flex; gap: 16px; }
+  .status-item { display: flex; gap: 6px; }
+  .status-label { color: #555; }
+  .status-val { color: #f0ede8; font-family: monospace; }
+  .status-val.open { color: #43a047; }
+  .status-val.locked { color: #e53935; }
+
+  .full-width { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">CIPHER — HOST</div>
+  <div class="round-badge" id="round-badge">ROUND 1</div>
+  <div class="conn-badge live" id="conn-badge">● CONNECTED</div>
+</div>
+
+<div class="status-bar">
+  <div class="status-item"><span class="status-label">Buzzer:</span><span class="status-val locked" id="sb-locked">LOCKED</span></div>
+  <div class="status-item"><span class="status-label">Teams:</span><span class="status-val" id="sb-teams">0</span></div>
+  <div class="status-item"><span class="status-label">Buzzed:</span><span class="status-val" id="sb-buzzed">—</span></div>
+  <div class="status-item"><span class="status-label">Round:</span><span class="status-val" id="sb-round">1</span></div>
+</div>
+
+<div class="grid">
+
+  <!-- Buzz result -->
+  <div class="card">
+    <div class="card-title">Buzz Order</div>
+    <div id="buzz-result">
+      <div class="no-buzz">No one has buzzed yet</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="card">
+    <div class="card-title">Controls</div>
+    <div class="controls">
+      <button class="btn btn-green" onclick="send({type:'unlock'})">🔓 Unlock Buzzer</button>
+      <button class="btn btn-gray"  onclick="send({type:'reset'})">↺ Reset Buzz</button>
+      <button class="btn btn-yellow" onclick="nextRound()">⏭ Next Round</button>
+
+      <div style="border-top:1px solid #2a2a3a;margin:4px 0;padding-top:12px;">
+        <div class="card-title" style="margin-bottom:8px;">Timer</div>
+        <div class="timer-display" id="timer-display"></div>
+        <div class="timer-row">
+          <input class="timer-input" id="timer-input" type="number" value="30" min="5" max="120" />
+          <button class="btn btn-gray" style="flex:1;" onclick="startTimer()">▶ Start</button>
+          <button class="btn btn-red"  style="flex:1;" onclick="stopTimer()">■ Stop</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #2a2a3a;margin:4px 0;padding-top:12px;">
+        <div class="card-title" style="margin-bottom:8px;">Quick Score</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-green" style="flex:1;" onclick="scoreSelected(3)">+3 Correct</button>
+          <button class="btn btn-red"   style="flex:1;" onclick="scoreSelected(-1)">−1 Wrong</button>
+        </div>
+        <div style="font-size:11px;color:#555;margin-top:6px;text-align:center;" id="selected-team-label">Select a team below to score</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teams & Scores -->
+  <div class="card full-width">
+    <div class="card-title">Teams & Scores</div>
+    <div id="teams-list">
+      <div style="color:#555;font-size:13px;">Waiting for teams to join...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let ws;
+  let gameState = null;
+  let selectedTeam = null;
+  let timerInterval = null;
+  let timerLeft = 0;
+
+  // ── WEBSOCKET ──
+  function connect() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+    ws.onopen = () => {
+      document.getElementById('conn-badge').textContent = '● CONNECTED';
+      document.getElementById('conn-badge').className = 'conn-badge live';
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'state') {
+        gameState = data.state;
+        updateUI();
+      }
+    };
+
+    ws.onclose = () => {
+      document.getElementById('conn-badge').textContent = '○ RECONNECTING...';
+      document.getElementById('conn-badge').className = 'conn-badge';
+      setTimeout(connect, 2000);
+    };
+  }
+
+  function send(msg) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
+  }
+
+  // ── NEXT ROUND ──
+  function nextRound() {
+    clearInterval(timerInterval);
+    document.getElementById('timer-display').textContent = '';
+    send({ type: 'next_round' });
+  }
+
+  // ── TIMER ──
+  function startTimer() {
+    const seconds = parseInt(document.getElementById('timer-input').value) || 30;
+    send({ type: 'timer', seconds });
+    send({ type: 'unlock' });
+    clearInterval(timerInterval);
+    timerLeft = seconds;
+    const el = document.getElementById('timer-display');
+    el.textContent = timerLeft;
+    timerInterval = setInterval(() => {
+      timerLeft--;
+      el.textContent = timerLeft;
+      el.className = timerLeft <= 5 ? 'timer-display urgent' : 'timer-display';
+      if (timerLeft <= 0) {
+        clearInterval(timerInterval);
+        el.textContent = "Time's up!";
+        send({ type: 'reset' });
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    document.getElementById('timer-display').textContent = '';
+    send({ type: 'reset' });
+  }
+
+  // ── SCORE SELECTED TEAM ──
+  function scoreSelected(delta) {
+    if (!selectedTeam) { alert('Click a team name first to select them'); return; }
+    send({ type: 'score', team: selectedTeam, delta });
+  }
+
+  function selectTeam(name) {
+    selectedTeam = name;
+    document.getElementById('selected-team-label').textContent = `Selected: ${name}`;
+    document.querySelectorAll('.team-name-label').forEach(el => {
+      el.style.color = el.dataset.name === name ? '#f0c040' : '';
+    });
+  }
+
+  // ── UPDATE UI ──
+  function updateUI() {
+    if (!gameState) return;
+
+    // Status bar
+    const locked = gameState.locked;
+    document.getElementById('sb-locked').textContent = locked ? 'LOCKED' : 'OPEN';
+    document.getElementById('sb-locked').className = `status-val ${locked ? 'locked' : 'open'}`;
+    document.getElementById('sb-teams').textContent = Object.keys(gameState.teams).length;
+    document.getElementById('sb-buzzed').textContent = gameState.buzz_order.length || '—';
+    document.getElementById('sb-round').textContent = gameState.round;
+    document.getElementById('round-badge').textContent = `ROUND ${gameState.round}`;
+
+    // Buzz order
+    const buzzEl = document.getElementById('buzz-result');
+    if (gameState.buzz_order.length === 0) {
+      buzzEl.innerHTML = `<div class="no-buzz">No one has buzzed yet</div>`;
+    } else {
+      buzzEl.innerHTML = `
+        <div class="buzz-result">
+          <div class="buzz-winner">🏆 ${gameState.buzz_order[0]}</div>
+          <div style="font-size:12px;color:#555;">buzzed first</div>
+        </div>
+        <div class="buzz-order">
+          ${gameState.buzz_order.map((name, i) => `
+            <div class="buzz-item">
+              <div class="buzz-num ${i === 0 ? 'first' : ''}">#${i + 1}</div>
+              <div class="buzz-name">${name}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    // Teams & scores
+    const teams = Object.entries(gameState.teams)
+      .sort((a, b) => b[1].score - a[1].score);
+
+    const teamsEl = document.getElementById('teams-list');
+    if (teams.length === 0) {
+      teamsEl.innerHTML = `<div style="color:#555;font-size:13px;">Waiting for teams to join...</div>`;
+    } else {
+      teamsEl.innerHTML = teams.map(([name, data], i) => `
+        <div class="team-row">
+          <div class="team-rank ${i === 0 ? 'gold' : ''}">${i + 1}</div>
+          <div class="team-name-label" data-name="${name}" onclick="selectTeam('${name}')" style="cursor:pointer;">${name}</div>
+          <div class="score-btns">
+            <button class="score-btn plus"  onclick="send({type:'score',team:'${name}',delta:3})">+3</button>
+            <button class="score-btn plus"  onclick="send({type:'score',team:'${name}',delta:1})">+1</button>
+            <button class="score-btn minus" onclick="send({type:'score',team:'${name}',delta:-1})">−1</button>
+          </div>
+          <div class="team-score">${data.score}</div>
+          <button class="remove-btn" onclick="send({type:'remove_team',team:'${name}'})">✕</button>
+        </div>`).join('');
+    }
+  }
+
+  connect();
+</script>
+</body>
+</html>
