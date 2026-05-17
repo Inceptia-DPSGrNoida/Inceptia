@@ -3,231 +3,709 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cipher — Buzzer</title>
+<title>Cipher &mdash; Buzzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0a0a0f; color: #f0ede8; font-family: 'DM Sans', sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
-  
-  .room-info { font-size: 12px; color: #888; letter-spacing: 2px; text-transform: uppercase; }
-  .team-name { font-size: 20px; font-weight: 600; }
-  .round { font-size: 13px; color: #888; }
-  
-  /* Big buzzer button */
-  .buzzer { width: 220px; height: 220px; border-radius: 50%; border: none; cursor: pointer; font-size: 22px; font-weight: 700; letter-spacing: 2px; transition: all 0.1s; box-shadow: 0 8px 32px #0006; }
-  .buzzer.ready   { background: #e53935; color: #fff; }
-  .buzzer.ready:hover { transform: scale(1.04); box-shadow: 0 12px 40px #e5393566; }
-  .buzzer.ready:active { transform: scale(0.97); }
-  .buzzer.winner  { background: #43a047; color: #fff; animation: pulse 0.6s ease; }
-  .buzzer.late    { background: #333; color: #666; cursor: not-allowed; }
-  .buzzer.locked  { background: #1a1a2e; color: #444; cursor: not-allowed; border: 2px solid #333; }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+  :root {
+    --red: #ff2d2d;
+    --red-glow: #ff2d2d66;
+    --green: #00e676;
+    --green-glow: #00e67666;
+    --gold: #ffc400;
+    --gold-glow: #ffc40044;
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --surface2: #16162a;
+    --border: #ffffff11;
+    --text: #f0ede8;
+    --muted: #555577;
+  }
 
-  .status { font-size: 16px; color: #888; min-height: 24px; text-align: center; }
-  .status.winner-text { color: #43a047; font-weight: 600; font-size: 20px; }
-  .status.late-text   { color: #e53935; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ambient glow behind buzzer */
+  .ambient {
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.12;
+    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--red);
+    transition: background 0.5s, opacity 0.5s;
+    z-index: 0;
+  }
+  .ambient.open { opacity: 0.18; background: var(--red); animation: ambientPulse 2s infinite; }
+  .ambient.winner { opacity: 0.3; background: var(--green); }
+  .ambient.late { opacity: 0.1; background: #333; }
+  @keyframes ambientPulse { 0%,100%{opacity:0.18} 50%{opacity:0.28} }
+
+  /* ── JOIN SCREEN ── */
+  .join-screen {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 0;
+    padding: 20px;
+  }
+
+  .join-eyebrow {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .join-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 15vw, 120px);
+    color: var(--text);
+    letter-spacing: 8px;
+    line-height: 0.9;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .join-title span {
+    color: var(--red);
+    text-shadow: 0 0 40px var(--red-glow);
+  }
+
+  .join-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .join-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .join-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .join-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 16px 20px;
+    border-radius: 10px;
+    outline: none;
+    text-align: center;
+    letter-spacing: 2px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+  .join-input:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px var(--red-glow);
+  }
+  .join-input::placeholder { color: var(--muted); font-size: 14px; letter-spacing: 1px; }
+
+  .join-btn {
+    background: var(--red);
+    border: none;
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 4px;
+    padding: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 24px var(--red-glow);
+  }
+  .join-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--red-glow); }
+  .join-btn:active { transform: translateY(0); }
+
+  .join-error {
+    color: var(--red);
+    font-size: 12px;
+    text-align: center;
+    min-height: 16px;
+    letter-spacing: 1px;
+  }
+
+  /* ── GAME SCREEN ── */
+  .game-screen {
+    display: none;
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface)aa;
+    backdrop-filter: blur(10px);
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .event-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--text);
+  }
+
+  .event-name span { color: var(--red); }
+
+  .round-pill {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: var(--red)22;
+    border: 1px solid var(--red)66;
+    padding: 4px 14px;
+    border-radius: 99px;
+    color: var(--red);
+  }
+
+  .team-pill {
+    font-size: 11px;
+    letter-spacing: 2px;
+    background: var(--red)22;
+    border: 1px solid var(--red)44;
+    padding: 4px 12px;
+    border-radius: 99px;
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  /* Main content */
+  .game-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+  }
+
+  /* Buzzer area */
+  .buzzer-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 40px;
+  }
 
   /* Timer */
-  .timer { font-size: 48px; font-weight: 700; font-family: monospace; color: #f0c040; min-height: 60px; }
-  .timer.urgent { color: #e53935; animation: blink 0.5s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .timer-wrap {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    color: var(--gold);
+    text-shadow: 0 0 30px var(--gold-glow);
+    min-height: 90px;
+    letter-spacing: 4px;
+    transition: color 0.3s;
+  }
+  .timer-wrap.urgent {
+    color: var(--red);
+    text-shadow: 0 0 30px var(--red-glow);
+    animation: urgentBlink 0.4s infinite;
+  }
+  @keyframes urgentBlink { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-  /* Scoreboard */
-  .scoreboard { width: 340px; background: #111118; border: 1px solid #2a2a3a; border-radius: 12px; padding: 16px; }
-  .sb-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-bottom: 12px; font-family: monospace; }
-  .sb-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #1a1a24; font-size: 13px; }
-  .sb-row:last-child { border-bottom: none; }
-  .sb-rank { font-family: monospace; color: #555; min-width: 20px; }
-  .sb-rank.gold { color: #f0c040; }
-  .sb-name { flex: 1; font-weight: 500; }
-  .sb-name.me { color: #40c0f0; }
-  .sb-buzz { font-size: 10px; color: #555; min-width: 30px; }
-  .sb-buzz.first { color: #43a047; font-weight: 700; }
-  .sb-score { font-family: monospace; font-size: 14px; font-weight: 700; color: #f0c040; min-width: 32px; text-align: right; }
+  /* The big buzzer */
+  .buzzer-outer {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-  /* Join screen */
-  .join-screen { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-  .join-title { font-size: 28px; font-weight: 700; letter-spacing: 4px; color: #f0c040; font-family: monospace; }
-  .join-sub { font-size: 13px; color: #888; }
-  input { background: #1a1a24; border: 1px solid #2a2a3a; color: #f0ede8; font-size: 16px; padding: 12px 16px; border-radius: 8px; width: 280px; outline: none; text-align: center; }
-  input:focus { border-color: #f0c040; }
-  .join-btn { background: #f0c040; color: #000; border: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; width: 280px; }
-  .join-btn:hover { background: #ffd060; }
-  .error { color: #e53935; font-size: 12px; }
+  .buzzer-ring {
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+  }
 
-  .game-screen { display: none; flex-direction: column; align-items: center; gap: 20px; }
+  .buzzer-ring.ready {
+    border-color: var(--red);
+    box-shadow: 0 0 0 8px var(--red-glow), 0 0 60px var(--red-glow);
+    animation: ringPulse 1.5s infinite;
+  }
+  .buzzer-ring.winner { border-color: var(--green); box-shadow: 0 0 0 8px var(--green-glow), 0 0 60px var(--green-glow); }
+  .buzzer-ring.late { border-color: #333; }
+  .buzzer-ring.locked { border-color: #222; }
+
+  @keyframes ringPulse {
+    0%,100% { box-shadow: 0 0 0 8px var(--red-glow), 0 0 60px var(--red-glow); }
+    50% { box-shadow: 0 0 0 16px var(--red)22, 0 0 80px var(--red-glow); }
+  }
+
+  .buzzer-btn {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 6px;
+    cursor: pointer;
+    transition: all 0.12s;
+    position: relative;
+    z-index: 1;
+    /* Gradient for 3D effect */
+    background: radial-gradient(circle at 35% 35%, #ff5252, #b71c1c);
+    color: #fff;
+    box-shadow:
+      0 12px 40px #0008,
+      inset 0 2px 4px #ffffff33,
+      inset 0 -4px 8px #00000033;
+  }
+
+  .buzzer-btn:hover:not(:disabled) {
+    transform: scale(1.04) translateY(-4px);
+    box-shadow: 0 20px 60px #0008, 0 0 40px var(--red-glow), inset 0 2px 4px #ffffff33;
+  }
+
+  .buzzer-btn:active:not(:disabled) {
+    transform: scale(0.96) translateY(2px);
+    box-shadow: 0 4px 16px #0008, inset 0 4px 8px #00000044;
+  }
+
+  .buzzer-btn.winner {
+    background: radial-gradient(circle at 35% 35%, #69f0ae, #00897b);
+    box-shadow: 0 12px 40px #0008, 0 0 60px var(--green-glow), inset 0 2px 4px #ffffff33;
+    animation: winnerBounce 0.5s ease;
+    cursor: default;
+  }
+
+  .buzzer-btn.late {
+    background: radial-gradient(circle at 35% 35%, #444, #222);
+    color: #555;
+    cursor: not-allowed;
+    box-shadow: 0 8px 24px #0008, inset 0 2px 4px #ffffff11;
+  }
+
+  .buzzer-btn.locked {
+    background: radial-gradient(circle at 35% 35%, #1a1a2e, #0f0f1a);
+    color: #333;
+    cursor: not-allowed;
+    box-shadow: 0 4px 16px #0004, inset 0 2px 4px #ffffff08;
+  }
+
+  @keyframes winnerBounce {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.1); }
+    60% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+
+  /* Status text */
+  .status-text {
+    font-size: 16px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-align: center;
+    min-height: 24px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  .status-text.ready { color: var(--red); font-weight: 600; }
+  .status-text.winner { color: var(--green); font-weight: 700; font-size: 20px; }
+  .status-text.late { color: #555; }
+
+  /* Buzz result display */
+  .buzz-display {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    min-width: 280px;
+    text-align: center;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .buzz-display.has-winner {
+    border-color: var(--green)44;
+    background: var(--green)08;
+  }
+
+  .buzz-winner-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .buzz-winner-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--green);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px var(--green-glow);
+  }
+
+  .buzz-order-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .buzz-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .buzz-pill.first { background: var(--green)22; border-color: var(--green)44; color: var(--green); }
+
+  /* ── RIGHT PANEL - SCOREBOARD ── */
+  .scoreboard-panel {
+    border-left: 1px solid var(--border);
+    background: var(--surface)88;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .panel-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 4px;
+    color: var(--muted);
+  }
+
+  .sb-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .sb-row.me {
+    border-color: var(--red)44;
+    background: var(--red)0a;
+  }
+
+  .sb-row.leader {
+    border-color: var(--gold)44;
+    background: var(--gold)08;
+  }
+
+  .sb-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--muted);
+    min-width: 24px;
+    text-align: center;
+  }
+  .sb-rank.gold { color: var(--gold); text-shadow: 0 0 10px var(--gold-glow); }
+
+  .sb-info { flex: 1; min-width: 0; }
+
+  .sb-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+  .sb-name.me-name { color: var(--red); }
+
+  .sb-buzz-tag {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .sb-buzz-tag.first { color: var(--green); }
+
+  .sb-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--gold);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* Flash overlay for buzz */
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .flash-overlay.flash-green { background: var(--green); animation: flashAnim 0.4s ease; }
+  .flash-overlay.flash-red   { background: var(--red);   animation: flashAnim 0.3s ease; }
+  @keyframes flashAnim { 0%{opacity:0.4} 100%{opacity:0} }
+
+  /* Waiting state empty scoreboard */
+  .sb-empty {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 20px 0;
+  }
 </style>
 </head>
 <body>
 
-<!-- Join screen -->
+<div class="ambient" id="ambient"></div>
+<div class="flash-overlay" id="flash"></div>
+
+<!-- JOIN SCREEN -->
 <div class="join-screen" id="join-screen">
-  <div class="join-title">CIPHER</div>
-  <div class="join-sub">Enter your team name to join</div>
-  <input id="team-input" placeholder="Team name" maxlength="30" />
-  <button class="join-btn" onclick="joinGame()">Join</button>
-  <div class="error" id="join-error"></div>
+  <div class="join-eyebrow">Inceptia Fest &mdash; Round 3</div>
+  <div class="join-title">CI<span>PH</span>ER</div>
+  <div class="join-subtitle">Buzzer Beater Challenge</div>
+  <div class="join-form">
+    <div class="join-label">Enter your team code</div>
+    <input class="join-input" id="team-input" placeholder="e.g. ALPHA" maxlength="30" autocomplete="off" />
+    <button class="join-btn" onclick="joinGame()">ENTER ARENA</button>
+    <div class="join-error" id="join-error"></div>
+  </div>
 </div>
 
-<!-- Game screen -->
+<!-- GAME SCREEN -->
 <div class="game-screen" id="game-screen">
-  <div class="room-info">CIPHER — BUZZER ROUND</div>
-  <div style="display:flex;gap:16px;align-items:center;">
-    <div class="team-name" id="my-team-display"></div>
-    <div class="round" id="round-display">Round 1</div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="event-name">CI<span>PH</span>ER</div>
+      <div class="round-pill" id="round-pill">Round 1</div>
+    </div>
+    <div class="team-pill" id="team-pill"></div>
   </div>
 
-  <div class="timer" id="timer-display"></div>
+  <div class="game-content">
+    <!-- Buzzer area -->
+    <div class="buzzer-area">
+      <div class="buzzer-outer">
+        <div class="buzzer-ring locked" id="buzzer-ring"></div>
+        <button class="buzzer-btn locked" id="buzzer-btn" onclick="buzz()">BUZZ</button>
+      </div>
 
-  <button class="buzzer locked" id="buzzer-btn" onclick="buzz()">BUZZ</button>
-  <div class="status" id="status-text">Waiting for host...</div>
+      <div class="status-text" id="status-text">Waiting for host...</div>
 
-  <div class="scoreboard">
-    <div class="sb-title">Scoreboard</div>
-    <div id="scoreboard-rows"></div>
+      <div class="buzz-display" id="buzz-display">
+        <div class="buzz-winner-label">No buzz yet</div>
+      </div>
+    </div>
+
+    <!-- Scoreboard panel -->
+    <div class="scoreboard-panel">
+      <div class="panel-title">Scoreboard</div>
+      <div id="scoreboard-rows">
+        <div class="sb-empty">Waiting for teams...</div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-  let ws;
-  let myTeam = null;
-  let gameState = null;
-  let timerInterval = null;
-  let timerLeft = 0;
+  let ws, myTeam = null, gameState = null;
 
-  // ── JOIN GAME ──
   function joinGame() {
-    const name = document.getElementById('team-input').value.trim();
-    if (!name) {
-      document.getElementById('join-error').textContent = 'Enter a team name';
-      return;
-    }
+    const name = document.getElementById('team-input').value.trim().toUpperCase();
+    if (!name) { document.getElementById('join-error').textContent = 'Enter a team code'; return; }
     myTeam = name;
-    connectWebSocket();
+    connectWS();
   }
 
-  // Allow Enter key on input
   document.getElementById('team-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') joinGame();
   });
 
-  // ── WEBSOCKET ──
-  function connectWebSocket() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}/ws`);
 
     ws.onopen = () => {
-      // Send join message
       ws.send(JSON.stringify({ type: 'join', team: myTeam }));
-      // Switch screens
       document.getElementById('join-screen').style.display = 'none';
       document.getElementById('game-screen').style.display = 'flex';
-      document.getElementById('my-team-display').textContent = myTeam;
+      document.getElementById('team-pill').textContent = myTeam;
     };
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    ws.onmessage = e => {
+      const data = JSON.parse(e.data);
       if (data.type === 'state') {
+        const prev = gameState;
         gameState = data.state;
+        // Detect new buzz
+        if (prev && gameState.buzz_order.length > prev?.buzz_order?.length) {
+          const winner = gameState.buzz_order[0];
+          triggerFlash(winner === myTeam ? 'green' : 'red');
+        }
         updateUI();
       }
     };
 
-    ws.onclose = () => {
-      setTimeout(connectWebSocket, 2000); // auto reconnect
-    };
+    ws.onclose = () => setTimeout(connectWS, 2000);
   }
 
-  // ── BUZZ ──
   function buzz() {
     if (!gameState || gameState.locked) return;
     if (gameState.buzz_order.includes(myTeam)) return;
     ws.send(JSON.stringify({ type: 'buzz', team: myTeam }));
   }
 
-  // ── UPDATE UI ──
+  function triggerFlash(color) {
+    const el = document.getElementById('flash');
+    el.className = `flash-overlay flash-${color}`;
+    setTimeout(() => el.className = 'flash-overlay', 400);
+  }
+
   function updateUI() {
     if (!gameState) return;
-    const btn = document.getElementById('buzzer-btn');
-    const status = document.getElementById('status-text');
     const myData = gameState.teams[myTeam];
+    const btn = document.getElementById('buzzer-btn');
+    const ring = document.getElementById('buzzer-ring');
+    const status = document.getElementById('status-text');
+    const ambient = document.getElementById('ambient');
 
-    // Round
-    document.getElementById('round-display').textContent = `Round ${gameState.round}`;
+    document.getElementById('round-pill').textContent = `Round ${gameState.round}`;
 
-    // Buzzer state
-    if (myData && myData.rank === 1) {
-      // I was first!
-      btn.className = 'buzzer winner';
-      btn.textContent = '1st!';
-      status.className = 'status winner-text';
-      status.textContent = '🎉 You buzzed first!';
-    } else if (myData && myData.rank > 1) {
-      // I buzzed but wasn't first
-      btn.className = 'buzzer late';
+    const buzzed = gameState.buzz_order.length > 0;
+    const iFirst = myData?.rank === 1;
+    const iLate  = myData?.rank > 1;
+
+    if (iFirst) {
+      btn.className = 'buzzer-btn winner'; ring.className = 'buzzer-ring winner';
+      btn.textContent = '1ST!';
+      status.className = 'status-text winner'; status.textContent = 'You buzzed first!';
+      ambient.className = 'ambient winner';
+    } else if (iLate) {
+      btn.className = 'buzzer-btn late'; ring.className = 'buzzer-ring late';
       btn.textContent = `#${myData.rank}`;
-      status.className = 'status late-text';
-      status.textContent = `You were #${myData.rank} — ${gameState.buzz_order[0]} was first`;
-    } else if (gameState.locked && gameState.buzz_order.length > 0) {
-      // Someone else buzzed first, I didn't
-      btn.className = 'buzzer late';
+      status.className = 'status-text late'; status.textContent = `You were #${myData.rank}`;
+      ambient.className = 'ambient late';
+    } else if (gameState.locked && buzzed) {
+      btn.className = 'buzzer-btn late'; ring.className = 'buzzer-ring late';
       btn.textContent = 'BUZZ';
-      status.className = 'status late-text';
-      status.textContent = `${gameState.buzz_order[0]} buzzed first!`;
-    } else if (gameState.locked) {
-      // Locked, no one buzzed yet
-      btn.className = 'buzzer locked';
-      btn.textContent = 'BUZZ';
-      status.className = 'status';
-      status.textContent = 'Waiting for host...';
-    } else {
-      // OPEN — buzz now!
-      btn.className = 'buzzer ready';
+      status.className = 'status-text late'; status.textContent = `${gameState.buzz_order[0]} got it`;
+      ambient.className = 'ambient late';
+    } else if (!gameState.locked) {
+      btn.className = 'buzzer-btn'; ring.className = 'buzzer-ring ready';
       btn.textContent = 'BUZZ!';
-      status.className = 'status';
-      status.textContent = 'Go!';
+      status.className = 'status-text ready'; status.textContent = 'GO!';
+      ambient.className = 'ambient open';
+    } else {
+      btn.className = 'buzzer-btn locked'; ring.className = 'buzzer-ring locked';
+      btn.textContent = 'BUZZ';
+      status.className = 'status-text'; status.textContent = 'Waiting for host...';
+      ambient.className = 'ambient';
     }
 
-    // Timer
-    if (gameState.timer > 0 && !gameState.locked) {
-      startTimer(gameState.timer);
-    } else if (gameState.locked) {
-      clearInterval(timerInterval);
-      document.getElementById('timer-display').textContent = '';
+    // Buzz display
+    const bd = document.getElementById('buzz-display');
+    if (gameState.buzz_order.length > 0) {
+      bd.className = 'buzz-display has-winner';
+      bd.innerHTML = `
+        <div class="buzz-winner-label">First buzz</div>
+        <div class="buzz-winner-name">${gameState.buzz_order[0]}</div>
+        <div class="buzz-order-pills">
+          ${gameState.buzz_order.map((n,i) =>
+            `<div class="buzz-pill ${i===0?'first':''}">#${i+1} ${n}</div>`
+          ).join('')}
+        </div>`;
+    } else {
+      bd.className = 'buzz-display';
+      bd.innerHTML = `<div class="buzz-winner-label">No buzz yet</div>`;
     }
 
-    // Scoreboard
     renderScoreboard();
   }
 
-  // ── TIMER ──
-  function startTimer(seconds) {
-    clearInterval(timerInterval);
-    timerLeft = seconds;
-    const el = document.getElementById('timer-display');
-    el.textContent = timerLeft;
-    timerInterval = setInterval(() => {
-      timerLeft--;
-      el.textContent = timerLeft;
-      el.className = timerLeft <= 5 ? 'timer urgent' : 'timer';
-      if (timerLeft <= 0) {
-        clearInterval(timerInterval);
-        el.textContent = "Time's up!";
-      }
-    }, 1000);
-  }
-
-  // ── SCOREBOARD ──
   function renderScoreboard() {
-    const teams = Object.entries(gameState.teams)
-      .sort((a, b) => b[1].score - a[1].score);
-    
+    const teams = Object.entries(gameState.teams || {})
+      .sort((a,b) => b[1].score - a[1].score);
     const el = document.getElementById('scoreboard-rows');
+    if (!teams.length) { el.innerHTML = `<div class="sb-empty">Waiting for teams...</div>`; return; }
     el.innerHTML = teams.map(([name, data], i) => {
-      const buzzed = gameState.buzz_order.indexOf(name);
-      return `<div class="sb-row">
-        <div class="sb-rank ${i === 0 ? 'gold' : ''}">${i + 1}</div>
-        <div class="sb-name ${name === myTeam ? 'me' : ''}">${name}</div>
-        <div class="sb-buzz ${buzzed === 0 ? 'first' : ''}">${buzzed >= 0 ? `#${buzzed + 1}` : ''}</div>
+      const buzzIdx = gameState.buzz_order.indexOf(name);
+      const isMe = name === myTeam;
+      const isLeader = i === 0;
+      return `<div class="sb-row ${isMe?'me':''} ${isLeader&&!isMe?'leader':''}">
+        <div class="sb-rank ${i===0?'gold':''}">${i+1}</div>
+        <div class="sb-info">
+          <div class="sb-name ${isMe?'me-name':''}">${name}${isMe?' (you)':''}</div>
+          ${buzzIdx>=0 ? `<div class="sb-buzz-tag ${buzzIdx===0?'first':''}">${buzzIdx===0?'buzzed first':`#${buzzIdx+1} buzz`}</div>` : ''}
+        </div>
         <div class="sb-score">${data.score}</div>
       </div>`;
     }).join('');

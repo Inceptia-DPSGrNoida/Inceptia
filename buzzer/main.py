@@ -1,7 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-import time
 import json
 
 app = FastAPI()
@@ -11,7 +10,6 @@ state = {
     "teams": {},        # team_name: {score, buzzed_at, rank}
     "locked": True,     # buzzer locked or open
     "buzz_order": [],   # list of team names in order they buzzed
-    "timer": 0,         # countdown seconds
     "round": 1,         # current round number
 }
 
@@ -76,7 +74,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     
                     await broadcast({"type": "state", "state": state})
 
-            # Host unlocks buzzer
+            # Unlock buzzer
             elif msg_type == "unlock":
                 state["locked"] = False
                 state["buzz_order"] = []
@@ -85,7 +83,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team]["rank"] = None
                 await broadcast({"type": "state", "state": state})
 
-            # Host resets everything
+            # Reset everything
             elif msg_type == "reset":
                 state["buzz_order"] = []
                 state["locked"] = True
@@ -94,7 +92,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team]["rank"] = None
                 await broadcast({"type": "state", "state": state})
 
-            # Host updates score
+            # Updating score
             elif msg_type == "score":
                 team_name = message.get("team")
                 delta = message.get("delta", 0)
@@ -102,12 +100,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team_name]["score"] += delta
                 await broadcast({"type": "state", "state": state})
 
-            # Host sets timer
-            elif msg_type == "timer":
-                state["timer"] = message.get("seconds", 30)
-                await broadcast({"type": "state", "state": state})
-
-            # Host advances round
+            # Continuing round
             elif msg_type == "next_round":
                 state["round"] += 1
                 state["buzz_order"] = []
@@ -117,7 +110,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team]["rank"] = None
                 await broadcast({"type": "state", "state": state})
 
-            # Host removes a team
+            # Remove team
             elif msg_type == "remove_team":
                 team_name = message.get("team")
                 if team_name in state["teams"]:
@@ -130,10 +123,10 @@ async def websocket_endpoint(websocket: WebSocket):
 # ── SERVE HTML FILES ──
 @app.get("/")
 async def get_team_view():
-    with open("index.html") as f:
+    with open("index.html", encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
 @app.get("/host")
 async def get_host_view():
-    with open("host.html") as f:
+    with open("host.html", encoding="utf-8") as f:
         return HTMLResponse(f.read())

@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Host Panel — Market Mayhem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080b10;
+  --surface: #0d1117;
+  --surface2:#111820;
+  --border:  #1c2333;
+  --gold:    #f0b429;
+  --green:   #26c281;
+  --red:     #e5534b;
+  --blue:    #58a6ff;
+  --purple:  #a371f7;
+  --orange:  #f0883e;
+  --muted:   rgba(255,255,255,0.35);
+  --text:    #e6edf3;
+  --mono:    'DM Mono', monospace;
+  --sans:    'DM Sans', sans-serif;
+  --display: 'Syne', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Auth ── */
+#auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 400px; text-align: center; }
+.auth-title { font-family: var(--display); font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+.auth-sub   { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+input[type=password], input[type=text], input[type=number], select, textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; color: var(--text); font-family: var(--mono); font-size: 14px;
+  outline: none; transition: border-color 0.2s; resize: vertical;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px; margin-top: 16px; }
+label:first-child { margin-top: 0; }
+.err { font-size: 13px; color: var(--red); margin-top: 10px; min-height: 20px; }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border-radius: 8px; font-family: var(--display); font-size: 13px;
+  font-weight: 700; letter-spacing: 0.5px; cursor: pointer; border: none;
+  transition: opacity 0.15s, transform 0.1s; user-select: none; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-gold   { background: var(--gold);   color: #000; }
+.btn-green  { background: var(--green);  color: #000; }
+.btn-red    { background: var(--red);    color: #fff; }
+.btn-blue   { background: var(--blue);   color: #000; }
+.btn-ghost  { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+.btn-full { width: 100%; }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+/* ── Layout ── */
+#app { display: none; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px;
+  border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+.topbar-title { font-family: var(--display); font-size: 18px; font-weight: 800; color: var(--gold); }
+.topbar-stats { display: flex; gap: 24px; }
+.ts { display: flex; flex-direction: column; align-items: flex-end; }
+.ts-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.ts-val   { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
+.ts-val.gold { color: var(--gold); }
+.ts-val.green { color: var(--green); }
+.ts-val.red   { color: var(--red); }
+
+.main { display: grid; grid-template-columns: 340px 1fr; gap: 0; min-height: calc(100vh - 57px); }
+.sidebar { border-right: 1px solid var(--border); padding: 20px; background: var(--surface); display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+.content { padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+
+/* ── Cards ── */
+.card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.card-title { font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+
+/* ── Phase banner ── */
+.phase-banner { border-radius: 10px; padding: 14px 18px; font-size: 15px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px; border: 1px solid; }
+.ph-lobby    { background: rgba(240,180,41,0.07);  border-color: rgba(240,180,41,0.25);  color: var(--gold); }
+.ph-trading  { background: rgba(38,194,129,0.07);  border-color: rgba(38,194,129,0.25);  color: var(--green); }
+.ph-break    { background: rgba(240,136,62,0.07);  border-color: rgba(240,136,62,0.25);  color: var(--orange); }
+.ph-ended    { background: rgba(229,83,75,0.07);   border-color: rgba(229,83,75,0.25);   color: var(--red); }
+
+/* ── Progress bar ── */
+.progress-wrap { background: rgba(255,255,255,0.07); border-radius: 99px; height: 8px; overflow: hidden; margin-top: 10px; }
+.progress-bar  { height: 100%; border-radius: 99px; transition: width 1s linear, background 0.6s; }
+
+/* ── Price grid ── */
+.price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.price-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.pt-sym  { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }
+.pt-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pt-price { font-family: var(--mono); font-size: 18px; font-weight: 500; color: #fff; }
+.pt-chg  { font-size: 12px; margin-top: 3px; }
+.up { color: var(--green); } .dn { color: var(--red); } .nc { color: var(--muted); }
+
+/* ── Leaderboard ── */
+.lb-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 6px; }
+.lb-rank { font-family: var(--mono); font-size: 13px; color: var(--muted); width: 28px; flex-shrink: 0; }
+.lb-rank.gold   { color: #ffd700; font-weight: 700; }
+.lb-rank.silver { color: #c0c0c0; font-weight: 700; }
+.lb-rank.bronze { color: #cd7f32; font-weight: 700; }
+.lb-name { font-size: 14px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.lb-nw   { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.lb-kick { background: rgba(229,83,75,0.1); color: var(--red); border: 1px solid rgba(229,83,75,0.3);
+  font-size: 11px; padding: 3px 8px; border-radius: 5px; cursor: pointer; flex-shrink: 0; }
+.lb-kick:hover { background: rgba(229,83,75,0.2); }
+
+/* ── Code chips ── */
+.code-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.code-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 13px; font-weight: 500; padding: 5px 10px;
+  display: flex; align-items: center; gap: 8px; }
+.code-chip.used { border-color: rgba(38,194,129,0.3); color: var(--green); }
+.code-chip .del { cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; }
+.code-chip .del:hover { color: var(--red); }
+
+/* ── Chaos grid ── */
+.chaos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.chaos-btn  { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; cursor: pointer; text-align: left; transition: border-color 0.15s, background 0.15s; }
+.chaos-btn:hover { background: var(--surface2); border-color: var(--gold); }
+.chaos-btn .cb-icon  { font-size: 22px; margin-bottom: 6px; }
+.chaos-btn .cb-name  { font-size: 13px; font-weight: 700; color: var(--text); }
+.chaos-btn .cb-desc  { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+/* ── News form ── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+  display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; width: 100%; max-width: 480px; }
+.modal-title { font-family: var(--display); font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 18px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+/* ── Toast ── */
+.toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  animation: slideIn 0.2s ease; max-width: 320px; }
+.toast.ok   { background: rgba(38,194,129,0.15); border: 1px solid rgba(38,194,129,0.4); color: var(--green); }
+.toast.err  { background: rgba(229,83,75,0.15);  border: 1px solid rgba(229,83,75,0.4);  color: var(--red); }
+.toast.info { background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.3); color: var(--blue); }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── Section header ── */
+.sec-hdr { font-family: var(--display); font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+
+/* ── Tab nav ── */
+.tab-nav { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted);
+  cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-panel { display: none; } .tab-panel.active { display: block; }
+
+/* ── Quiz buzz alert ── */
+.buzz-alert { background: rgba(240,180,41,0.1); border: 2px solid var(--gold); border-radius: 10px;
+  padding: 14px 18px; display: none; margin-bottom: 12px; }
+.buzz-alert.show { display: block; }
+.buzz-name { font-family: var(--display); font-size: 20px; font-weight: 800; color: var(--gold); }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  .form-row { grid-template-columns: 1fr; }
+  .form-row.three { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Auth screen ── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-title">Host Panel</div>
+    <div class="auth-sub">Market Mayhem — Inceptia · Restricted access</div>
+    <label>Password</label>
+    <input type="password" id="pw-input" placeholder="Enter host password" onkeydown="if(event.key==='Enter')authSubmit()">
+    <div class="err" id="auth-err"></div>
+    <button class="btn btn-gold btn-full" style="margin-top:16px" onclick="authSubmit()">Unlock →</button>
+  </div>
+</div>
+
+<!-- ── Main app ── -->
+<div id="app">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">⚡ Market Mayhem Host</div>
+    </div>
+    <div class="topbar-stats">
+      <div class="ts"><span class="ts-label">Phase</span><span class="ts-val gold" id="stat-phase">Lobby</span></div>
+      <div class="ts"><span class="ts-label">Round</span><span class="ts-val" id="stat-round">0 / 6</span></div>
+      <div class="ts"><span class="ts-label">Players</span><span class="ts-val green" id="stat-players">0</span></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- ── Sidebar ── -->
+    <div class="sidebar">
+
+      <!-- Phase + round control -->
+      <div class="card">
+        <div class="card-title">Game State</div>
+        <div class="phase-banner ph-lobby" id="phase-banner">⏳ Lobby — waiting to start</div>
+        <div class="progress-wrap"><div class="progress-bar" id="timer-bar" style="width:0%;background:var(--green)"></div></div>
+        <div style="font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:8px" id="timer-label">—</div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn btn-green" id="btn-start" onclick="startRound()" style="flex:1">▶ Start Round 1</button>
+          <button class="btn btn-ghost" id="btn-end"   onclick="endRound()"  style="flex:1" disabled>⏸ End Round</button>
+        </div>
+        <button class="btn btn-blue btn-full" style="margin-top:8px" id="btn-end-game" onclick="endGame()" disabled>🏁 End Game & Reveal</button>
+        <button class="btn btn-ghost btn-sm btn-full" style="margin-top:10px;color:var(--red);border-color:rgba(229,83,75,0.3)" onclick="confirmReset()">⚠ Reset Entire Game</button>
+      </div>
+
+      <!-- Codes -->
+      <div class="card">
+        <div class="card-title">Player Codes</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input type="number" id="code-count" value="10" min="1" max="80" style="width:70px">
+          <button class="btn btn-gold" style="flex:1" onclick="genCodes()">Generate Codes</button>
+        </div>
+        <div class="code-grid" id="code-grid"><div style="font-size:13px;color:var(--muted)">No codes yet.</div></div>
+      </div>
+
+      <!-- Quick price bump -->
+      <div class="card">
+        <div class="card-title">Manual Price Override</div>
+        <label>Stock</label>
+        <select id="manual-stock" onchange="prefillPrice()"></select>
+        <label>New Price (₹)</label>
+        <input type="number" id="manual-price" min="1" placeholder="e.g. 500">
+        <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="manualPrice()">Set Price</button>
+      </div>
+
+    </div>
+
+    <!-- ── Content ── -->
+    <div class="content">
+
+      <!-- Prices -->
+      <div>
+        <div class="sec-hdr">Live Prices</div>
+        <div class="price-grid" id="price-grid">Loading...</div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="tab-nav">
+          <div class="tab-btn active" onclick="switchTab('leaderboard',this)">Leaderboard</div>
+          <div class="tab-btn" onclick="switchTab('news',this)">Inject News</div>
+          <div class="tab-btn" onclick="switchTab('chaos',this)">Chaos Events</div>
+          <div class="tab-btn" onclick="switchTab('quiz',this)">Quiz</div>
+          <div class="tab-btn" onclick="switchTab('intel',this)">Secret Intel</div>
+        </div>
+
+        <!-- Leaderboard tab -->
+        <div class="tab-panel active" id="tab-leaderboard" style="padding:16px">
+          <div id="lb-list"><div style="color:var(--muted);font-size:13px">No players yet.</div></div>
+        </div>
+
+        <!-- News tab -->
+        <div class="tab-panel" id="tab-news" style="padding:16px">
+          <div class="sec-hdr">Inject a News Event</div>
+          <div class="form-row">
+            <div>
+              <label>Type</label>
+              <select id="news-type">
+                <option value="event">Market Event</option>
+                <option value="rumour">Unverified Rumour</option>
+                <option value="insider">Insider Hint</option>
+              </select>
+            </div>
+            <div>
+              <label>Affects Stock</label>
+              <select id="news-stock"></select>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:0">
+            <div>
+              <label>Direction</label>
+              <select id="news-dir">
+                <option value="1">Up ↑</option>
+                <option value="-1">Down ↓</option>
+              </select>
+            </div>
+            <div>
+              <label>Is Real?</label>
+              <select id="news-real">
+                <option value="1">Yes — strong price impact</option>
+                <option value="0">No — fake / weak impact</option>
+              </select>
+            </div>
+          </div>
+          <label>News Text</label>
+          <textarea id="news-text" rows="3" placeholder="e.g. BREAKING: RBI freezes all transactions above ₹50,000..."></textarea>
+          <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="injectNews()">Inject Event</button>
+
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <div class="sec-hdr" style="font-size:13px">Fake Analyst Report</div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Drops to ALL players. You mark it real/fake — only you know.</p>
+            <textarea id="fake-report-text" rows="2" placeholder="Analyst report text..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-gold" style="flex:1" onclick="injectFakeReport(false)">Drop as REAL</button>
+              <button class="btn btn-ghost" style="flex:1" onclick="injectFakeReport(true)">Drop as FAKE</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chaos tab -->
+        <div class="tab-panel" id="tab-chaos" style="padding:16px">
+          <div class="sec-hdr">Chaos Events</div>
+          <div class="chaos-grid">
+            <div class="chaos-btn" onclick="openChaosModal('circuit')">
+              <div class="cb-icon">⚡</div>
+              <div class="cb-name">Circuit Breaker</div>
+              <div class="cb-desc">Halt trading on one stock for 2 minutes.</div>
+            </div>
+            <div class="chaos-btn" onclick="triggerChaos('tax_raid')">
+              <div class="cb-icon">🚨</div>
+              <div class="cb-name">Tax Raid</div>
+              <div class="cb-desc">All players lose 10% of cash instantly.</div>
+            </div>
+            <div class="chaos-btn" onclick="triggerChaos('ipo_drop')">
+              <div class="cb-icon">🚀</div>
+              <div class="cb-name">IPO Drop</div>
+              <div class="cb-desc">NovaPay lists on the exchange mid-game.</div>
+            </div>
+            <div class="chaos-btn" onclick="openChaosModal('insider_scandal')">
+              <div class="cb-icon">🔒</div>
+              <div class="cb-name">Insider Scandal</div>
+              <div class="cb-desc">Freeze the #1 player's portfolio for 1 round.</div>
+            </div>
+            <div class="chaos-btn" onclick="triggerChaos('market_crash')">
+              <div class="cb-icon">📉</div>
+              <div class="cb-name">Market Crash</div>
+              <div class="cb-desc">All prices drop 20% simultaneously.</div>
+            </div>
+            <div class="chaos-btn" onclick="openChaosModal('bull_run')">
+              <div class="cb-icon">🐂</div>
+              <div class="cb-name">Bull Run</div>
+              <div class="cb-desc">Pick a sector — all stocks in it +30%.</div>
+            </div>
+            <div class="chaos-btn" onclick="openChaosModal('hostile')">
+              <div class="cb-icon">⚔️</div>
+              <div class="cb-name">Hostile Takeover</div>
+              <div class="cb-desc">Force a player to sell all of one stock.</div>
+            </div>
+            <div class="chaos-btn" onclick="openChaosModal('blackout')">
+              <div class="cb-icon">🌑</div>
+              <div class="cb-name">Blackout Round</div>
+              <div class="cb-desc">Toggle price visibility on/off.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz tab -->
+        <div class="tab-panel" id="tab-quiz" style="padding:16px">
+          <div class="sec-hdr">Flash Quiz</div>
+          <div class="buzz-alert" id="buzz-alert">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px">FIRST BUZZ</div>
+            <div class="buzz-name" id="buzz-name">—</div>
+          </div>
+          <label>Question</label>
+          <textarea id="quiz-q" rows="2" placeholder="Leave blank for a random finance question..."></textarea>
+          <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="launchQuiz()">Launch Quiz (all players see buzzer)</button>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+            <div class="sec-hdr" style="font-size:13px">Award Result</div>
+            <div class="form-row">
+              <div>
+                <label>Winner Name</label>
+                <input type="text" id="quiz-winner" placeholder="Player name">
+              </div>
+              <div>
+                <label>Amount (₹)</label>
+                <input type="number" id="quiz-amount" value="50000">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-green" style="flex:1" onclick="awardQuiz(true)">✓ Correct — Award</button>
+              <button class="btn btn-red"   style="flex:1" onclick="awardQuiz(false)">✗ Wrong — No award</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secret intel tab -->
+        <div class="tab-panel" id="tab-intel" style="padding:16px">
+          <div class="sec-hdr">Secret Intel</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Send a private news tip to ONE player. Nobody else sees it.</p>
+          <label>Target Player Code</label>
+          <select id="intel-code"></select>
+          <label>Intel Text</label>
+          <textarea id="intel-text" rows="3" placeholder="e.g. SkyLink is about to crash next round. Trust me."></textarea>
+          <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="sendIntel()">Send Secret Intel</button>
+        </div>
+
+      </div><!-- end tabs card -->
+
+      <!-- News log -->
+      <div>
+        <div class="sec-hdr">News Released (truth visible to host)</div>
+        <div id="news-log" style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:13px;color:var(--muted)">No news yet.</div>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </div><!-- end main -->
+</div><!-- end app -->
+
+<!-- ── Modals ── -->
+<!-- Circuit breaker -->
+<div class="modal-overlay" id="modal-circuit">
+  <div class="modal-box">
+    <div class="modal-title">⚡ Circuit Breaker</div>
+    <label>Stock to halt</label>
+    <select id="circuit-stock"></select>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="triggerCircuit()">Trigger</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-circuit')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bull run -->
+<div class="modal-overlay" id="modal-bull">
+  <div class="modal-box">
+    <div class="modal-title">🐂 Bull Run</div>
+    <label>Sector to boost (+30%)</label>
+    <select id="bull-sector">
+      <option>Manufacturing</option>
+      <option>Media / OTT</option>
+      <option>FMCG</option>
+      <option>Renewable Energy</option>
+      <option>Pharma</option>
+      <option>Technology</option>
+      <option>Logistics</option>
+      <option>Retail</option>
+      <option>Defence</option>
+      <option>Fintech</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="triggerBullRun()">Trigger</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-bull')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hostile takeover -->
+<div class="modal-overlay" id="modal-hostile">
+  <div class="modal-box">
+    <div class="modal-title">⚔️ Hostile Takeover</div>
+    <label>Target player name</label>
+    <input type="text" id="hostile-target" placeholder="Exact display name">
+    <label>Stock to force-sell</label>
+    <select id="hostile-stock"></select>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="triggerHostile()">Execute</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-hostile')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Insider scandal confirm -->
+<div class="modal-overlay" id="modal-insider-scandal">
+  <div class="modal-box">
+    <div class="modal-title">🔒 Insider Scandal</div>
+    <p style="color:var(--muted);font-size:14px;line-height:1.5">This will freeze the #1 ranked player's portfolio for the current round. They cannot buy or sell anything. Confirm?</p>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="triggerInsiderScandal()">Confirm — Freeze #1</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-insider-scandal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Blackout toggle -->
+<div class="modal-overlay" id="modal-blackout">
+  <div class="modal-box">
+    <div class="modal-title">🌑 Blackout Round</div>
+    <p style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:8px">Hide all prices from players. They trade completely blind. Toggle again to reveal.</p>
+    <p style="font-size:13px;color:var(--gold)" id="blackout-status">Status: Prices visible</p>
+    <div class="modal-actions">
+      <button class="btn btn-gold" id="btn-blackout-toggle" onclick="triggerBlackout()">Enable Blackout</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-blackout')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset confirm -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--red)">⚠ Reset Entire Game</div>
+    <p style="color:var(--muted);font-size:14px;line-height:1.5">This wipes ALL teams, codes, prices, and news. Cannot be undone. Are you absolutely sure?</p>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="resetGame()">Yes — Wipe Everything</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-reset')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let pw           = '';
+let state        = null;
+let board        = [];
+let ws           = null;
+let timerInt     = null;
+let blackoutActive = false;
+let nameToCode   = {};   // display name → join code, kept fresh
+
+const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+function authSubmit() {
+  const val = document.getElementById('pw-input').value.trim();
+  if (!val) return;
+  pw = val;
+  // Quick verify via API
+  fetch('/api/state', {
+    headers: { 'X-Host-PW': pw }
+  }).then(r => {
+    if (r.status === 403) {
+      document.getElementById('auth-err').textContent = 'Wrong password.';
+      pw = '';
+      return;
+    }
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  }).catch(() => {
+    // Try connecting anyway — password checked on actions
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  });
+}
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') authSubmit(); });
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init() {
+  connectWS();
+  loadCodes();
+  refreshPlayers();
+  setInterval(loadCodes, 15000);
+  setInterval(refreshPlayers, 10000);
+  startTimerTick();
+}
+
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/host`);
+  ws.onopen = () => toast('Connected', 'ok');
+  ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'state_update') {
+      state = msg.state;
+      board = msg.board || [];
+      render();
+    } else if (msg.type === 'prices_bulk') {
+      if (state && msg.prices) {
+        for (const [k, v] of Object.entries(msg.prices)) {
+          if (state.companies[k]) state.companies[k].price = v;
+        }
+      }
+      if (msg.board) board = msg.board;
+      renderPrices();
+      renderLeaderboard();
+    } else if (msg.type === 'player_joined') {
+      toast(`${msg.name} joined (${msg.code})`, 'info');
+      document.getElementById('stat-players').textContent = parseInt(document.getElementById('stat-players').textContent || '0') + 1;
+      loadCodes();
+      refreshPlayers();
+    } else if (msg.type === 'player_kicked') {
+      toast(`${msg.name} was kicked.`, 'info');
+      if (msg.board) board = msg.board;
+      refreshPlayers();
+      renderLeaderboard();
+    } else if (msg.type === 'quiz_buzzed') {
+      const el = document.getElementById('buzz-alert');
+      document.getElementById('buzz-name').textContent = msg.name;
+      el.classList.add('show');
+      toast(`⚡ ${msg.name} buzzed first!`, 'ok');
+    } else if (msg.type === 'reset') {
+      location.reload();
+    }
+  };
+  ws.onclose = () => {
+    toast('WS disconnected. Reconnecting...', 'err');
+    setTimeout(connectWS, 2000);
+  };
+}
+
+function ping() {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping' }));
+}
+setInterval(ping, 3000);
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  if (!state) return;
+  renderPhase();
+  renderPrices();
+  renderLeaderboard();
+  renderNewsLog();
+  populateSelects();
+  const pcount = board.length;
+  document.getElementById('stat-players').textContent = pcount;
+  document.getElementById('stat-round').textContent   = state.round + ' / 6';
+  document.getElementById('stat-phase').textContent   = { lobby:'Lobby', trading:'Trading', break:'Break', ended:'Ended' }[state.phase] || state.phase;
+}
+
+function renderPhase() {
+  const banner = document.getElementById('phase-banner');
+  const labels = {
+    lobby:   ['ph-lobby',   '⏳ Lobby — waiting to start'],
+    trading: ['ph-trading', '🟢 ROUND ' + state.round + ' — Trading Open'],
+    break:   ['ph-break',   '☕ Break — Round ' + state.round + ' ended'],
+    ended:   ['ph-ended',   '🏁 Game Over'],
+  };
+  const [cls, txt] = labels[state.phase] || labels.lobby;
+  banner.className = 'phase-banner ' + cls;
+  banner.textContent = txt;
+
+  const btnStart   = document.getElementById('btn-start');
+  const btnEnd     = document.getElementById('btn-end');
+  const btnEndGame = document.getElementById('btn-end-game');
+
+  if (state.phase === 'lobby') {
+    btnStart.textContent = '▶ Start Round 1';
+    btnStart.disabled = false;
+    btnEnd.disabled   = true;
+    btnEndGame.disabled = true;
+  } else if (state.phase === 'trading') {
+    btnStart.textContent = '▶ Round ' + state.round;
+    btnStart.disabled = true;
+    btnEnd.disabled   = false;
+    btnEndGame.disabled = (state.round < 6);
+  } else if (state.phase === 'break') {
+    const next = state.round + 1;
+    btnStart.textContent = next <= 6 ? '▶ Start Round ' + next : '(All rounds done)';
+    btnStart.disabled = next > 6;
+    btnEnd.disabled   = true;
+    btnEndGame.disabled = (state.round < 6);
+  } else {
+    btnStart.disabled = true;
+    btnEnd.disabled   = true;
+    btnEndGame.disabled = true;
+  }
+}
+
+function renderPrices() {
+  if (!state) return;
+  const grid = document.getElementById('price-grid');
+  let html = '';
+  for (const [cid, c] of Object.entries(state.companies)) {
+    const chg = c.price - (c.prev_price || c.price);
+    const pct = c.prev_price ? ((chg / c.prev_price) * 100).toFixed(1) : '0.0';
+    const dir = chg > 0 ? 'up' : chg < 0 ? 'dn' : 'nc';
+    const arr = chg > 0 ? '▲' : chg < 0 ? '▼' : '—';
+    html += `<div class="price-tile">
+      <div class="pt-sym">${cid.toUpperCase()}</div>
+      <div class="pt-name">${c.name}</div>
+      <div class="pt-price">${fmt(c.price)}</div>
+      <div class="pt-chg ${dir}">${arr} ${pct}%</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderLeaderboard() {
+  const list = document.getElementById('lb-list');
+  if (!board.length) { list.innerHTML = '<div style="color:var(--muted);font-size:13px">No players yet.</div>'; return; }
+  const rankCls = ['gold','silver','bronze'];
+  list.innerHTML = board.map(p => {
+    const code = nameToCode[p.name] || '';
+    return `
+    <div class="lb-row">
+      <div class="lb-rank ${rankCls[p.rank-1]||''}">${p.rank}</div>
+      <div style="display:flex;flex-direction:column;flex:1;min-width:0">
+        <div class="lb-name">${p.name}</div>
+        ${code ? `<div class="lb-code">${code}</div>` : ''}
+      </div>
+      <div class="lb-nw">${fmt(p.net_worth)}</div>
+      <button class="lb-kick" onclick="kickPlayer('${p.name}','${code}')">Kick</button>
+    </div>`;
+  }).join('');
+}
+
+function renderNewsLog() {
+  if (!state) return;
+  const log = document.getElementById('news-log');
+  if (!state.news || !state.news.length) return;
+  log.innerHTML = [...state.news].reverse().map(n => {
+    const realTag = n.real !== undefined
+      ? (n.real ? '<span style="color:var(--green);font-size:11px">✅ Real</span>' : '<span style="color:var(--red);font-size:11px">❌ Fake</span>')
+      : '';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">${n.label||n.type}</span>
+        ${realTag}
+        <span style="font-size:11px;color:var(--muted);margin-left:auto">${(n.affects||'').toUpperCase()}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text);line-height:1.5">${n.text}</div>
+    </div>`;
+  }).join('');
+}
+
+function populateSelects() {
+  if (!state) return;
+  const companies = state.companies;
+  const opts = Object.entries(companies).map(([k, c]) => `<option value="${k}">${c.name}</option>`).join('');
+  ['news-stock','manual-stock','circuit-stock','hostile-stock'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+// ── Timer tick ────────────────────────────────────────────────────────────────
+function startTimerTick() {
+  setInterval(() => {
+    if (!state) return;
+    const bar   = document.getElementById('timer-bar');
+    const label = document.getElementById('timer-label');
+    let remaining = 0, total = 1200;
+    if (state.phase === 'trading' && state.round_end_time) {
+      remaining = Math.max(0, state.round_end_time - Date.now()/1000);
+      total     = 1200;
+    } else if (state.phase === 'break' && state.break_end_time) {
+      remaining = Math.max(0, state.break_end_time - Date.now()/1000);
+      total     = 300;
+    } else {
+      bar.style.width = '0%';
+      label.textContent = '—';
+      return;
+    }
+    const pct    = Math.min(100, ((total - remaining) / total) * 100);
+    const mins   = Math.floor(remaining / 60);
+    const secs   = Math.floor(remaining % 60);
+    bar.style.width = pct + '%';
+    label.textContent = remaining > 0 ? `${mins}m ${String(secs).padStart(2,'0')}s remaining` : 'Time up — advance manually';
+    // Colour shift
+    if (state.phase === 'trading') {
+      bar.style.background = pct < 50 ? 'var(--green)' : pct < 75 ? 'var(--gold)' : 'var(--red)';
+    } else {
+      bar.style.background = 'var(--blue)';
+    }
+  }, 1000);
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function apiPost(path, body={}) {
+  const url = `${path}?pw=${encodeURIComponent(pw)}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || 'Error');
+  return data;
+}
+
+async function apiDelete(path) {
+  const r = await fetch(`${path}?pw=${encodeURIComponent(pw)}`, { method: 'DELETE' });
+  return r.json();
+}
+
+// ── Round controls ────────────────────────────────────────────────────────────
+async function startRound() {
+  try {
+    await apiPost('/api/host/start_round');
+    toast('Round started!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function endRound() {
+  try {
+    await apiPost('/api/host/end_round');
+    toast('Round ended. Break started.', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function endGame() {
+  try {
+    await apiPost('/api/host/end_game');
+    toast('Game over! Final leaderboard pushed.', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function resetGame() {
+  closeModal('modal-reset');
+  try {
+    await fetch('/api/reset', { method: 'POST' });
+    location.reload();
+  } catch(e) { toast('Reset failed.', 'err'); }
+}
+function confirmReset() { document.getElementById('modal-reset').classList.add('open'); }
+
+// ── Codes ─────────────────────────────────────────────────────────────────────
+async function genCodes() {
+  const n = parseInt(document.getElementById('code-count').value) || 10;
+  try {
+    await apiPost(`/api/codes/generate?count=${n}`);
+    await loadCodes();
+    toast(`Generated ${n} codes`, 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function loadCodes() {
+  try {
+    const data = await (await fetch('/api/codes')).json();
+    const grid = document.getElementById('code-grid');
+    // Also populate intel select
+    const sel = document.getElementById('intel-code');
+    if (sel) sel.innerHTML = data.codes.map(c => `<option value="${c}">${c}${data.used.includes(c)?'  ✓':''}</option>`).join('');
+    if (!data.codes.length) { grid.innerHTML = '<div style="font-size:13px;color:var(--muted)">No codes yet.</div>'; return; }
+    grid.innerHTML = data.codes.map(c => {
+      const used = data.used.includes(c);
+      return `<div class="code-chip ${used?'used':''}">
+        ${c}${used?' ✓':''}
+        <span class="del" onclick="deleteCode('${c}')" title="Remove">×</span>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+async function deleteCode(code) {
+  if (!confirm(`Remove code ${code}?`)) return;
+  await apiDelete(`/api/codes/${code}`);
+  loadCodes();
+  toast(`Removed ${code}`, 'info');
+}
+
+// ── Manual price ──────────────────────────────────────────────────────────────
+function prefillPrice() {
+  const stock = document.getElementById('manual-stock').value;
+  if (state && state.companies[stock]) {
+    document.getElementById('manual-price').value = state.companies[stock].price;
+  }
+}
+
+async function manualPrice() {
+  const stock = document.getElementById('manual-stock').value;
+  const price = parseInt(document.getElementById('manual-price').value);
+  if (!price || price < 1) return toast('Enter a valid price.', 'err');
+  try {
+    await apiPost('/api/host/manual_price', { stock, price });
+    toast('Price updated!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── News injection ────────────────────────────────────────────────────────────
+async function injectNews() {
+  const text = document.getElementById('news-text').value.trim();
+  if (!text) return toast('Enter news text.', 'err');
+  try {
+    await apiPost('/api/host/inject_news', {
+      type:      document.getElementById('news-type').value,
+      label:     { event: 'Market Event', rumour: 'Unverified Rumour', insider: 'Insider Hint' }[document.getElementById('news-type').value],
+      text,
+      affects:   document.getElementById('news-stock').value,
+      direction: parseInt(document.getElementById('news-dir').value),
+      real:      document.getElementById('news-real').value === '1',
+    });
+    document.getElementById('news-text').value = '';
+    toast('News injected!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function injectFakeReport(isFake) {
+  const text = document.getElementById('fake-report-text').value.trim();
+  if (!text) return toast('Enter report text.', 'err');
+  // Drops to all players as "Analyst Report" but marks real/fake for host visibility
+  try {
+    await apiPost('/api/host/inject_news', {
+      type:      'rumour',
+      label:     'Analyst Report',
+      text,
+      affects:   document.getElementById('news-stock').value,
+      direction: isFake ? -1 : 1,
+      real:      !isFake,
+    });
+    document.getElementById('fake-report-text').value = '';
+    toast('Report dropped to all players.', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Secret intel ──────────────────────────────────────────────────────────────
+async function sendIntel() {
+  const code = document.getElementById('intel-code').value;
+  const text = document.getElementById('intel-text').value.trim();
+  if (!code || !text) return toast('Fill both fields.', 'err');
+  try {
+    await apiPost('/api/host/secret_intel', { code, text });
+    document.getElementById('intel-text').value = '';
+    toast('Intel sent privately.', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Chaos ─────────────────────────────────────────────────────────────────────
+async function triggerChaos(event) {
+  const map = {
+    tax_raid:     '/api/chaos/tax_raid',
+    ipo_drop:     '/api/chaos/ipo_drop',
+    market_crash: '/api/chaos/market_crash',
+  };
+  if (!map[event]) return;
+  if (!confirm(`Trigger ${event.replace(/_/g,' ')}?`)) return;
+  try {
+    await apiPost(map[event]);
+    toast(`${event} triggered!`, 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+function openChaosModal(type) {
+  const modals = { circuit:'modal-circuit', bull_run:'modal-bull', hostile:'modal-hostile', insider_scandal:'modal-insider-scandal', blackout:'modal-blackout' };
+  const id = modals[type];
+  if (id) document.getElementById(id).classList.add('open');
+}
+
+async function triggerCircuit() {
+  const stock = document.getElementById('circuit-stock').value;
+  closeModal('modal-circuit');
+  try {
+    await apiPost('/api/chaos/circuit_breaker', { stock });
+    toast('Circuit breaker triggered!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function triggerBullRun() {
+  const sector = document.getElementById('bull-sector').value;
+  closeModal('modal-bull');
+  try {
+    await apiPost('/api/chaos/bull_run', { sector });
+    toast('Bull run triggered!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function triggerHostile() {
+  const target = document.getElementById('hostile-target').value.trim();
+  const stock  = document.getElementById('hostile-stock').value;
+  closeModal('modal-hostile');
+  try {
+    await apiPost('/api/chaos/hostile_takeover', { target, stock });
+    toast('Hostile takeover executed!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function triggerInsiderScandal() {
+  closeModal('modal-insider-scandal');
+  try {
+    await apiPost('/api/chaos/insider_scandal');
+    toast('Top player frozen!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function triggerBlackout() {
+  blackoutActive = !blackoutActive;
+  closeModal('modal-blackout');
+  try {
+    await apiPost('/api/chaos/blackout', { active: blackoutActive });
+    toast(`Blackout ${blackoutActive ? 'enabled' : 'disabled'}`, 'ok');
+    document.getElementById('blackout-status').textContent = blackoutActive ? 'Status: ⚠ BLACKOUT ACTIVE' : 'Status: Prices visible';
+    document.getElementById('btn-blackout-toggle').textContent = blackoutActive ? 'Disable Blackout' : 'Enable Blackout';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Quiz ──────────────────────────────────────────────────────────────────────
+async function launchQuiz() {
+  const q = document.getElementById('quiz-q').value.trim();
+  document.getElementById('buzz-alert').classList.remove('show');
+  document.getElementById('buzz-name').textContent = '—';
+  try {
+    const data = await apiPost('/api/chaos/quiz', { question: q || null });
+    toast(`Quiz launched: "${data.question}"`, 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function awardQuiz(correct) {
+  const winner = document.getElementById('quiz-winner').value.trim();
+  const amount = parseInt(document.getElementById('quiz-amount').value) || 50000;
+  if (!winner) return toast('Enter winner name.', 'err');
+  try {
+    await apiPost('/api/chaos/quiz_award', { winner, correct, amount });
+    toast(correct ? `+₹${amount.toLocaleString()} awarded to ${winner}` : 'No award.', 'ok');
+    document.getElementById('buzz-alert').classList.remove('show');
+    document.getElementById('quiz-winner').value = '';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Players ───────────────────────────────────────────────────────────────────
+async function refreshPlayers() {
+  try {
+    const data = await (await fetch('/api/players')).json();
+    nameToCode = data.players || {};
+    if (data.board) {
+      board = data.board;
+      renderLeaderboard();
+    }
+    // Also refresh intel select with names + codes
+    const sel = document.getElementById('intel-code');
+    if (sel) {
+      sel.innerHTML = Object.entries(nameToCode)
+        .map(([name, code]) => `<option value="${code}">${name} (${code})</option>`)
+        .join('');
+    }
+  } catch(e) {}
+}
+
+async function kickPlayer(name, code) {
+  if (!code) {
+    // Fallback: try to look up from nameToCode
+    code = nameToCode[name];
+  }
+  if (!code) {
+    toast(`Can't find code for ${name}. Try refreshing.`, 'err');
+    return;
+  }
+  if (!confirm(`Kick ${name} (${code})? This removes them from the game and invalidates their code.`)) return;
+  try {
+    const r = await fetch(`/api/players/${code}?pw=${encodeURIComponent(pw)}`, { method: 'DELETE' });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Failed');
+    toast(`${name} has been kicked.`, 'ok');
+    delete nameToCode[name];
+    await refreshPlayers();
+    await loadCodes();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toast-wrap');
+  const el   = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+</script>
+</body>
+</html>
