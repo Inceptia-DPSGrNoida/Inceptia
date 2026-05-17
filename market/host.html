@@ -246,6 +246,14 @@ label:first-child { margin-top: 0; }
         <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="manualPrice()">Set Price</button>
       </div>
 
+      <!-- Round guide -->
+      <div class="card">
+        <div class="card-title">Round Playbook</div>
+        <div id="round-guide" style="display:flex;flex-direction:column;gap:8px">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
     </div>
 
     <!-- ── Content ── -->
@@ -265,6 +273,7 @@ label:first-child { margin-top: 0; }
           <div class="tab-btn" onclick="switchTab('chaos',this)">Chaos Events</div>
           <div class="tab-btn" onclick="switchTab('quiz',this)">Quiz</div>
           <div class="tab-btn" onclick="switchTab('intel',this)">Secret Intel</div>
+          <div class="tab-btn" onclick="switchTab('loans',this)">Loans</div>
         </div>
 
         <!-- Leaderboard tab -->
@@ -405,6 +414,39 @@ label:first-child { margin-top: 0; }
           <label>Intel Text</label>
           <textarea id="intel-text" rows="3" placeholder="e.g. SkyLink is about to crash next round. Trust me."></textarea>
           <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="sendIntel()">Send Secret Intel</button>
+        </div>
+
+        <!-- Loans tab -->
+        <div class="tab-panel" id="tab-loans" style="padding:16px">
+          <div class="sec-hdr">Player Loans Overview</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+            Players can take a ₹50,000 loan from their own screen. 10% interest is charged automatically at the end of each round.
+            If their net worth drops below their loan balance → margin call (auto-liquidation).
+            If net worth hits zero → bankruptcy (restart with ₹25,000, loan cleared).
+          </p>
+          <div id="loans-list">
+            <div style="color:var(--muted);font-size:13px">No active loans.</div>
+          </div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+            <div class="sec-hdr" style="font-size:13px">Manual Cash Adjustment</div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Give or take cash from a player (for quiz awards, penalties, etc.)</p>
+            <label>Player</label>
+            <select id="adj-code"></select>
+            <div class="form-row" style="margin-top:0">
+              <div>
+                <label>Amount (₹)</label>
+                <input type="number" id="adj-amount" placeholder="e.g. 10000">
+              </div>
+              <div>
+                <label>Direction</label>
+                <select id="adj-dir">
+                  <option value="1">Add cash ↑</option>
+                  <option value="-1">Deduct cash ↓</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="adjustCash()">Apply Adjustment</button>
+          </div>
         </div>
 
       </div><!-- end tabs card -->
@@ -558,6 +600,7 @@ function init() {
   refreshPlayers();
   setInterval(loadCodes, 15000);
   setInterval(refreshPlayers, 10000);
+  setInterval(refreshLoans, 8000);
   startTimerTick();
 }
 
@@ -617,6 +660,7 @@ function render() {
   renderPrices();
   renderLeaderboard();
   renderNewsLog();
+  renderRoundGuide();
   populateSelects();
   const pcount = board.length;
   document.getElementById('stat-players').textContent = pcount;
@@ -1012,14 +1056,94 @@ async function refreshPlayers() {
       board = data.board;
       renderLeaderboard();
     }
-    // Also refresh intel select with names + codes
+    // Refresh intel select with names + codes
     const sel = document.getElementById('intel-code');
     if (sel) {
       sel.innerHTML = Object.entries(nameToCode)
         .map(([name, code]) => `<option value="${code}">${name} (${code})</option>`)
         .join('');
     }
+    // Refresh adj-code select
+    const adj = document.getElementById('adj-code');
+    if (adj) {
+      adj.innerHTML = Object.entries(nameToCode)
+        .map(([name, code]) => `<option value="${code}">${name} (${code})</option>`)
+        .join('');
+    }
   } catch(e) {}
+  // Also refresh loans tab
+  refreshLoans();
+}
+
+async function refreshLoans() {
+  try {
+    const data = await (await fetch('/api/players/detail')).json();
+    const list = document.getElementById('loans-list');
+    const withLoans = data.players.filter(p => p.loan > 0);
+    if (!withLoans.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px">No active loans.</div>';
+      return;
+    }
+    list.innerHTML = withLoans.map(p => `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${p.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${p.code}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:14px;color:var(--red)">Loan: ${fmt(p.loan)}</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">NW: ${fmt(p.net_worth)}</div>
+        </div>
+        ${p.net_worth < p.loan ? '<div style="font-size:11px;font-weight:700;color:var(--red);padding:3px 8px;background:rgba(229,83,75,0.1);border-radius:5px">⚠ MARGIN RISK</div>' : ''}
+        ${p.frozen ? '<div style="font-size:11px;font-weight:700;color:var(--orange);padding:3px 8px;background:rgba(240,136,62,0.1);border-radius:5px">🔒 FROZEN</div>' : ''}
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function adjustCash() {
+  const code   = document.getElementById('adj-code').value;
+  const amount = parseInt(document.getElementById('adj-amount').value);
+  const dir    = parseInt(document.getElementById('adj-dir').value);
+  if (!code || !amount || amount < 1) return toast('Fill in player and amount.', 'err');
+  try {
+    await apiPost('/api/host/adjust_cash', { code, amount, direction: dir });
+    const name = Object.entries(nameToCode).find(([n,c]) => c === code)?.[0] || code;
+    toast(`${dir > 0 ? '+' : '-'}₹${amount.toLocaleString()} applied to ${name}.`, 'ok');
+    document.getElementById('adj-amount').value = '';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Round guide ───────────────────────────────────────────────────────────────
+const ROUND_GUIDE = [
+  { round: 1, theme: "Stable Market",    colour: "var(--green)",  tips: ["Stable prices, small drift","Drop 2 news events","Let players learn the companies","No chaos yet — let them settle"] },
+  { round: 2, theme: "First Crash",      colour: "var(--orange)", tips: ["Drop a negative news on 1-2 stocks","Trigger Market Crash chaos","Watch panic selling begin","Good time for a secret intel tip"] },
+  { round: 3, theme: "Flash Quiz",       colour: "var(--blue)",   tips: ["Run Flash Quiz between rounds","Inject 3 news events at start","Trigger Bull Run on a random sector","IPO Drop is good here"] },
+  { round: 4, theme: "Blackout Round",   colour: "var(--purple)",  tips: ["Enable Blackout at round start","Players trade completely blind","Trigger Circuit Breaker mid-round","Disable blackout at round end"] },
+  { round: 5, theme: "IPO + Circuit",    colour: "var(--gold)",   tips: ["Drop NovaPay IPO if not done yet","Trigger Circuit Breaker on top stock","Insider Scandal on #1 player","Tax Raid keeps cash in check"] },
+  { round: 6, theme: "Final Round",      colour: "var(--red)",    tips: ["All news revealed — mark real/fake","Force-cover all shorts at game end","Hostile Takeover for drama","End game → final leaderboard"] },
+];
+
+function renderRoundGuide() {
+  const el = document.getElementById('round-guide');
+  if (!el || !state) return;
+  const current = state.round;
+  el.innerHTML = ROUND_GUIDE.map(r => {
+    const active  = r.round === current && state.phase === 'trading';
+    const done    = r.round < current || (r.round === current && state.phase === 'break');
+    return `<div style="border-radius:8px;border:1px solid ${active ? r.colour : 'var(--border)'};
+      background:${active ? `rgba(0,0,0,0.4)` : 'transparent'};padding:10px 12px;
+      opacity:${done ? '0.45' : '1'};transition:all 0.3s">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${active?'8':'0'}px">
+        <span style="font-family:var(--mono);font-size:11px;color:${r.colour};font-weight:700">R${r.round}</span>
+        <span style="font-size:13px;font-weight:600;color:${active?'#fff':'var(--muted)'}">${r.theme}</span>
+        ${done ? '<span style="font-size:11px;color:var(--green);margin-left:auto">✓</span>' : ''}
+        ${active ? '<span style="font-size:11px;color:'+r.colour+';margin-left:auto;font-weight:700">NOW</span>' : ''}
+      </div>
+      ${active ? `<ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:3px">
+        ${r.tips.map(t => `<li style="font-size:12px;color:var(--muted);line-height:1.4">${t}</li>`).join('')}
+      </ul>` : ''}
+    </div>`;
+  }).join('');
 }
 
 async function kickPlayer(name, code) {

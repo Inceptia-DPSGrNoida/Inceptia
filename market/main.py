@@ -19,9 +19,13 @@ import aiosqlite
 # ── Config ────────────────────────────────────────────────────────────────────
 DB_PATH        = Path(os.getenv("DB_PATH", "game.db"))
 HOST_PASSWORD  = os.getenv("HOST_PASSWORD", "InceptiaHost2025")
-STARTING_CASH  = 50_000
-ROUND_DURATION = 1200   # seconds (20 min) — host can end early
-BORROW_FEE     = 0.10   # 10% short-sell borrow fee upfront
+STARTING_CASH      = 50_000
+ROUND_DURATION     = 1200     # seconds (20 min) — host can end early
+BORROW_FEE         = 0.10     # 10% short-sell borrow fee upfront
+LOAN_AMOUNT        = 50_000   # fixed loan size players can take once
+LOAN_INTEREST      = 0.10     # 10% interest charged at end of each round
+BANKRUPTCY_RESTART = 25_000   # cash given on bankruptcy restart (no loan)
+DRIFT_INTERVAL     = 120      # seconds between passive price drifts mid-round
 
 # ── Companies ─────────────────────────────────────────────────────────────────
 BASE_COMPANIES = {
@@ -411,10 +415,39 @@ async def circuit_lift_task(state: dict, stock: str, until: float):
         cname = state2["companies"].get(stock, {}).get("name", stock)
         await manager.broadcast_all({"type": "circuit_lifted", "msg": f"Circuit breaker lifted on {cname}. Trading resumed."})
 
+# ── Passive price drift (runs every DRIFT_INTERVAL seconds while trading) ─────
+async def price_drift_loop():
+    """Background task: small random price movements mid-round so the board feels alive."""
+    await asyncio.sleep(30)   # wait for server to settle on startup
+    while True:
+        await asyncio.sleep(DRIFT_INTERVAL)
+        state = await read_state()
+        if state.get("phase") != "trading":
+            continue
+        companies  = state["companies"]
+        circuit    = state.get("circuit_broken")
+        changed    = False
+        for cid, c in companies.items():
+            if cid == circuit:
+                continue
+            # Tiny drift — max ±3%
+            lo, hi, bias = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
+            mag   = random.uniform(0.002, min(0.03, hi * 0.4))
+            direc = 1 if random.random() > bias else -1
+            c["price"] = max(10, round(c["price"] * (1 + direc * mag)))
+            changed = True
+        if changed:
+            await write_state(state)
+            players = await all_players()
+            board   = leaderboard(players, state)
+            prices  = {k: v["price"] for k, v in companies.items()}
+            await manager.broadcast_all({"type": "prices_bulk", "prices": prices, "board": board})
+
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    asyncio.create_task(price_drift_loop())
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -474,9 +507,29 @@ async def api_players():
     state   = await read_state()
     players = await all_players()
     board   = leaderboard(players, state)
-    # Build name->code map for the host
     name_to_code = {p["name"]: p["code"] for p in players if p["name"]}
     return {"players": name_to_code, "board": board}
+
+@app.get("/api/players/detail")
+async def api_players_detail():
+    """Returns full player data for host panel (loans, cash, net worth)."""
+    state   = await read_state()
+    players = await all_players()
+    result  = []
+    for p in players:
+        if not p["name"]:
+            continue
+        pv = player_view(p, state)
+        result.append({
+            "code":      p["code"],
+            "name":      p["name"],
+            "cash":      p["cash"],
+            "loan":      p["loan"],
+            "frozen":    p["frozen"],
+            "net_worth": pv["net_worth"],
+        })
+    result.sort(key=lambda x: x["net_worth"], reverse=True)
+    return {"players": result}
 
 @app.delete("/api/players/{code}")
 async def kick_player(code: str, pw: str):
@@ -529,6 +582,12 @@ async def start_round(pw: str):
     state["phase"]  = "trading"
     state["round_end_time"] = time.time() + ROUND_DURATION
     state["break_end_time"] = None
+    # Unfreeze all players from previous insider scandal
+    players = await all_players()
+    for p in players:
+        if p["frozen"]:
+            p["frozen"] = False
+            await save_player(p)
     news = pick_news(state, 2 if state["round"] == 1 else 3)
     state["news"].extend(news)
     fluctuate_prices(state, news)
@@ -560,10 +619,51 @@ async def end_round(pw: str):
     players = await all_players()
     for p in players:
         if p["loan"] > 0:
-            p["loan"] = round(p["loan"] * 1.10)
+            p["loan"] = round(p["loan"] * (1 + LOAN_INTEREST))
             await save_player(p)
+    # Re-fetch after loan updates
+    players = await all_players()
+    # Margin call + bankruptcy check
+    for p in players:
+        if not p["name"]:
+            continue
+        pv = player_view(p, state)
+        nw = pv["net_worth"]
+        if p["loan"] > 0 and nw < p["loan"]:
+            # Margin call — force-sell all holdings to cover loan
+            total_raised = 0
+            for cid, qty in list(p["holdings"].items()):
+                if qty > 0 and cid in state["companies"]:
+                    total_raised += qty * state["companies"][cid]["price"]
+                    p["holdings"][cid] = 0
+            p["cash"] += total_raised
+            p["cash"]  = max(0, p["cash"] - p["loan"])
+            p["loan"]  = 0
+            await save_player(p)
+            await manager.send_player(p["code"], {
+                "type": "margin_call",
+                "msg":  "⚠️ MARGIN CALL — Your net worth fell below your loan. All holdings liquidated to cover the debt.",
+                "player": player_view(p, state),
+            })
+            await manager.broadcast_all({"type": "chaos", "event": "margin_call",
+                                          "msg": f"📢 MARGIN CALL — {p['name']} was forced to liquidate their entire portfolio!"})
+        # Bankruptcy — net worth fully negative (can happen if market crashed and shorts went wrong)
+        pv2 = player_view(p, state)
+        if pv2["net_worth"] <= 0:
+            p["cash"]     = BANKRUPTCY_RESTART
+            p["holdings"] = {}
+            p["shorts"]   = {}
+            p["loan"]     = 0
+            await save_player(p)
+            await manager.send_player(p["code"], {
+                "type": "bankrupt",
+                "msg":  f"💀 BANKRUPTCY — You've been wiped out. Restarting with ₹{BANKRUPTCY_RESTART:,}. No loan this time.",
+                "player": player_view(p, state),
+            })
+            await manager.broadcast_all({"type": "chaos", "event": "bankrupt",
+                                          "msg": f"💀 BANKRUPTCY — {p['name']} has gone bust and restarted with ₹{BANKRUPTCY_RESTART:,}!"})
     # Resolve prediction market
-    await resolve_predictions(state, players)
+    await resolve_predictions(state, await all_players())
     await write_state(state)
     board = leaderboard(await all_players(), state)
     await manager.broadcast_all({"type": "phase_change", "phase": "break", "round": state["round"], "board": board})
@@ -594,6 +694,29 @@ async def end_game(pw: str):
     await manager.broadcast_all({"type": "game_ended", "board": board})
     await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
     return {"ok": True, "board": board}
+
+@app.post("/api/host/adjust_cash")
+async def adjust_cash(data: dict, pw: str):
+    """Manually add or deduct cash from a player. Direction: 1 = add, -1 = deduct."""
+    if pw != HOST_PASSWORD:
+        raise HTTPException(403)
+    code      = data["code"]
+    amount    = abs(int(data.get("amount", 0)))
+    direction = int(data.get("direction", 1))
+    p = await get_player(code)
+    if not p:
+        raise HTTPException(404, "Player not found")
+    p["cash"] = max(0, p["cash"] + direction * amount)
+    await save_player(p)
+    state = await read_state()
+    view  = player_view(p, state)
+    await manager.send_player(code, {"type": "player_update", "player": view})
+    sign = "+" if direction > 0 else "-"
+    await manager.send_player(code, {"type": "info", "msg": f"Host adjustment: {sign}₹{amount:,} to your cash."})
+    players = await all_players()
+    board   = leaderboard(players, state)
+    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board, "player_count": len([x for x in players if x["name"]])})
+    return {"ok": True}
 
 @app.post("/api/host/inject_news")
 async def inject_news(data: dict, pw: str):
@@ -1145,6 +1268,45 @@ async def ws_player(websocket: WebSocket, code: str):
                 await manager.send_player(bid["partner_code"], {"type": "player_update", "player": player_view(p_resp, state)})
                 await manager.send_player(bid["from_code"],    {"type": "info", "msg": f"Merger complete! Bought {qty}× {cname} jointly."})
                 await websocket.send_text(json.dumps({"type": "info", "msg": f"Merger complete! {bid['from_name']} got {qty}× {cname}."}))
+
+            # ── Take loan ────────────────────────────────────────────────────
+            elif action == "take_loan":
+                if not player:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                if state["phase"] not in ("trading", "break"):
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Can't take loans right now."})); continue
+                if player["loan"] > 0:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"You already have a loan of ₹{int(player['loan']):,}. Repay it first."})); continue
+                player["loan"] = LOAN_AMOUNT
+                player["cash"] += LOAN_AMOUNT
+                await save_player(player)
+                view = player_view(player, state)
+                await websocket.send_text(json.dumps({
+                    "type":   "trade_ok",
+                    "msg":    f"Loan of ₹{LOAN_AMOUNT:,} received. 10% interest charged every round.",
+                    "player": view,
+                }))
+
+            # ── Repay loan ───────────────────────────────────────────────────
+            elif action == "repay_loan":
+                if not player:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                if player["loan"] <= 0:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "You have no loan to repay."})); continue
+                repay_amt = int(msg.get("amount", player["loan"]))
+                repay_amt = min(repay_amt, int(player["loan"]))
+                if player["cash"] < repay_amt:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Not enough cash. You have ₹{int(player['cash']):,}."})); continue
+                player["cash"] -= repay_amt
+                player["loan"] = max(0, player["loan"] - repay_amt)
+                await save_player(player)
+                view = player_view(player, state)
+                remaining = player["loan"]
+                await websocket.send_text(json.dumps({
+                    "type":   "trade_ok",
+                    "msg":    f"Repaid ₹{repay_amt:,}. {'Loan fully cleared! ✅' if remaining == 0 else f'₹{int(remaining):,} still outstanding.'}",
+                    "player": view,
+                }))
 
     except WebSocketDisconnect:
         pass
