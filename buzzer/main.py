@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import json
+import time
 
 app = FastAPI()
 
@@ -13,8 +14,8 @@ state = {
     "round": 1,         # current round number
 }
 
-# All connected WebSocket clients
-connections = []
+# WebSocket connections — maps websocket -> team_name (or None for host)
+connections = {}  # ws: team_name | None
 
 # ── HELPER: send state to everyone ──
 async def broadcast(data: dict):
@@ -26,20 +27,20 @@ async def broadcast(data: dict):
         except:
             dead.append(ws)
     for ws in dead:
-        connections.remove(ws)
+        connections.pop(ws, None)
 
 # ── WEBSOCKET ENDPOINT ──
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    connections.append(websocket)
-    
+    connections[websocket] = None  # unknown team until they send join
+
     # Send current state to new connection
     await websocket.send_text(json.dumps({
         "type": "state",
         "state": state
     }))
-    
+
     try:
         while True:
             data = await websocket.receive_text()
@@ -55,26 +56,24 @@ async def websocket_endpoint(websocket: WebSocket):
                         "buzzed_at": None,
                         "rank": None
                     }
+                # Track which team this websocket belongs to
+                connections[websocket] = team_name
                 await broadcast({"type": "state", "state": state})
 
             # Team buzzes
             elif msg_type == "buzz":
                 team_name = message.get("team")
-                if (not state["locked"] and 
-                    team_name in state["teams"] and 
+                if (not state["locked"] and
+                    team_name in state["teams"] and
                     team_name not in state["buzz_order"]):
-                    
+
                     state["teams"][team_name]["buzzed_at"] = time.time()
                     state["buzz_order"].append(team_name)
                     state["teams"][team_name]["rank"] = len(state["buzz_order"])
-                    
-                    # Lock after first buzz
-                    if len(state["buzz_order"]) == 1:
-                        state["locked"] = True
-                    
+
                     await broadcast({"type": "state", "state": state})
 
-            # Unlock buzzer
+            # Host unlocks buzzer
             elif msg_type == "unlock":
                 state["locked"] = False
                 state["buzz_order"] = []
@@ -83,7 +82,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team]["rank"] = None
                 await broadcast({"type": "state", "state": state})
 
-            # Reset everything
+            # Host resets buzz
             elif msg_type == "reset":
                 state["buzz_order"] = []
                 state["locked"] = True
@@ -92,7 +91,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team]["rank"] = None
                 await broadcast({"type": "state", "state": state})
 
-            # Updating score
+            # Host updates score
             elif msg_type == "score":
                 team_name = message.get("team")
                 delta = message.get("delta", 0)
@@ -100,7 +99,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team_name]["score"] += delta
                 await broadcast({"type": "state", "state": state})
 
-            # Continuing round
+            # Host advances round
             elif msg_type == "next_round":
                 state["round"] += 1
                 state["buzz_order"] = []
@@ -110,15 +109,23 @@ async def websocket_endpoint(websocket: WebSocket):
                     state["teams"][team]["rank"] = None
                 await broadcast({"type": "state", "state": state})
 
-            # Remove team
+            # Host removes a team
             elif msg_type == "remove_team":
                 team_name = message.get("team")
                 if team_name in state["teams"]:
                     del state["teams"][team_name]
+                if team_name in state["buzz_order"]:
+                    state["buzz_order"].remove(team_name)
                 await broadcast({"type": "state", "state": state})
 
     except WebSocketDisconnect:
-        connections.remove(websocket)
+        # Find which team this was and remove them
+        team_name = connections.pop(websocket, None)
+        if team_name and team_name in state["teams"]:
+            del state["teams"][team_name]
+            if team_name in state["buzz_order"]:
+                state["buzz_order"].remove(team_name)
+            await broadcast({"type": "state", "state": state})
 
 # ── SERVE HTML FILES ──
 @app.get("/")
