@@ -16,6 +16,7 @@
   --red:      #e5534b;
   --blue:     #58a6ff;
   --purple:   #a371f7;
+  --orange:   #f0883e;
   --muted:    rgba(255,255,255,0.35);
   --text:     #e6edf3;
   --mono:     'DM Mono', monospace;
@@ -24,8 +25,6 @@
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); overscroll-behavior: none; }
-
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -37,39 +36,26 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   padding: 24px;
   background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(240,180,41,0.07) 0%, transparent 70%);
 }
-.join-logo {
-  font-family: var(--display); font-size: 13px; font-weight: 800;
-  letter-spacing: 6px; text-transform: uppercase; color: var(--gold);
-  margin-bottom: 40px; opacity: 0.8;
-}
-.join-title {
-  font-family: var(--display); font-size: clamp(36px, 8vw, 56px); font-weight: 800;
-  color: #fff; line-height: 1; margin-bottom: 8px; text-align: center;
-}
-.join-sub {
-  font-size: 14px; color: var(--muted); margin-bottom: 48px; text-align: center;
-}
-.join-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 32px; width: 100%; max-width: 400px;
-}
+.join-logo { font-family: var(--display); font-size: 13px; font-weight: 800;
+  letter-spacing: 6px; text-transform: uppercase; color: var(--gold); margin-bottom: 40px; opacity: 0.8; }
+.join-title { font-family: var(--display); font-size: clamp(36px, 8vw, 56px); font-weight: 800;
+  color: #fff; line-height: 1; margin-bottom: 8px; text-align: center; }
+.join-sub { font-size: 14px; color: var(--muted); margin-bottom: 48px; text-align: center; }
+.join-card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; }
 .join-card label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
   text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-.join-card input {
-  width: 100%; background: var(--bg); border: 1px solid var(--border);
+.join-card input { width: 100%; background: var(--bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--mono);
   font-size: 16px; outline: none; transition: border-color 0.2s;
-  letter-spacing: 2px; text-transform: uppercase;
-}
+  letter-spacing: 2px; text-transform: uppercase; }
 .join-card input:focus { border-color: var(--gold); }
 .join-card input.name-input { letter-spacing: normal; text-transform: none; margin-top: 16px; }
 #name-field { display: none; }
-.btn-primary {
-  width: 100%; margin-top: 20px; padding: 16px;
+.btn-primary { width: 100%; margin-top: 20px; padding: 16px;
   background: var(--gold); color: #000; border: none; border-radius: 8px;
   font-family: var(--display); font-size: 16px; font-weight: 800;
-  letter-spacing: 1px; cursor: pointer; transition: opacity 0.15s, transform 0.1s;
-}
+  letter-spacing: 1px; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
 .btn-primary:hover { opacity: 0.9; }
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -79,321 +65,272 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 #app { display: none; flex-direction: column; height: 100vh; }
 
 /* ── Top bar ── */
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
+.topbar { display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px; border-bottom: 1px solid var(--border);
-  background: var(--surface); flex-shrink: 0; gap: 8px;
-}
+  background: var(--surface); flex-shrink: 0; gap: 8px; }
 .topbar-left { display: flex; flex-direction: column; }
 .topbar-name { font-family: var(--display); font-size: 16px; font-weight: 800; color: #fff; }
 .topbar-phase { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; margin-top: 1px; }
-.topbar-right { display: flex; gap: 12px; align-items: center; }
-.stat-pill {
-  display: flex; flex-direction: column; align-items: flex-end;
+.topbar-right { display: flex; gap: 8px; align-items: center; }
+.stat-pill { display: flex; flex-direction: column; align-items: flex-end;
   background: var(--bg); border: 1px solid var(--border);
-  border-radius: 8px; padding: 6px 12px; min-width: 80px;
-}
+  border-radius: 8px; padding: 6px 10px; min-width: 76px; }
 .stat-pill .s-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-.stat-pill .s-val { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
+.stat-pill .s-val { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); }
 .stat-pill .s-val.gold { color: var(--gold); }
 .stat-pill .s-val.green { color: var(--green); }
 .stat-pill .s-val.red { color: var(--red); }
 
 /* ── Nav tabs ── */
-.nav {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0;
-}
-.nav-tab {
-  padding: 12px 4px; text-align: center; font-size: 11px; font-weight: 600;
+.nav { display: grid; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.nav-tab { padding: 12px 4px; text-align: center; font-size: 10px; font-weight: 600;
   letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
   color: var(--muted); border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s; position: relative; user-select: none;
-}
+  transition: color 0.15s, border-color 0.15s; position: relative; user-select: none; }
 .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-.nav-badge {
-  position: absolute; top: 6px; right: 8px;
+.nav-badge { position: absolute; top: 6px; right: 6px;
   background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
-  padding: 1px 5px; border-radius: 99px; min-width: 16px; text-align: center;
-}
+  padding: 1px 5px; border-radius: 99px; min-width: 16px; text-align: center; }
 
 /* ── Content area ── */
 .content { flex: 1; overflow-y: auto; padding: 16px; }
-
-/* ── Panels ── */
 .panel { display: none; }
 .panel.active { display: block; }
 
 /* ── Phase banner ── */
-.phase-banner {
-  padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
-  margin-bottom: 16px; border: 1px solid;
-}
-.banner-lobby   { background: rgba(88,166,255,0.06); border-color: rgba(88,166,255,0.2); color: var(--blue); }
-.banner-trading { background: rgba(38,194,129,0.06); border-color: rgba(38,194,129,0.2); color: var(--green); }
-.banner-break   { background: rgba(240,180,41,0.06); border-color: rgba(240,180,41,0.2); color: var(--gold); }
-.banner-ended   { background: rgba(229,83,75,0.06);  border-color: rgba(229,83,75,0.2);  color: var(--red); }
+.phase-banner { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  margin-bottom: 16px; border: 1px solid; }
+.banner-lobby   { background: rgba(88,166,255,0.06);  border-color: rgba(88,166,255,0.2);  color: var(--blue); }
+.banner-trading { background: rgba(38,194,129,0.06);  border-color: rgba(38,194,129,0.2);  color: var(--green); }
+.banner-break   { background: rgba(240,180,41,0.06);  border-color: rgba(240,180,41,0.2);  color: var(--gold); }
+.banner-ended   { background: rgba(229,83,75,0.06);   border-color: rgba(229,83,75,0.2);   color: var(--red); }
 
 /* ── Company cards ── */
-.company-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; margin-bottom: 10px; cursor: pointer;
-  transition: border-color 0.15s;
-}
+.company-card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer;
+  transition: border-color 0.15s; }
 .company-card:hover { border-color: rgba(240,180,41,0.3); }
-.company-card.circuit-broken { opacity: 0.5; pointer-events: none; }
+.company-card.sector-frozen { opacity: 0.45; pointer-events: none; border-color: rgba(229,83,75,0.3); }
 .cc-top { display: flex; justify-content: space-between; align-items: flex-start; }
 .cc-name { font-weight: 600; font-size: 15px; color: #fff; }
 .cc-sector { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.cc-trait { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 4px; }
-.cc-right { text-align: right; }
-.cc-price { font-family: var(--mono); font-size: 20px; font-weight: 500; color: #fff; }
-.cc-price.hidden-price { color: var(--muted); font-size: 14px; letter-spacing: 2px; }
+.cc-trait { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 3px; }
+.cc-right { text-align: right; flex-shrink: 0; margin-left: 8px; }
+.cc-price { font-family: var(--mono); font-size: 19px; font-weight: 500; color: #fff; }
 .cc-chg { font-size: 12px; margin-top: 2px; }
 .up { color: var(--green); } .dn { color: var(--red); } .nc { color: var(--muted); }
-.risk-badge {
-  display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 8px;
-  border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px;
-}
+.risk-badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 7px;
+  border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px; }
 .risk-Low { background: rgba(38,194,129,0.1); color: var(--green); border: 1px solid rgba(38,194,129,0.2); }
 .risk-Medium { background: rgba(240,180,41,0.1); color: var(--gold); border: 1px solid rgba(240,180,41,0.2); }
 .risk-High { background: rgba(229,83,75,0.1); color: var(--red); border: 1px solid rgba(229,83,75,0.2); }
 .risk-Medium-High { background: rgba(163,113,247,0.1); color: var(--purple); border: 1px solid rgba(163,113,247,0.2); }
+.risk-Very-High { background: rgba(229,83,75,0.15); color: #ff6b6b; border: 1px solid rgba(229,83,75,0.35); }
+.ipo-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px;
+  border-radius: 99px; background: rgba(38,194,129,0.15); color: var(--green);
+  border: 1px solid rgba(38,194,129,0.3); margin-left: 6px; letter-spacing: 0.5px; }
+.freeze-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px;
+  border-radius: 99px; background: rgba(229,83,75,0.15); color: var(--red);
+  border: 1px solid rgba(229,83,75,0.3); margin-left: 6px; letter-spacing: 0.5px; }
+
+/* ── Sentiment bar ── */
+.sentiment-bar { margin-top: 10px; display: flex; height: 6px; border-radius: 99px; overflow: hidden; gap: 1px; }
+.sentiment-up   { background: var(--green); border-radius: 99px 0 0 99px; }
+.sentiment-down { background: var(--red);   border-radius: 0 99px 99px 0; }
+.sentiment-label { font-size: 10px; color: var(--muted); margin-top: 4px;
+  display: flex; justify-content: space-between; }
 
 /* ── Trade modal ── */
-.modal-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-  z-index: 100; align-items: flex-end; justify-content: center;
-}
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  z-index: 100; align-items: flex-end; justify-content: center; }
 .modal-overlay.open { display: flex; }
-.modal {
-  background: var(--surface); border: 1px solid var(--border);
+.modal { background: var(--surface); border: 1px solid var(--border);
   border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 480px;
-  animation: slide-up 0.2s ease;
-}
+  animation: slide-up 0.2s ease; max-height: 90vh; overflow-y: auto; }
 @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .modal-title { font-family: var(--display); font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
-.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
-.modal-price-row { display: flex; justify-content: space-between; margin-bottom: 20px;
+.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+.modal-price-row { display: flex; justify-content: space-between; margin-bottom: 16px;
   background: var(--bg); border-radius: 8px; padding: 12px 16px; }
 .modal-price-row .mp-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
 .modal-price-row .mp-val { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--gold); }
-.qty-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.modal-bio { font-size: 12px; color: var(--muted); line-height: 1.6;
+  margin-bottom: 14px; padding: 10px 14px; background: var(--bg); border-radius: 8px; }
+.qty-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .qty-row label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
-.qty-input {
-  flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+.qty-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
   padding: 12px 16px; color: var(--text); font-family: var(--mono); font-size: 18px;
-  outline: none; text-align: center; transition: border-color 0.2s;
-}
+  outline: none; text-align: center; transition: border-color 0.2s; }
 .qty-input:focus { border-color: var(--gold); }
 .total-row { display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 20px; padding: 10px 0; border-top: 1px solid var(--border); }
+  margin-bottom: 16px; padding: 10px 0; border-top: 1px solid var(--border); }
 .total-row .t-label { font-size: 12px; color: var(--muted); }
 .total-row .t-val { font-family: var(--mono); font-size: 16px; color: #fff; }
-.modal-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.btn-buy   { background: rgba(38,194,129,0.15); border: 1px solid rgba(38,194,129,0.4); color: var(--green); }
-.btn-sell  { background: rgba(229,83,75,0.12);  border: 1px solid rgba(229,83,75,0.4);  color: var(--red); }
-.btn-short { background: rgba(163,113,247,0.1); border: 1px solid rgba(163,113,247,0.4); color: var(--purple); }
+.modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.modal-btns.one-col { grid-template-columns: 1fr; }
+.btn-buy    { background: rgba(38,194,129,0.15);  border: 1px solid rgba(38,194,129,0.4);  color: var(--green); }
+.btn-sell   { background: rgba(229,83,75,0.12);   border: 1px solid rgba(229,83,75,0.4);   color: var(--red); }
 .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); grid-column: 1 / -1; }
-.modal-btns button {
-  padding: 14px; border-radius: 8px; font-family: var(--display);
+.modal-btns button { padding: 14px; border-radius: 8px; font-family: var(--display);
   font-size: 13px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer;
-  transition: opacity 0.15s; outline: none;
-}
+  transition: opacity 0.15s; outline: none; }
 .modal-btns button:hover { opacity: 0.85; }
 .modal-btns button:disabled { opacity: 0.3; cursor: not-allowed; }
-.modal-bio { font-size: 12px; color: var(--muted); line-height: 1.6;
-  margin-bottom: 16px; padding: 10px 14px; background: var(--bg); border-radius: 8px; }
-.short-note { font-size: 11px; color: var(--purple); margin-bottom: 12px;
-  padding: 8px 12px; background: rgba(163,113,247,0.06); border-radius: 6px; border: 1px solid rgba(163,113,247,0.15); }
+.owned-note { font-size: 12px; color: var(--muted); margin-bottom: 12px;
+  padding: 8px 12px; background: var(--bg); border-radius: 6px; }
 
 /* ── Portfolio ── */
-.port-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
-}
+.port-card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
 .port-top { display: flex; justify-content: space-between; align-items: flex-start; }
 .port-name { font-weight: 600; font-size: 14px; }
 .port-qty { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .port-stats { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
 .ps-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
 .ps-val { font-family: var(--mono); font-size: 13px; font-weight: 500; }
-.short-card {
-  background: rgba(163,113,247,0.05); border: 1px solid rgba(163,113,247,0.2);
-  border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
-}
-.short-label { font-size: 10px; color: var(--purple); font-weight: 600; letter-spacing: 1px;
-  text-transform: uppercase; margin-bottom: 6px; }
-.btn-cover {
-  margin-top: 10px; padding: 8px 16px; background: rgba(163,113,247,0.1);
-  border: 1px solid rgba(163,113,247,0.3); color: var(--purple); border-radius: 6px;
-  font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
-}
-.btn-cover:hover { opacity: 0.8; }
 
-/* ── Leaderboard ── */
-.lb-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; border-radius: 8px; margin-bottom: 6px;
-  background: var(--surface); border: 1px solid var(--border);
-}
-.lb-rank { font-family: var(--mono); font-size: 13px; color: var(--muted); width: 24px; flex-shrink: 0; }
-.lb-rank.gold { color: var(--gold); font-weight: 700; }
-.lb-rank.silver { color: #8b949e; font-weight: 700; }
-.lb-rank.bronze { color: #c96c3a; font-weight: 700; }
-.lb-name { flex: 1; font-weight: 500; font-size: 14px; }
-.lb-name.me { color: var(--gold); }
-.lb-nw { font-family: var(--mono); font-size: 14px; color: var(--text); }
-.lb-you { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: 0.5px; margin-left: 4px; }
+/* ── Bank cards ── */
+.bank-card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.bank-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.bank-name { font-weight: 600; font-size: 14px; }
+.bank-rate { font-size: 11px; color: var(--muted); }
+.bank-balance { font-family: var(--mono); font-size: 16px; color: var(--red); }
+.bank-balance.zero { color: var(--muted); font-size: 13px; }
+.bank-options { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.borrow-btn { padding: 6px 12px; background: rgba(240,180,41,0.08); border: 1px solid rgba(240,180,41,0.25);
+  color: var(--gold); border-radius: 6px; font-family: var(--mono); font-size: 12px; cursor: pointer; transition: opacity 0.15s; }
+.borrow-btn:hover { opacity: 0.85; }
+.repay-row { display: flex; gap: 8px; margin-top: 8px; }
+.repay-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; color: var(--text); font-family: var(--mono); font-size: 14px; outline: none; }
+.repay-input:focus { border-color: var(--gold); }
+.repay-btn { padding: 10px 14px; background: rgba(38,194,129,0.1); border: 1px solid rgba(38,194,129,0.3);
+  color: var(--green); border-radius: 8px; font-family: var(--display); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.repay-full-btn { width: 100%; margin-top: 6px; padding: 8px; background: rgba(38,194,129,0.06);
+  border: 1px solid rgba(38,194,129,0.2); color: var(--green); border-radius: 6px;
+  font-family: var(--display); font-size: 11px; font-weight: 700; cursor: pointer; }
+.break-only-note { font-size: 11px; color: var(--orange); margin-top: 6px; padding: 6px 10px;
+  background: rgba(240,136,62,0.06); border-radius: 6px; border: 1px solid rgba(240,136,62,0.2); }
+.bankruptcy-btn { width: 100%; margin-top: 16px; padding: 12px;
+  background: rgba(229,83,75,0.08); border: 1px solid rgba(229,83,75,0.25); color: var(--red);
+  border-radius: 8px; font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
+.bankruptcy-btn:hover { background: rgba(229,83,75,0.14); }
 
-/* ── News panel ── */
-.news-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
-}
-.news-label-tag {
-  display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; padding: 3px 8px; border-radius: 99px; margin-bottom: 8px;
-}
-.tag-event   { background: rgba(88,166,255,0.1); color: var(--blue); border: 1px solid rgba(88,166,255,0.2); }
-.tag-insider { background: rgba(240,180,41,0.1); color: var(--gold); border: 1px solid rgba(240,180,41,0.2); }
-.tag-rumour  { background: rgba(229,83,75,0.1);  color: var(--red);  border: 1px solid rgba(229,83,75,0.2); }
-.tag-chaos   { background: rgba(163,113,247,0.1);color: var(--purple);border: 1px solid rgba(163,113,247,0.2); }
-.tag-private { background: rgba(38,194,129,0.1); color: var(--green);border: 1px solid rgba(38,194,129,0.2); }
+/* ── Prediction tab ── */
+.pred-stock-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+.pred-stock-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 8px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600;
+  color: var(--text); transition: border-color 0.15s, background 0.15s; line-height: 1.3; }
+.pred-stock-btn.selected { border-color: var(--gold); background: rgba(240,180,41,0.08); color: var(--gold); }
+.pred-stock-btn:hover { border-color: rgba(240,180,41,0.35); }
+.pred-form { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.pred-form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.dir-btn { flex: 1; padding: 10px; border-radius: 8px; font-family: var(--display); font-size: 13px;
+  font-weight: 700; cursor: pointer; border: 1px solid; transition: opacity 0.15s; }
+.dir-up   { background: rgba(38,194,129,0.1);  border-color: rgba(38,194,129,0.3);  color: var(--green); }
+.dir-down { background: rgba(229,83,75,0.1);   border-color: rgba(229,83,75,0.3);   color: var(--red); }
+.dir-btn.active-dir { opacity: 1; }
+.dir-btn:not(.active-dir) { opacity: 0.4; }
+.pred-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 14px;
+  outline: none; margin-bottom: 10px; }
+.pred-input:focus { border-color: var(--gold); }
+.pred-submit { width: 100%; padding: 12px; background: var(--gold); color: #000;
+  border: none; border-radius: 8px; font-family: var(--display); font-size: 14px; font-weight: 800; cursor: pointer; }
+.pred-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+.open-bet-card { background: rgba(240,180,41,0.06); border: 1px solid rgba(240,180,41,0.2);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.sentiment-mini { display: flex; height: 5px; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.pred-locked-notice { font-size: 12px; color: var(--muted); text-align: center; padding: 20px;
+  background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--border); }
+
+/* ── News ── */
+.news-card { background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.news-label-tag { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 8px;
+  border-radius: 99px; margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+.tag-verified  { background: rgba(38,194,129,0.12); color: var(--green); border: 1px solid rgba(38,194,129,0.25); }
+.tag-unverified { background: rgba(240,136,62,0.12); color: var(--orange); border: 1px solid rgba(240,136,62,0.25); }
+.tag-chaos     { background: rgba(229,83,75,0.12);  color: var(--red);    border: 1px solid rgba(229,83,75,0.25); }
+.tag-private   { background: rgba(163,113,247,0.12);color: var(--purple); border: 1px solid rgba(163,113,247,0.25); }
 .news-text { font-size: 13px; line-height: 1.6; color: var(--text); }
 .news-ts { font-size: 10px; color: var(--muted); margin-top: 6px; font-family: var(--mono); }
 
-/* ── Merge UI ── */
-.merge-section { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
-.merge-section h3 { font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 1px;
-  text-transform: uppercase; margin-bottom: 14px; }
-.merge-input { width: 100%; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 8px; padding: 12px 16px; color: var(--text); font-family: var(--mono);
-  font-size: 15px; outline: none; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-.merge-input:focus { border-color: var(--purple); }
-.btn-merge { width: 100%; padding: 12px; background: rgba(163,113,247,0.1);
-  border: 1px solid rgba(163,113,247,0.3); color: var(--purple); border-radius: 8px;
-  font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
-
-/* ── Prediction ── */
-.prediction-section { margin-top: 20px; }
-.pred-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-.pred-stocks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.pred-stock-btn {
-  padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border);
-  background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 12px; cursor: pointer;
-  transition: all 0.15s;
-}
-.pred-stock-btn.selected { border-color: var(--gold); color: var(--gold); background: rgba(240,180,41,0.08); }
-.pred-amount-input { width: 100%; background: var(--bg); border: 1px solid var(--border);
-  border-radius: 8px; padding: 12px 16px; color: var(--text); font-family: var(--mono);
-  font-size: 15px; outline: none; margin-bottom: 10px; }
-.pred-amount-input:focus { border-color: var(--gold); }
-.btn-predict { width: 100%; padding: 12px; background: rgba(240,180,41,0.1);
-  border: 1px solid rgba(240,180,41,0.3); color: var(--gold); border-radius: 8px;
-  font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
-
-/* ── Chaos overlay ── */
-.chaos-overlay {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
-  flex-direction: column; text-align: center; padding: 32px;
-}
-.chaos-overlay.show { display: flex; animation: chaos-in 0.3s ease; }
-@keyframes chaos-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-.chaos-icon { font-size: 64px; margin-bottom: 16px; }
-.chaos-title { font-family: var(--display); font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 12px; }
-.chaos-msg { font-size: 16px; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 400px; }
-.chaos-dismiss { margin-top: 24px; padding: 12px 32px; background: var(--gold); color: #000;
-  border: none; border-radius: 8px; font-family: var(--display); font-size: 14px; font-weight: 800;
-  cursor: pointer; }
-
-/* ── Toast ── */
-.toast-wrap { position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
-  z-index: 300; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
-.toast {
-  padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
-  pointer-events: none; animation: toast-in 0.2s ease; white-space: nowrap; max-width: 90vw;
-  overflow: hidden; text-overflow: ellipsis;
-}
-@keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-.toast.ok  { background: rgba(38,194,129,0.9); color: #fff; }
-.toast.err { background: rgba(229,83,75,0.9);  color: #fff; }
-.toast.info{ background: rgba(88,166,255,0.9); color: #fff; }
-
-/* ── Merge request popup ── */
-.merge-popup {
-  display: none; position: fixed; bottom: 20px; left: 16px; right: 16px;
-  background: var(--surface); border: 1px solid var(--purple);
-  border-radius: 14px; padding: 20px; z-index: 150; animation: slide-up 0.2s ease;
-}
-.merge-popup.show { display: block; }
-.merge-popup-title { font-family: var(--display); font-size: 16px; font-weight: 800; margin-bottom: 6px; }
-.merge-popup-body { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
-.merge-popup-btns { display: flex; gap: 10px; }
-.btn-accept { flex: 1; padding: 12px; background: rgba(38,194,129,0.15);
-  border: 1px solid rgba(38,194,129,0.4); color: var(--green); border-radius: 8px;
-  font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
-.btn-reject { flex: 1; padding: 12px; background: rgba(229,83,75,0.1);
-  border: 1px solid rgba(229,83,75,0.3); color: var(--red); border-radius: 8px;
-  font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
-
-/* ── Quiz buzz button ── */
-.quiz-overlay {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.9); flex-direction: column;
-  align-items: center; justify-content: center; text-align: center; padding: 32px;
-}
-.quiz-overlay.show { display: flex; }
-.quiz-question { font-family: var(--display); font-size: clamp(20px,5vw,32px);
-  font-weight: 800; color: #fff; margin-bottom: 40px; line-height: 1.3; }
-.quiz-buzz-btn {
-  width: 180px; height: 180px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ff6b6b, var(--red));
-  border: 4px solid rgba(255,255,255,0.2); color: #fff;
-  font-family: var(--display); font-size: 20px; font-weight: 800;
-  cursor: pointer; box-shadow: 0 0 40px rgba(229,83,75,0.5);
-  animation: buzz-pulse 1.5s ease-in-out infinite;
-  transition: transform 0.1s;
-}
-.quiz-buzz-btn:active { transform: scale(0.95); }
-@keyframes buzz-pulse {
-  0%, 100% { box-shadow: 0 0 40px rgba(229,83,75,0.5); }
-  50%       { box-shadow: 0 0 60px rgba(229,83,75,0.8); }
-}
-.quiz-buzz-btn.buzzed { background: var(--green); box-shadow: 0 0 40px rgba(38,194,129,0.5); animation: none; }
-
-/* ── Empty states ── */
-.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-.empty-icon { font-size: 40px; margin-bottom: 12px; }
-.empty-text { font-size: 15px; }
-
-/* ── Frozen banner ── */
-.frozen-banner {
-  padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 13px;
-  background: rgba(229,83,75,0.08); border: 1px solid rgba(229,83,75,0.25); color: var(--red);
-  display: none;
-}
-.frozen-banner.show { display: block; }
+/* ── Leaderboard ── */
+.lb-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; }
+.lb-rank { font-family: var(--mono); font-size: 14px; font-weight: 700; width: 24px; text-align: center; color: var(--muted); }
+.lb-rank.gold   { color: #ffd700; }
+.lb-rank.silver { color: #c0c0c0; }
+.lb-rank.bronze { color: #cd7f32; }
+.lb-name { flex: 1; font-weight: 600; font-size: 14px; }
+.lb-name.me { color: var(--gold); }
+.lb-you { font-size: 9px; background: var(--gold); color: #000; padding: 1px 5px;
+  border-radius: 4px; margin-left: 6px; font-weight: 700; vertical-align: middle; }
+.lb-nw { font-family: var(--mono); font-size: 13px; color: var(--text); }
 
 /* ── Section heading ── */
 .section-hdr { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 1.5px;
   text-transform: uppercase; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 
-/* ── Waiting lobby ── */
-.lobby-card { text-align: center; padding: 48px 24px; }
-.lobby-card .l-icon { font-size: 48px; margin-bottom: 16px; }
-.lobby-card .l-title { font-family: var(--display); font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 8px; }
-.lobby-card .l-sub { font-size: 14px; color: var(--muted); }
-.lobby-card .l-cash { font-family: var(--mono); font-size: 28px; color: var(--gold); margin-top: 24px; }
-.lobby-card .l-cash-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+/* ── Phase banner / frozen ── */
+.frozen-banner { padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 13px;
+  background: rgba(229,83,75,0.08); border: 1px solid rgba(229,83,75,0.25); color: var(--red); display: none; }
+.frozen-banner.show { display: block; }
+.reg-freeze-banner { padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 13px;
+  background: rgba(229,83,75,0.06); border: 1px solid rgba(229,83,75,0.2); color: var(--red); display: none; }
+.reg-freeze-banner.show { display: block; }
 
-/* ── IPO badge ── */
-.ipo-badge {
-  display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px;
-  border-radius: 99px; background: rgba(38,194,129,0.15); color: var(--green);
-  border: 1px solid rgba(38,194,129,0.3); margin-left: 6px; letter-spacing: 0.5px;
-}
+/* ── Chaos overlay ── */
+.chaos-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 200; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px; text-align: center; }
+.chaos-overlay.show { display: flex; }
+.chaos-icon  { font-size: 72px; margin-bottom: 20px; }
+.chaos-title { font-family: var(--display); font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 12px; }
+.chaos-msg   { font-size: 16px; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 380px; }
+.chaos-dismiss { margin-top: 36px; padding: 14px 32px; background: var(--gold); color: #000;
+  border: none; border-radius: 10px; font-family: var(--display); font-size: 15px;
+  font-weight: 800; cursor: pointer; }
+
+/* ── Merge modal ── */
+.merge-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; margin-top: 16px; }
+.merge-section h3 { font-family: var(--display); font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.merge-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 14px;
+  outline: none; margin-bottom: 8px; }
+.merge-input:focus { border-color: var(--gold); }
+.merge-select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; margin-bottom: 8px; }
+.btn-merge { width: 100%; padding: 12px; background: rgba(88,166,255,0.1);
+  border: 1px solid rgba(88,166,255,0.3); color: var(--blue);
+  border-radius: 8px; font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
+.merge-popup { display: none; position: fixed; bottom: 20px; left: 16px; right: 16px; max-width: 440px;
+  margin: auto; background: #161b22; border: 1px solid rgba(163,113,247,0.4);
+  border-radius: 16px; padding: 20px; z-index: 150; }
+.merge-popup.show { display: block; }
+.merge-popup-title { font-family: var(--display); font-size: 16px; font-weight: 700; color: var(--purple); margin-bottom: 10px; }
+.merge-popup-body { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 16px; }
+.merge-popup-btns { display: flex; gap: 8px; }
+.btn-accept { flex: 1; padding: 12px; background: rgba(38,194,129,0.15); border: 1px solid rgba(38,194,129,0.4); color: var(--green); border-radius: 8px; font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-reject { flex: 1; padding: 12px; background: rgba(229,83,75,0.1); border: 1px solid rgba(229,83,75,0.3); color: var(--red); border-radius: 8px; font-family: var(--display); font-size: 13px; font-weight: 700; cursor: pointer; }
+
+/* ── Toast ── */
+.toast-wrap { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 300; pointer-events: none; }
+.toast { padding: 10px 18px; border-radius: 99px; font-size: 13px; font-weight: 500;
+  max-width: 340px; text-align: center; animation: toast-in 0.2s ease; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.toast.ok   { background: rgba(38,194,129,0.9);  color: #000; }
+.toast.err  { background: rgba(229,83,75,0.9);   color: #fff; }
+.toast.info { background: rgba(30,40,55,0.95);   color: var(--text); border: 1px solid var(--border); }
+
+/* ── Empty states ── */
+.empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-text { font-size: 15px; }
 </style>
 </head>
 <body>
@@ -436,37 +373,31 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     </div>
   </div>
 
-  <div class="nav">
-    <div class="nav-tab active" onclick="switchTab('market')" id="tab-market">Market</div>
-    <div class="nav-tab" onclick="switchTab('portfolio')" id="tab-portfolio">Portfolio</div>
-    <div class="nav-tab" onclick="switchTab('board')" id="tab-board">Ranks</div>
-    <div class="nav-tab" onclick="switchTab('news')" id="tab-news">News<span class="nav-badge" id="news-badge" style="display:none">0</span></div>
+  <!-- Nav rebuilt dynamically based on phase -->
+  <div class="nav" id="main-nav" style="grid-template-columns: repeat(4,1fr)">
+    <div class="nav-tab active" onclick="switchTab('market')"    id="tab-market">Market</div>
+    <div class="nav-tab"        onclick="switchTab('portfolio')" id="tab-portfolio">Portfolio</div>
+    <div class="nav-tab"        onclick="switchTab('predict')"   id="tab-predict">Predict</div>
+    <div class="nav-tab"        onclick="switchTab('news')"      id="tab-news">News<span class="nav-badge" id="news-badge" style="display:none">0</span></div>
+    <div class="nav-tab"        onclick="switchTab('board')"     id="tab-board" style="display:none">Ranks</div>
   </div>
 
   <div class="content">
     <!-- MARKET PANEL -->
     <div class="panel active" id="panel-market">
       <div class="phase-banner banner-lobby" id="phase-banner">Waiting for the game to start...</div>
-      <div class="frozen-banner" id="frozen-banner">⚠️ Your portfolio is frozen this round due to an insider trading scandal.</div>
+      <div class="frozen-banner" id="frozen-banner">⚠️ Your portfolio is frozen this round.</div>
+      <div class="reg-freeze-banner" id="reg-freeze-banner">🚫 Regulatory Freeze active on <span id="freeze-sector-name"></span>.</div>
       <div id="market-list"></div>
 
-      <!-- Prediction section -->
-      <div class="prediction-section" id="pred-section" style="display:none">
-        <div class="section-hdr">Prediction Market</div>
-        <div class="pred-label">Bet on which stock moves most this round. Correct = 2× your bet.</div>
-        <div class="pred-stocks" id="pred-stocks"></div>
-        <input class="pred-amount-input" id="pred-amount" type="number" placeholder="Bet amount (₹)" min="1000">
-        <button class="btn-predict" onclick="submitPrediction()">Lock Prediction</button>
-      </div>
-
-      <!-- Merge section -->
+      <!-- Merger section (trading only) -->
       <div class="merge-section" id="merge-section" style="display:none">
-        <h3>Merger Bid</h3>
-        <input class="merge-input" id="merge-partner" placeholder="Partner's Code" maxlength="6">
-        <select id="merge-stock" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-size:14px;outline:none;margin-bottom:10px;">
+        <h3>⚔️ Merger Bid</h3>
+        <input class="merge-input" id="merge-partner" placeholder="Partner's 6-digit code" maxlength="6">
+        <select class="merge-select" id="merge-stock">
           <option value="">Select stock to buy together</option>
         </select>
-        <input class="pred-amount-input" id="merge-qty" type="number" placeholder="Total quantity to buy" min="1">
+        <input class="merge-input" id="merge-qty" type="number" placeholder="Total shares to buy" min="1">
         <button class="btn-merge" onclick="initiateMerge()">Propose Merger</button>
       </div>
     </div>
@@ -474,49 +405,35 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     <!-- PORTFOLIO PANEL -->
     <div class="panel" id="panel-portfolio">
       <div id="portfolio-list"></div>
-
-      <!-- Loan section -->
-      <div id="loan-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:20px">
-        <div class="section-hdr">Loan</div>
-        <div id="loan-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <div>
-              <div style="font-size:13px;font-weight:600">Bank Loan</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">10% interest charged each round</div>
-            </div>
-            <div style="font-family:var(--mono);font-size:18px" id="loan-amount-display">₹0</div>
-          </div>
-          <div id="btn-take-loan-wrap">
-            <button onclick="takeLoan()" style="width:100%;padding:12px;background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.3);color:var(--gold);border-radius:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
-              Take ₹50,000 Loan
-            </button>
-          </div>
-          <div id="btn-repay-wrap" style="display:none">
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <input id="repay-input" type="number" placeholder="Amount to repay" min="1000"
-                style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none">
-              <button onclick="repayLoan()" style="padding:10px 16px;background:rgba(38,194,129,0.1);border:1px solid rgba(38,194,129,0.3);color:var(--green);border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
-                Repay
-              </button>
-            </div>
-            <button onclick="repayLoanFull()" style="width:100%;margin-top:8px;padding:10px;background:rgba(38,194,129,0.06);border:1px solid rgba(38,194,129,0.2);color:var(--green);border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;opacity:0.8">
-              Repay Full Amount
-            </button>
-          </div>
+      <!-- Banks section -->
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+        <div class="section-hdr">Loans</div>
+        <div id="bank-list"></div>
+        <div class="break-only-note" id="repay-note" style="display:none">⏸ Repayment only available during break periods.</div>
+        <!-- Voluntary bankruptcy -->
+        <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Declare voluntary bankruptcy to wipe all holdings and loans. You restart with ₹25,000.</div>
+          <button class="bankruptcy-btn" onclick="declareBankruptcy()">💀 Declare Bankruptcy</button>
         </div>
       </div>
     </div>
 
-    <!-- LEADERBOARD PANEL -->
-    <div class="panel" id="panel-board">
-      <div class="section-hdr">Live Rankings</div>
-      <div id="board-list"></div>
+    <!-- PREDICT PANEL -->
+    <div class="panel" id="panel-predict">
+      <div class="section-hdr">Prediction Market</div>
+      <div id="predict-content"></div>
     </div>
 
     <!-- NEWS PANEL -->
     <div class="panel" id="panel-news">
       <div class="section-hdr">News Feed</div>
       <div id="news-list"><div class="empty"><div class="empty-icon">📰</div><div class="empty-text">No news yet</div></div></div>
+    </div>
+
+    <!-- RANKS PANEL -->
+    <div class="panel" id="panel-board">
+      <div class="section-hdr">Live Rankings</div>
+      <div id="board-list"></div>
     </div>
   </div>
 </div>
@@ -525,14 +442,11 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 <div class="modal-overlay" id="trade-modal">
   <div class="modal">
     <div class="modal-title" id="modal-name"></div>
-    <div class="modal-sub" id="modal-sector"></div>
-    <div class="modal-bio" id="modal-bio"></div>
+    <div class="modal-sub"   id="modal-sector"></div>
+    <div class="modal-bio"   id="modal-bio"></div>
     <div class="modal-price-row">
       <div><div class="mp-label">Current Price</div><div class="mp-val" id="modal-price"></div></div>
-      <div style="text-align:right"><div class="mp-label">Your Cash</div><div class="mp-val" id="modal-cash"></div></div>
-    </div>
-    <div class="short-note" id="short-note" style="display:none">
-      Short selling: You borrow shares and sell them now. If price drops, you profit when you cover. 10% borrow fee charged upfront.
+      <div style="text-align:right"><div class="mp-label">You Own</div><div class="mp-val" id="modal-owned"></div></div>
     </div>
     <div class="qty-row">
       <label>Qty</label>
@@ -542,10 +456,9 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <span class="t-label">Total</span>
       <span class="t-val" id="modal-total">₹0</span>
     </div>
-    <div class="modal-btns">
-      <button class="btn-buy"   onclick="executeTrade('buy')">BUY</button>
-      <button class="btn-sell"  onclick="executeTrade('sell')" id="btn-sell">SELL</button>
-      <button class="btn-short" onclick="executeTrade('short')">SHORT</button>
+    <div class="modal-btns" id="modal-btns">
+      <button class="btn-buy"  onclick="executeTrade('buy')">BUY</button>
+      <button class="btn-sell" onclick="executeTrade('sell')" id="btn-sell">SELL</button>
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
     </div>
   </div>
@@ -553,17 +466,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 <!-- CHAOS OVERLAY -->
 <div class="chaos-overlay" id="chaos-overlay">
-  <div class="chaos-icon" id="chaos-icon"></div>
+  <div class="chaos-icon"  id="chaos-icon"></div>
   <div class="chaos-title" id="chaos-title"></div>
-  <div class="chaos-msg" id="chaos-msg"></div>
+  <div class="chaos-msg"   id="chaos-msg"></div>
   <button class="chaos-dismiss" onclick="dismissChaos()">Got it</button>
-</div>
-
-<!-- QUIZ OVERLAY -->
-<div class="quiz-overlay" id="quiz-overlay">
-  <div class="quiz-question" id="quiz-question"></div>
-  <button class="quiz-buzz-btn" id="quiz-btn" onclick="buzzQuiz()">BUZZ!</button>
-  <div style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.4)" id="quiz-status"></div>
 </div>
 
 <!-- MERGE POPUP -->
@@ -580,29 +486,28 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────────────
-let ws = null;
-let myCode = '';
-let myName = '';
-let phase  = 'lobby';
-let market = {};
-let playerData = { cash: 0, loan: 0, frozen: false, net_worth: 0, portfolio: {}, shorts: {} };
+// ── State ──────────────────────────────────────────────────────────────────────
+let ws = null, myCode = '', myName = '';
+let phase = 'lobby', currentRound = 0;
+let market = {};          // cid -> company object
+let playerData = { cash:0, loans:{}, total_loan:0, frozen:false, net_worth:0, portfolio:{}, bets:{} };
 let boardData  = [];
-let prices     = {};
 let prevPrices = {};
 let newsCount  = 0;
 let activeTab  = 'market';
 let currentStock = null;
-let blackout   = false;
 let joinStep1Done = false;
 let pendingMerge  = null;
-let predStock     = null;
-let circuitStock  = null;   // stock id currently circuit-broken, or null
-let currentRound  = 0;
+let banksConfig   = {};
+let sentiment     = {};   // cid -> {up_pct, down_pct}
+let regFreeze     = null; // sector name or null
+let predDirection = null; // 'up' | 'down'
+let predStock     = null; // selected cid for prediction
+let creditCrunch  = false;
 
 const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
 
-// ── Join flow ─────────────────────────────────────────────────────────────────
+// ── Join flow ──────────────────────────────────────────────────────────────────
 function joinStep() {
   if (!joinStep1Done) {
     const code = document.getElementById('code-input').value.trim().toUpperCase();
@@ -620,48 +525,31 @@ function joinStep() {
     connectWS();
   }
 }
-
-document.getElementById('code-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') joinStep();
-});
-document.getElementById('name-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') joinStep();
-});
-
-function showJoinErr(msg) {
-  document.getElementById('join-err').textContent = msg;
-}
+document.getElementById('code-input').addEventListener('keydown', e => { if (e.key==='Enter') joinStep(); });
+document.getElementById('name-input').addEventListener('keydown', e => { if (e.key==='Enter') joinStep(); });
+function showJoinErr(msg) { document.getElementById('join-err').textContent = msg; }
 
 function connectWS() {
-  document.getElementById('join-btn').disabled = true;
+  document.getElementById('join-btn').disabled  = true;
   document.getElementById('join-btn').textContent = 'Connecting...';
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   ws = new WebSocket(`${proto}://${location.host}/ws/player/${myCode}`);
-
-  ws.onopen = () => {
-    // Connection established — server validates code, then we send name
-  };
-
-  ws.onmessage = e => {
-    const msg = JSON.parse(e.data);
-    handleMsg(msg);
-  };
-
+  ws.onopen = () => {};
+  ws.onmessage = e => handleMsg(JSON.parse(e.data));
   ws.onerror = () => {
     showJoinErr('Connection failed. Try again.');
     document.getElementById('join-btn').disabled = false;
     document.getElementById('join-btn').textContent = 'Enter Market →';
   };
-
   ws.onclose = () => {
     if (document.getElementById('app').style.display === 'flex') {
       toast('Disconnected. Reconnecting...', 'err');
-      setTimeout(connectWS, 2000);
+      setTimeout(connectWS, 2500);
     }
   };
 }
 
-// ── Message handler ───────────────────────────────────────────────────────────
+// ── Message handler ────────────────────────────────────────────────────────────
 function handleMsg(msg) {
   switch (msg.type) {
     case 'error':
@@ -672,12 +560,15 @@ function handleMsg(msg) {
       break;
 
     case 'init':
-      phase      = msg.phase;
-      market     = msg.market || {};
-      playerData = msg.player || playerData;
-      boardData  = msg.board  || [];
-      blackout   = msg.blackout || false;
-      updatePrices();
+      phase       = msg.phase;
+      currentRound = msg.round || 0;
+      market      = msg.market || {};
+      boardData   = msg.board  || [];
+      banksConfig = msg.banks  || {};
+      regFreeze   = msg.reg_freeze || null;
+      creditCrunch = msg.credit_crunch || false;
+      if (msg.player) playerData = msg.player;
+      updatePrevPrices();
       if (!msg.joined) {
         ws.send(JSON.stringify({ action: 'set_name', name: myName }));
       } else {
@@ -688,30 +579,28 @@ function handleMsg(msg) {
 
     case 'joined':
       myName = msg.name;
-      playerData = msg.player || playerData;
+      if (msg.player) playerData = msg.player;
+      if (msg.banks)  banksConfig = msg.banks;
       showApp();
       break;
 
     case 'phase_change':
       phase = msg.phase;
       if (msg.round) currentRound = msg.round;
-      if (msg.prices) {
-        for (const [k, v] of Object.entries(msg.prices)) {
-          if (market[k]) { prevPrices[k] = market[k].price; market[k].price = v; }
-          else market[k] = { price: v };
-        }
-      }
-      if (msg.board) { boardData = msg.board; renderBoard(); }
+      if (msg.prices) applyPrices(msg.prices);
+      if (msg.board)  { boardData = msg.board; renderBoard(); }
       updatePhase();
       renderMarket();
-      const phaseLabel = { trading: '🟢 Round ' + currentRound + ' — TRADE!', break: '⏸ Break time.', ended: '🏁 Game over!' };
-      toast(phaseLabel[phase] || phase, 'info');
+      const phaseLbl = { trading:`🟢 Round ${currentRound} — TRADE!`, break:'⏸ Break time.', ended:'🏁 Game over!' };
+      toast(phaseLbl[phase] || phase, 'info');
+      renderPredictPanel();
       break;
 
     case 'trade_ok':
       playerData = msg.player;
       updateTopBar();
       renderPortfolio();
+      renderPredictPanel();
       toast(msg.msg, 'ok');
       closeModal();
       break;
@@ -720,23 +609,24 @@ function handleMsg(msg) {
       playerData = msg.player;
       updateTopBar();
       renderPortfolio();
+      renderPredictPanel();
+      if (msg.msg) toast(msg.msg, 'info');
       break;
 
     case 'prices_bulk':
-      if (msg.prices) {
-        for (const [k, v] of Object.entries(msg.prices)) {
-          if (market[k]) { prevPrices[k] = market[k].price; market[k].price = v; }
-          else { market[k] = { price: v }; }
-        }
-      }
-      boardData = msg.board || boardData;
+      if (msg.prices) applyPrices(msg.prices);
+      if (msg.board)  { boardData = msg.board; renderBoard(); }
       renderMarket();
-      renderBoard();
       break;
 
     case 'leaderboard':
       boardData = msg.board || boardData;
       renderBoard();
+      break;
+
+    case 'sentiment_update':
+      sentiment = msg.sentiment || {};
+      renderMarket();
       break;
 
     case 'news':
@@ -749,51 +639,8 @@ function handleMsg(msg) {
       }
       break;
 
-    case 'blackout':
-      blackout = msg.active;
-      if (msg.prices && !blackout) {
-        for (const [k, v] of Object.entries(msg.prices)) {
-          if (market[k]) market[k].price = v;
-        }
-      }
-      if (blackout) {
-        for (const k of Object.keys(market)) market[k].price = null;
-      }
-      renderMarket();
-      showChaos('🌑', 'Blackout Round', msg.msg);
-      break;
-
     case 'chaos':
       handleChaos(msg);
-      break;
-
-    case 'circuit_lifted':
-      circuitStock = null;
-      toast(msg.msg, 'info');
-      renderMarket();
-      break;
-
-    case 'frozen':
-      playerData.frozen = true;
-      document.getElementById('frozen-banner').classList.add('show');
-      toast(msg.msg, 'err');
-      break;
-
-    case 'quiz_start':
-      showQuiz(msg.question);
-      break;
-
-    case 'quiz_result':
-      document.getElementById('quiz-overlay').classList.remove('show');
-      showChaos('⚡', 'Quiz Result', msg.msg);
-      if (msg.winner === myName) toast('+₹' + msg.amount.toLocaleString('en-IN') + ' bonus!', 'ok');
-      break;
-
-    case 'merge_request':
-      pendingMerge = msg;
-      document.getElementById('merge-popup-body').innerHTML =
-        `<strong>${msg.from}</strong> proposes a joint buy of <strong>${msg.qty} × ${msg.stock}</strong>. You each pay <strong>${fmt(msg.each)}</strong>.`;
-      document.getElementById('merge-popup').classList.add('show');
       break;
 
     case 'game_ended':
@@ -813,30 +660,41 @@ function handleMsg(msg) {
       toast(msg.msg, 'info');
       break;
 
-    case 'margin_call':
-      playerData = msg.player;
-      updateTopBar();
-      renderPortfolio();
-      showChaos('⚠️', 'MARGIN CALL', msg.msg);
-      addNews({ type: 'chaos', label: 'Margin Call', text: msg.msg });
-      break;
-
     case 'bankrupt':
       playerData = msg.player;
       updateTopBar();
       renderPortfolio();
       showChaos('💀', 'BANKRUPTCY', msg.msg);
-      addNews({ type: 'chaos', label: 'Bankruptcy', text: msg.msg });
+      addNews({ type: 'chaos', label: 'Chaos Event', text: msg.msg });
+      break;
+
+    case 'merge_request':
+      pendingMerge = msg;
+      document.getElementById('merge-popup-body').innerHTML =
+        `<strong>${msg.from}</strong> proposes a joint buy of <strong>${msg.qty} × ${market[msg.stock]?.name || msg.stock}</strong>. You each pay <strong>${fmt(msg.each)}</strong>.`;
+      document.getElementById('merge-popup').classList.add('show');
       break;
 
     case 'kicked':
       document.getElementById('app').style.display = 'none';
       document.getElementById('join-screen').style.display = 'flex';
-      document.getElementById('join-err').textContent = msg.msg || 'You have been removed from the game.';
+      document.getElementById('join-err').textContent = msg.msg || 'You were removed from the game.';
       if (ws) { ws.onclose = null; ws.close(); ws = null; }
       break;
   }
 }
+
+function applyPrices(prices) {
+  for (const [k, v] of Object.entries(prices)) {
+    if (market[k]) { prevPrices[k] = market[k].price; market[k].price = v; }
+    else market[k] = { price: v };
+  }
+}
+
+function updatePrevPrices() {
+  for (const [k, c] of Object.entries(market)) prevPrices[k] = c.price;
+}
+
 function showApp() {
   document.getElementById('join-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
@@ -846,198 +704,333 @@ function showApp() {
   renderMarket();
   renderPortfolio();
   renderBoard();
+  renderPredictPanel();
   populateMergeStocks();
-  populatePredStocks();
-}
-
-function updatePrices() {
-  for (const [k, c] of Object.entries(market)) {
-    prices[k] = c.price;
-  }
 }
 
 function updateTopBar() {
   document.getElementById('top-cash').textContent = fmt(playerData.cash);
-  const nw = playerData.net_worth;
+  const nw   = playerData.net_worth;
   const nwEl = document.getElementById('top-nw');
   nwEl.textContent = fmt(nw);
-  nwEl.className = 's-val ' + (nw >= 50000 ? 'green' : 'red');
-  if (playerData.frozen) {
-    document.getElementById('frozen-banner').classList.add('show');
-  } else {
-    document.getElementById('frozen-banner').classList.remove('show');
-  }
+  nwEl.className   = 's-val ' + (nw >= 50000 ? 'green' : 'red');
+  document.getElementById('frozen-banner').classList.toggle('show', !!playerData.frozen);
 }
 
 function updatePhase() {
-  const el    = document.getElementById('phase-banner');
-  const phEl  = document.getElementById('top-phase');
-  const labels = {
+  const el   = document.getElementById('phase-banner');
+  const phEl = document.getElementById('top-phase');
+  const map  = {
     lobby:   ['banner-lobby',   '⏳ Waiting for round to start...'],
-    trading: ['banner-trading', '🟢 TRADING OPEN'],
+    trading: ['banner-trading', '🟢 TRADING OPEN — Round ' + currentRound],
     break:   ['banner-break',   '⏸ Break — next round starting soon'],
     ended:   ['banner-ended',   '🏁 Game Over'],
   };
-  el.className = 'phase-banner ' + (labels[phase]?.[0] || 'banner-lobby');
-  el.textContent = labels[phase]?.[1] || phase;
+  el.className   = 'phase-banner ' + (map[phase]?.[0] || 'banner-lobby');
+  el.textContent = map[phase]?.[1] || phase;
   phEl.textContent = { lobby:'Lobby', trading:`Round ${currentRound}`, break:'Break', ended:'Ended' }[phase] || phase;
 
-  // Show merge / prediction only during trading
+  // Merge section: trading only
   document.getElementById('merge-section').style.display = phase === 'trading' ? 'block' : 'none';
-  document.getElementById('pred-section').style.display  = phase === 'break'   ? 'block' : 'none';
+
+  // Ranks tab: visible only in lobby, break, ended
+  const ranksTab = document.getElementById('tab-board');
+  const inTrading = phase === 'trading';
+  ranksTab.style.display = inTrading ? 'none' : '';
+  // Nav columns
+  document.getElementById('main-nav').style.gridTemplateColumns = inTrading ? 'repeat(4,1fr)' : 'repeat(5,1fr)';
+
+  // If ranks was active and we entered trading, switch to market
+  if (inTrading && activeTab === 'board') switchTab('market');
+
+  // Repay note
+  document.getElementById('repay-note').style.display = phase !== 'break' ? 'block' : 'none';
+
+  // Regulatory freeze banner
+  if (regFreeze) {
+    document.getElementById('freeze-sector-name').textContent = regFreeze;
+    document.getElementById('reg-freeze-banner').classList.add('show');
+  } else {
+    document.getElementById('reg-freeze-banner').classList.remove('show');
+  }
 }
 
+// ── Market ────────────────────────────────────────────────────────────────────
 function renderMarket() {
   const list = document.getElementById('market-list');
-  if (!Object.keys(market).length) {
+  const keys = Object.keys(market);
+  if (!keys.length) {
     list.innerHTML = '<div class="empty"><div class="empty-icon">📈</div><div class="empty-text">Market loading...</div></div>';
     return;
   }
   let html = '';
-  for (const [cid, c] of Object.entries(market)) {
-    const p     = c.price;
-    const prev  = prevPrices[cid];
-    const chg   = (prev != null && p != null) ? p - prev : 0;
-    const chgPct = prev ? ((chg / prev) * 100).toFixed(1) : '0.0';
-    const dir   = chg > 0 ? 'up' : chg < 0 ? 'dn' : 'nc';
+  for (const cid of keys) {
+    const c    = market[cid];
+    if (!c.name) continue;
+    const p    = c.price;
+    const prev = prevPrices[cid];
+    const chg  = (prev != null && p != null) ? p - prev : 0;
+    const pct  = prev ? ((chg / prev) * 100).toFixed(1) : '0.0';
+    const dir  = chg > 0 ? 'up' : chg < 0 ? 'dn' : 'nc';
     const arrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '—';
-    const priceStr = p == null ? '????' : '₹' + p.toLocaleString('en-IN');
-    const isIPO    = cid === 'novapay';
-    const isBroken = cid === circuitStock;
+    const isIPO    = !BASE_IDS.has(cid);
+    const isFrozen = regFreeze && c.sector === regFreeze;
+    const riskKey  = (c.risk || '').replace(/ /g, '-');
+    const sent = sentiment[cid];
+    const sentBar = sent ? `
+      <div class="sentiment-bar">
+        <div class="sentiment-up"   style="width:${sent.up_pct}%"></div>
+        <div class="sentiment-down" style="width:${sent.down_pct}%"></div>
+      </div>
+      <div class="sentiment-label">
+        <span style="color:var(--green)">▲ ${sent.up_pct}%</span>
+        <span style="color:var(--muted);font-size:9px">MARKET SENTIMENT</span>
+        <span style="color:var(--red)">▼ ${sent.down_pct}%</span>
+      </div>` : '';
+
     html += `
-      <div class="company-card${isBroken ? ' circuit-broken' : ''}" onclick="openModal('${cid}')">
+      <div class="company-card${isFrozen ? ' sector-frozen' : ''}" onclick="openModal('${cid}')">
         <div class="cc-top">
-          <div>
-            <div class="cc-name">${c.name}${isIPO ? '<span class="ipo-badge">IPO</span>' : ''}${isBroken ? '<span class="ipo-badge" style="background:rgba(229,83,75,0.15);color:var(--red);border-color:rgba(229,83,75,0.3)">⚡ HALTED</span>' : ''}</div>
-            <div class="cc-sector">${c.sector}</div>
+          <div style="flex:1;min-width:0">
+            <div class="cc-name">${c.name}${isIPO ? '<span class="ipo-badge">IPO</span>' : ''}${isFrozen ? '<span class="freeze-badge">🚫 FROZEN</span>' : ''}</div>
+            <div class="cc-sector">${c.sector || ''}</div>
             <div class="cc-trait">${c.trait || ''}</div>
-            <span class="risk-badge risk-${(c.risk||'').replace(' ','-')}">${c.risk || ''}</span>
+            <span class="risk-badge risk-${riskKey}">${c.risk || ''}</span>
           </div>
           <div class="cc-right">
-            <div class="cc-price ${p == null ? 'hidden-price' : ''}">${priceStr}</div>
-            ${p != null && chg !== 0 ? `<div class="cc-chg ${dir}">${arrow} ${chgPct}%</div>` : ''}
+            <div class="cc-price">₹${(p || 0).toLocaleString('en-IN')}</div>
+            ${chg !== 0 ? `<div class="cc-chg ${dir}">${arrow} ${pct}%</div>` : ''}
           </div>
         </div>
+        ${sentBar}
       </div>`;
   }
   list.innerHTML = html;
 }
 
+// Base company IDs set (so we can detect IPOs)
+const BASE_IDS = new Set(["zora","streamvx","freshco","voltex","mediq","skylink","swifthaul","crownmart","shieldgen","indranet"]);
+
+// ── Portfolio ─────────────────────────────────────────────────────────────────
 function renderPortfolio() {
-  const list = document.getElementById('portfolio-list');
-  let html   = '';
-
+  const list     = document.getElementById('portfolio-list');
   const holdings = Object.entries(playerData.portfolio || {}).filter(([,h]) => h.qty > 0);
-  const shorts   = Object.entries(playerData.shorts    || {});
 
-  if (!holdings.length && !shorts.length) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">📂</div><div class="empty-text">No holdings yet. Buy from the Market tab.</div></div>';
-    return;
-  }
-
-  if (holdings.length) {
-    html += '<div class="section-hdr">Holdings</div>';
+  if (!holdings.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📂</div><div class="empty-text">No holdings yet.</div></div>';
+  } else {
+    let html = '<div class="section-hdr">Holdings</div>';
     for (const [cid, h] of holdings) {
-      const name = market[cid]?.name || cid;
-      const pnl  = h.pnl;
-      const pnlCls = pnl >= 0 ? 'up' : 'dn';
-      const sign   = pnl >= 0 ? '+' : '';
+      const name   = market[cid]?.name || cid;
+      const pnlCls = h.pnl >= 0 ? 'up' : 'dn';
+      const sign   = h.pnl >= 0 ? '+' : '';
       html += `
         <div class="port-card">
           <div class="port-top">
             <div><div class="port-name">${name}</div><div class="port-qty">${h.qty} shares</div></div>
-            <div style="text-align:right"><div class="port-name ${pnlCls}">${sign}${fmt(pnl)}</div><div class="port-qty">P&amp;L</div></div>
+            <div style="text-align:right"><div class="port-name ${pnlCls}">${sign}${fmt(h.pnl)}</div><div class="port-qty">P&amp;L</div></div>
           </div>
           <div class="port-stats">
-            <div class="ps"><div class="ps-label">Avg Cost</div><div class="ps-val">${fmt(h.avg)}</div></div>
-            <div class="ps"><div class="ps-label">Current</div><div class="ps-val">${h.price != null ? fmt(h.price) : '?'}</div></div>
-            <div class="ps"><div class="ps-label">Value</div><div class="ps-val">${fmt(h.value)}</div></div>
+            <div><div class="ps-label">Avg Cost</div><div class="ps-val">${fmt(h.avg)}</div></div>
+            <div><div class="ps-label">Current</div><div class="ps-val">${fmt(h.price)}</div></div>
+            <div><div class="ps-label">Value</div><div class="ps-val">${fmt(h.value)}</div></div>
           </div>
         </div>`;
     }
+    list.innerHTML = html;
   }
-
-  if (shorts.length) {
-    html += '<div class="section-hdr" style="margin-top:16px">Short Positions</div>';
-    for (const [sid, s] of shorts) {
-      const name = market[s.stock]?.name || s.stock;
-      const pnlCls = s.pnl >= 0 ? 'up' : 'dn';
-      const sign   = s.pnl >= 0 ? '+' : '';
-      html += `
-        <div class="short-card">
-          <div class="short-label">SHORT POSITION</div>
-          <div class="port-top">
-            <div><div class="port-name">${name}</div><div class="port-qty">${s.qty} shares shorted @ ${fmt(s.sell_price)}</div></div>
-            <div style="text-align:right"><div class="port-name ${pnlCls}">${sign}${fmt(s.pnl)}</div><div class="port-qty">PnL</div></div>
-          </div>
-          <div class="port-stats" style="margin-top:10px">
-            <div class="ps"><div class="ps-label">Entry</div><div class="ps-val">${fmt(s.sell_price)}</div></div>
-            <div class="ps"><div class="ps-label">Current</div><div class="ps-val">${s.price != null ? fmt(s.price) : '?'}</div></div>
-          </div>
-          <button class="btn-cover" onclick="coverShort('${sid}')">Cover Short</button>
-        </div>`;
-    }
-  }
-
-  list.innerHTML = html;
-  renderLoanUI();
+  renderBanks();
 }
 
-function renderBoard() {
-  const list = document.getElementById('board-list');
-  if (!boardData.length) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">No players yet</div></div>';
+// ── Banks ─────────────────────────────────────────────────────────────────────
+function renderBanks() {
+  const container = document.getElementById('bank-list');
+  const inBreak   = phase === 'break';
+  let html = '';
+
+  for (const [bankId, bank] of Object.entries(banksConfig)) {
+    const balance  = (playerData.loans || {})[bankId] || 0;
+    let rate       = bank.rate * 100;
+    if (creditCrunch) rate += 5;
+
+    html += `<div class="bank-card">
+      <div class="bank-header">
+        <div>
+          <div class="bank-name">${bank.name}</div>
+          <div class="bank-rate">${rate.toFixed(0)}%/round · Limit ₹${(bank.limit/1000).toFixed(0)}k</div>
+        </div>
+        <div class="bank-balance ${balance === 0 ? 'zero' : ''}">${balance > 0 ? fmt(balance) : '—'}</div>
+      </div>`;
+
+    // Borrow buttons
+    if (balance < bank.limit) {
+      html += `<div class="bank-options">`;
+      for (const opt of bank.options) {
+        const remain = bank.limit - balance;
+        if (opt > remain) continue;
+        html += `<button class="borrow-btn" onclick="takeLoan('${bankId}',${opt})">+₹${(opt/1000).toFixed(0)}k</button>`;
+      }
+      html += `</div>`;
+    }
+
+    // Repay row
+    if (balance > 0) {
+      if (inBreak) {
+        html += `
+          <div class="repay-row">
+            <input class="repay-input" id="repay-${bankId}" type="number" placeholder="Amount to repay" min="1000">
+            <button class="repay-btn" onclick="repayLoan('${bankId}')">Repay</button>
+          </div>
+          <button class="repay-full-btn" onclick="repayLoanFull('${bankId}')">Repay Full (${fmt(balance)})</button>`;
+      } else {
+        html += `<div class="break-only-note">⏸ Repayment opens during breaks.</div>`;
+      }
+    }
+    html += `</div>`;
+  }
+
+  container.innerHTML = html || '<div style="color:var(--muted);font-size:13px">No banks configured.</div>';
+}
+
+function takeLoan(bankId, amount) {
+  if (!ws) return;
+  ws.send(JSON.stringify({ action: 'take_loan', bank_id: bankId, amount }));
+}
+
+function repayLoan(bankId) {
+  const input  = document.getElementById('repay-' + bankId);
+  const amount = parseInt(input?.value);
+  if (!amount || amount < 1) return toast('Enter a repayment amount.', 'err');
+  ws.send(JSON.stringify({ action: 'repay_loan', bank_id: bankId, amount }));
+  if (input) input.value = '';
+}
+
+function repayLoanFull(bankId) {
+  if (!ws) return;
+  const bal = (playerData.loans || {})[bankId] || 0;
+  if (!bal) return;
+  ws.send(JSON.stringify({ action: 'repay_loan', bank_id: bankId, amount: bal }));
+}
+
+function declareBankruptcy() {
+  if (!ws) return;
+  if (!confirm('Declare bankruptcy? All holdings, loans, and bets will be wiped. You restart with ₹25,000.')) return;
+  ws.send(JSON.stringify({ action: 'declare_bankruptcy' }));
+}
+
+// ── Prediction Panel ──────────────────────────────────────────────────────────
+function renderPredictPanel() {
+  const el = document.getElementById('predict-content');
+  const openBets = playerData.bets || {};
+
+  // Show open bets first
+  let html = '';
+  if (Object.keys(openBets).length > 0) {
+    html += '<div class="section-hdr" style="margin-bottom:12px">Your Open Bets</div>';
+    for (const [cid, bet] of Object.entries(openBets)) {
+      const cname = market[cid]?.name || cid;
+      const dirCls = bet.direction === 'up' ? 'up' : 'dn';
+      const arrow  = bet.direction === 'up' ? '▲' : '▼';
+      const sent   = sentiment[cid];
+      html += `<div class="open-bet-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-weight:600;font-size:14px">${cname}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Bet: ${fmt(bet.amount)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="${dirCls}" style="font-weight:700">${arrow} ${bet.direction.toUpperCase()}</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">Target: ₹${Math.round(bet.target).toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+        ${sent ? `<div class="sentiment-mini">
+          <div style="flex:${sent.up_pct};background:var(--green);border-radius:99px 0 0 99px"></div>
+          <div style="flex:${sent.down_pct};background:var(--red);border-radius:0 99px 99px 0"></div>
+        </div>` : ''}
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">
+          Pays: 3× if direction + target hit · 1.5× if direction only · 0 if wrong
+        </div>
+      </div>`;
+    }
+  }
+
+  if (phase !== 'trading') {
+    html += `<div class="pred-locked-notice">
+      ${phase === 'break' ? '⏸ Predictions open during trading rounds.' : '⏳ Predictions open when a round starts.'}
+    </div>`;
+    el.innerHTML = html;
     return;
   }
-  const rankCls = ['gold','silver','bronze'];
-  list.innerHTML = boardData.map(p => `
-    <div class="lb-row">
-      <div class="lb-rank ${rankCls[p.rank-1]||''}">${p.rank}</div>
-      <div class="lb-name ${p.name===myName?'me':''}">${p.name}${p.name===myName?'<span class="lb-you">YOU</span>':''}</div>
-      <div class="lb-nw">${fmt(p.net_worth)}</div>
-    </div>`).join('');
+
+  // New bet form
+  html += '<div class="section-hdr" style="margin-top:16px;margin-bottom:12px">Place a Bet</div>';
+  html += '<div class="pred-stock-grid" id="pred-stock-grid">';
+  for (const [cid, c] of Object.entries(market)) {
+    if (!c.name) continue;
+    const alreadyBet = !!openBets[cid];
+    const isSelected = predStock === cid;
+    html += `<button class="pred-stock-btn ${isSelected ? 'selected' : ''} ${alreadyBet ? '' : ''}"
+      onclick="selectPredStock('${cid}')" ${alreadyBet ? 'disabled style="opacity:0.3"' : ''}>
+      ${c.name}
+      ${alreadyBet ? '<br><span style="font-size:9px;color:var(--gold)">✓ BET PLACED</span>' : ''}
+    </button>`;
+  }
+  html += `</div>
+  <div class="pred-form" id="pred-form" style="${predStock ? '' : 'opacity:0.5;pointer-events:none'}">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+      ${predStock ? `Betting on: <strong style="color:var(--gold)">${market[predStock]?.name || predStock}</strong> @ ₹${(market[predStock]?.price || 0).toLocaleString('en-IN')}` : 'Select a stock above'}
+    </div>
+    <div class="pred-form-row">
+      <button class="dir-btn dir-up ${predDirection==='up' ? 'active-dir' : ''}" onclick="setDir('up')">▲ UP</button>
+      <button class="dir-btn dir-down ${predDirection==='down' ? 'active-dir' : ''}" onclick="setDir('down')">▼ DOWN</button>
+    </div>
+    <input class="pred-input" id="pred-target" type="number" placeholder="Target price (₹)" min="1">
+    <input class="pred-input" id="pred-amount" type="number" placeholder="Bet amount (min ₹1,000)" min="1000">
+    <button class="pred-submit" onclick="submitBet()">Lock Bet →</button>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">
+      3× if direction + target · 1.5× if direction only · 0 if wrong. One bet per stock.
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
 }
 
-// ── Loans ─────────────────────────────────────────────────────────────────────
-function renderLoanUI() {
-  const loan = playerData.loan || 0;
-  document.getElementById('loan-amount-display').textContent = '₹' + Math.round(loan).toLocaleString('en-IN');
-  document.getElementById('loan-amount-display').style.color = loan > 0 ? 'var(--red)' : 'var(--muted)';
-  document.getElementById('btn-take-loan-wrap').style.display = loan > 0 ? 'none' : 'block';
-  document.getElementById('btn-repay-wrap').style.display     = loan > 0 ? 'block' : 'none';
+function selectPredStock(cid) {
+  predStock = cid;
+  renderPredictPanel();
 }
 
-function takeLoan() {
-  if (!ws) return;
-  ws.send(JSON.stringify({ action: 'take_loan' }));
+function setDir(dir) {
+  predDirection = dir;
+  renderPredictPanel();
 }
 
-function repayLoan() {
-  const amount = parseInt(document.getElementById('repay-input').value);
-  if (!amount || amount < 1) return toast('Enter a repayment amount.', 'err');
-  ws.send(JSON.stringify({ action: 'repay_loan', amount }));
-  document.getElementById('repay-input').value = '';
+function submitBet() {
+  if (!predStock) return toast('Select a stock.', 'err');
+  if (!predDirection) return toast('Choose UP or DOWN.', 'err');
+  const target = parseFloat(document.getElementById('pred-target').value);
+  const amount = parseInt(document.getElementById('pred-amount').value);
+  if (!target || target <= 0) return toast('Enter a valid target price.', 'err');
+  if (!amount || amount < 1000) return toast('Minimum bet is ₹1,000.', 'err');
+  ws.send(JSON.stringify({ action: 'place_bet', stock: predStock, direction: predDirection, target, amount }));
+  predStock = null; predDirection = null;
 }
 
-function repayLoanFull() {
-  if (!ws) return;
-  ws.send(JSON.stringify({ action: 'repay_loan', amount: playerData.loan }));
-}
-
-// ── Trade modal ───────────────────────────────────────────────────────────────
+// ── Trade Modal ───────────────────────────────────────────────────────────────
 function openModal(cid) {
   if (phase !== 'trading') return toast('Trading is closed.', 'err');
-  currentStock = cid;
   const c = market[cid];
+  if (!c) return;
+  if (regFreeze && c.sector === regFreeze) return toast('⛔ This sector is under Regulatory Freeze.', 'err');
+  currentStock = cid;
   document.getElementById('modal-name').textContent   = c.name;
-  document.getElementById('modal-sector').textContent = c.sector + ' · ' + c.risk + ' Risk';
-  document.getElementById('modal-bio').textContent    = c.bio;
-  document.getElementById('modal-price').textContent  = c.price != null ? fmt(c.price) : '????';
-  document.getElementById('modal-cash').textContent   = fmt(playerData.cash);
-  document.getElementById('short-note').style.display = 'block';
-  document.getElementById('qty-input').value = 1;
+  document.getElementById('modal-sector').textContent = `${c.sector} · ${c.risk} Risk`;
+  document.getElementById('modal-bio').textContent    = c.bio || '';
+  document.getElementById('modal-price').textContent  = fmt(c.price);
   const owned = playerData.portfolio?.[cid]?.qty || 0;
-  document.getElementById('btn-sell').disabled = owned === 0;
+  document.getElementById('modal-owned').textContent  = owned + ' shares';
+  document.getElementById('btn-sell').disabled        = owned === 0;
+  document.getElementById('qty-input').value          = 1;
   updateTotal();
   document.getElementById('trade-modal').classList.add('open');
 }
@@ -1061,19 +1054,14 @@ function executeTrade(action) {
   ws.send(JSON.stringify({ action, stock: currentStock, qty }));
 }
 
-function coverShort(shortId) {
-  if (!ws) return;
-  ws.send(JSON.stringify({ action: 'short_cover', short_id: shortId }));
-}
-
 // ── News ──────────────────────────────────────────────────────────────────────
 function addNews(msg) {
-  const list = document.getElementById('news-list');
+  const list  = document.getElementById('news-list');
   const empty = list.querySelector('.empty');
   if (empty) list.innerHTML = '';
-  const tagMap = { event:'tag-event', insider:'tag-insider', rumour:'tag-rumour', chaos:'tag-chaos' };
-  const tagCls = msg.private ? 'tag-private' : (tagMap[msg.type] || 'tag-event');
-  const label  = msg.private ? '🔒 Secret Intel' : msg.label;
+  const typeMap = { verified: 'tag-verified', unverified: 'tag-unverified', chaos: 'tag-chaos' };
+  const tagCls  = msg.private ? 'tag-private' : (typeMap[msg.type] || 'tag-verified');
+  const label   = msg.private ? '🔒 Secret Intel' : (msg.label || msg.type || 'News');
   const div = document.createElement('div');
   div.className = 'news-card';
   div.innerHTML = `
@@ -1083,20 +1071,25 @@ function addNews(msg) {
   list.prepend(div);
 }
 
-// ── Chaos handler ─────────────────────────────────────────────────────────────
+// ── Chaos handler ──────────────────────────────────────────────────────────────
 const chaosIcons = {
-  circuit_breaker:    '⚡',
-  tax_raid:           '🚨',
+  regulatory_freeze:  '🚫',
+  dividend:           '💰',
+  acquisition_rumour: '🤝',
+  credit_crunch:      '💸',
   ipo_drop:           '🚀',
-  insider_scandal:    '🔒',
-  market_crash:       '📉',
-  bull_run:           '🐂',
-  hostile_takeover:   '⚔️',
+  bankrupt:           '💀',
 };
 
 function handleChaos(msg) {
-  if (msg.event === 'circuit_breaker' && msg.stock) {
-    circuitStock = msg.stock;
+  if (msg.event === 'regulatory_freeze' && msg.sector) {
+    regFreeze = msg.sector;
+    updatePhase();
+    renderMarket();
+  }
+  if (msg.event === 'credit_crunch') {
+    creditCrunch = true;
+    renderBanks();
   }
   if (msg.event === 'ipo_drop' && msg.company) {
     market[msg.company.id] = {
@@ -1105,22 +1098,17 @@ function handleChaos(msg) {
     };
     renderMarket();
     populateMergeStocks();
-    populatePredStocks();
-  }
-  if (msg.prices) {
-    for (const [k, v] of Object.entries(msg.prices)) {
-      if (market[k]) { prevPrices[k] = market[k].price; market[k].price = v; }
-    }
-    renderMarket();
+    renderPredictPanel();
   }
   if (msg.board) { boardData = msg.board; renderBoard(); }
   if (msg.player) { playerData = msg.player; updateTopBar(); renderPortfolio(); }
-  showChaos(chaosIcons[msg.event] || '⚠️', msg.event?.replace(/_/g,' ').toUpperCase() || 'CHAOS EVENT', msg.msg);
+  showChaos(chaosIcons[msg.event] || '⚠️', (msg.event||'CHAOS').replace(/_/g,' ').toUpperCase(), msg.msg);
   addNews({ type: 'chaos', label: 'Chaos Event', text: msg.msg });
   if (activeTab !== 'news') {
     newsCount++;
     const badge = document.getElementById('news-badge');
-    badge.textContent = newsCount; badge.style.display = 'inline-block';
+    badge.textContent = newsCount;
+    badge.style.display = 'inline-block';
   }
 }
 
@@ -1135,28 +1123,28 @@ function dismissChaos() {
   document.getElementById('chaos-overlay').classList.remove('show');
 }
 
-// ── Quiz ──────────────────────────────────────────────────────────────────────
-function showQuiz(question) {
-  document.getElementById('quiz-question').textContent = question;
-  document.getElementById('quiz-btn').className = 'quiz-buzz-btn';
-  document.getElementById('quiz-btn').disabled = false;
-  document.getElementById('quiz-status').textContent = '';
-  document.getElementById('quiz-overlay').classList.add('show');
+// ── Leaderboard ────────────────────────────────────────────────────────────────
+function renderBoard() {
+  const list = document.getElementById('board-list');
+  if (!boardData.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">No players yet</div></div>';
+    return;
+  }
+  const cls = ['gold','silver','bronze'];
+  list.innerHTML = boardData.map(p => `
+    <div class="lb-row">
+      <div class="lb-rank ${cls[p.rank-1]||''}">${p.rank}</div>
+      <div class="lb-name ${p.name===myName?'me':''}">${p.name}${p.name===myName?'<span class="lb-you">YOU</span>':''}</div>
+      <div class="lb-nw">${fmt(p.net_worth)}</div>
+    </div>`).join('');
 }
 
-function buzzQuiz() {
-  if (!ws) return;
-  ws.send(JSON.stringify({ action: 'quiz_buzz' }));
-  document.getElementById('quiz-btn').className = 'quiz-buzz-btn buzzed';
-  document.getElementById('quiz-btn').disabled  = true;
-  document.getElementById('quiz-status').textContent = 'Buzzed! ⚡';
-}
-
-// ── Merge ─────────────────────────────────────────────────────────────────────
+// ── Merger ────────────────────────────────────────────────────────────────────
 function populateMergeStocks() {
   const sel = document.getElementById('merge-stock');
+  if (!sel) return;
   sel.innerHTML = '<option value="">Select stock</option>' +
-    Object.entries(market).map(([k,c]) => `<option value="${k}">${c.name}</option>`).join('');
+    Object.entries(market).filter(([,c]) => c.name).map(([k,c]) => `<option value="${k}">${c.name}</option>`).join('');
 }
 
 function initiateMerge() {
@@ -1174,41 +1162,24 @@ function respondMerge(accept) {
   pendingMerge = null;
 }
 
-// ── Prediction ────────────────────────────────────────────────────────────────
-function populatePredStocks() {
-  const el = document.getElementById('pred-stocks');
-  el.innerHTML = Object.entries(market).map(([k,c]) =>
-    `<button class="pred-stock-btn" onclick="selectPredStock('${k}',this)">${c.name}</button>`
-  ).join('');
-}
-
-function selectPredStock(cid, btn) {
-  predStock = cid;
-  document.querySelectorAll('.pred-stock-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-}
-
-function submitPrediction() {
-  if (!predStock) return toast('Select a stock first.', 'err');
-  const amount = parseInt(document.getElementById('pred-amount').value);
-  if (!amount || amount < 1) return toast('Enter a valid bet amount.', 'err');
-  ws.send(JSON.stringify({ action: 'prediction', stock: predStock, amount }));
-}
-
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.getElementById('panel-' + tab).classList.add('active');
+  const tabEl = document.getElementById('tab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+  const panelEl = document.getElementById('panel-' + tab);
+  if (panelEl) panelEl.classList.add('active');
   if (tab === 'news') {
     newsCount = 0;
     document.getElementById('news-badge').style.display = 'none';
   }
+  if (tab === 'predict') renderPredictPanel();
+  if (tab === 'portfolio') renderPortfolio();
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
+// ── Toast ──────────────────────────────────────────────────────────────────────
 function toast(msg, type='info') {
   const wrap = document.getElementById('toast-wrap');
   const el   = document.createElement('div');
