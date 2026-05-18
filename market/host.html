@@ -8,199 +8,138 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:      #080b10;
-  --surface: #0d1117;
-  --surface2:#111820;
-  --border:  #1c2333;
-  --gold:    #f0b429;
-  --green:   #26c281;
-  --red:     #e5534b;
-  --blue:    #58a6ff;
-  --purple:  #a371f7;
-  --orange:  #f0883e;
-  --muted:   rgba(255,255,255,0.35);
-  --text:    #e6edf3;
-  --mono:    'DM Mono', monospace;
-  --sans:    'DM Sans', sans-serif;
-  --display: 'Syne', sans-serif;
+  --bg:      #080b10; --surface: #0d1117; --surface2:#111820;
+  --border:  #1c2333; --gold:   #f0b429; --green:  #26c281;
+  --red:     #e5534b; --blue:   #58a6ff; --purple: #a371f7;
+  --orange:  #f0883e; --muted:  rgba(255,255,255,0.35); --text: #e6edf3;
+  --mono: 'DM Mono',monospace; --sans:'DM Sans',sans-serif; --display:'Syne',sans-serif;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
-::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-/* ── Auth ── */
-#auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-.auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 400px; text-align: center; }
-.auth-title { font-family: var(--display); font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
-.auth-sub   { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
-input[type=password], input[type=text], input[type=number], select, textarea {
-  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 12px 14px; color: var(--text); font-family: var(--mono); font-size: 14px;
-  outline: none; transition: border-color 0.2s; resize: vertical;
-}
-input:focus, select:focus, textarea:focus { border-color: var(--gold); }
-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 6px; margin-top: 16px; }
-label:first-child { margin-top: 0; }
-.err { font-size: 13px; color: var(--red); margin-top: 10px; min-height: 20px; }
-
-/* ── Buttons ── */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 10px 18px; border-radius: 8px; font-family: var(--display); font-size: 13px;
-  font-weight: 700; letter-spacing: 0.5px; cursor: pointer; border: none;
-  transition: opacity 0.15s, transform 0.1s; user-select: none; }
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-gold   { background: var(--gold);   color: #000; }
-.btn-green  { background: var(--green);  color: #000; }
-.btn-red    { background: var(--red);    color: #fff; }
-.btn-blue   { background: var(--blue);   color: #000; }
-.btn-ghost  { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-.btn-ghost:hover { border-color: var(--text); color: var(--text); }
-.btn-full { width: 100%; }
-.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
-
-/* ── Layout ── */
-#app { display: none; }
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px;
-  border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
-.topbar-title { font-family: var(--display); font-size: 18px; font-weight: 800; color: var(--gold); }
-.topbar-stats { display: flex; gap: 24px; }
-.ts { display: flex; flex-direction: column; align-items: flex-end; }
-.ts-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-.ts-val   { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
-.ts-val.gold { color: var(--gold); }
-.ts-val.green { color: var(--green); }
-.ts-val.red   { color: var(--red); }
-
-.main { display: grid; grid-template-columns: 340px 1fr; gap: 0; min-height: calc(100vh - 57px); }
-.sidebar { border-right: 1px solid var(--border); padding: 20px; background: var(--surface); display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
-.content { padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
-
-/* ── Cards ── */
-.card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
-.card-title { font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
-
-/* ── Phase banner ── */
-.phase-banner { border-radius: 10px; padding: 14px 18px; font-size: 15px; font-weight: 600;
-  display: flex; align-items: center; gap: 10px; border: 1px solid; }
-.ph-lobby    { background: rgba(240,180,41,0.07);  border-color: rgba(240,180,41,0.25);  color: var(--gold); }
-.ph-trading  { background: rgba(38,194,129,0.07);  border-color: rgba(38,194,129,0.25);  color: var(--green); }
-.ph-break    { background: rgba(240,136,62,0.07);  border-color: rgba(240,136,62,0.25);  color: var(--orange); }
-.ph-ended    { background: rgba(229,83,75,0.07);   border-color: rgba(229,83,75,0.25);   color: var(--red); }
-
-/* ── Progress bar ── */
-.progress-wrap { background: rgba(255,255,255,0.07); border-radius: 99px; height: 8px; overflow: hidden; margin-top: 10px; }
-.progress-bar  { height: 100%; border-radius: 99px; transition: width 1s linear, background 0.6s; }
-
-/* ── Price grid ── */
-.price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-.price-tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
-.pt-sym  { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }
-.pt-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pt-price { font-family: var(--mono); font-size: 18px; font-weight: 500; color: #fff; }
-.pt-chg  { font-size: 12px; margin-top: 3px; }
-.up { color: var(--green); } .dn { color: var(--red); } .nc { color: var(--muted); }
-
-/* ── Leaderboard ── */
-.lb-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 6px; }
-.lb-rank { font-family: var(--mono); font-size: 13px; color: var(--muted); width: 28px; flex-shrink: 0; }
-.lb-rank.gold   { color: #ffd700; font-weight: 700; }
-.lb-rank.silver { color: #c0c0c0; font-weight: 700; }
-.lb-rank.bronze { color: #cd7f32; font-weight: 700; }
-.lb-name { font-size: 14px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lb-code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.lb-nw   { font-family: var(--mono); font-size: 14px; font-weight: 500; }
-.lb-kick { background: rgba(229,83,75,0.1); color: var(--red); border: 1px solid rgba(229,83,75,0.3);
-  font-size: 11px; padding: 3px 8px; border-radius: 5px; cursor: pointer; flex-shrink: 0; }
-.lb-kick:hover { background: rgba(229,83,75,0.2); }
-
-/* ── Code chips ── */
-.code-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-.code-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-  font-family: var(--mono); font-size: 13px; font-weight: 500; padding: 5px 10px;
-  display: flex; align-items: center; gap: 8px; }
-.code-chip.used { border-color: rgba(38,194,129,0.3); color: var(--green); }
-.code-chip .del { cursor: pointer; color: var(--muted); font-size: 14px; line-height: 1; }
-.code-chip .del:hover { color: var(--red); }
-
-/* ── Chaos grid ── */
-.chaos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.chaos-btn  { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px; cursor: pointer; text-align: left; transition: border-color 0.15s, background 0.15s; }
-.chaos-btn:hover { background: var(--surface2); border-color: var(--gold); }
-.chaos-btn .cb-icon  { font-size: 22px; margin-bottom: 6px; }
-.chaos-btn .cb-name  { font-size: 13px; font-weight: 700; color: var(--text); }
-.chaos-btn .cb-desc  { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
-
-/* ── News form ── */
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
-
-/* ── Modal ── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
-  display: none; align-items: center; justify-content: center; padding: 20px; }
-.modal-overlay.open { display: flex; }
-.modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-  padding: 28px; width: 100%; max-width: 480px; }
-.modal-title { font-family: var(--display); font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 18px; }
-.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-
-/* ── Toast ── */
-.toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
-.toast { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
-  animation: slideIn 0.2s ease; max-width: 320px; }
-.toast.ok   { background: rgba(38,194,129,0.15); border: 1px solid rgba(38,194,129,0.4); color: var(--green); }
-.toast.err  { background: rgba(229,83,75,0.15);  border: 1px solid rgba(229,83,75,0.4);  color: var(--red); }
-.toast.info { background: rgba(88,166,255,0.12); border: 1px solid rgba(88,166,255,0.3); color: var(--blue); }
-@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-/* ── Section header ── */
-.sec-hdr { font-family: var(--display); font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; }
-
-/* ── Tab nav ── */
-.tab-nav { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
-.tab-btn { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--muted);
-  cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
-.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
-.tab-panel { display: none; } .tab-panel.active { display: block; }
-
-/* ── Quiz buzz alert ── */
-.buzz-alert { background: rgba(240,180,41,0.1); border: 2px solid var(--gold); border-radius: 10px;
-  padding: 14px 18px; display: none; margin-bottom: 12px; }
-.buzz-alert.show { display: block; }
-.buzz-name { font-family: var(--display); font-size: 20px; font-weight: 800; color: var(--gold); }
-
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .main { grid-template-columns: 1fr; }
-  .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
-  .form-row { grid-template-columns: 1fr; }
-  .form-row.three { grid-template-columns: 1fr; }
-}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px 32px;width:100%;max-width:400px;text-align:center;}
+.auth-title{font-family:var(--display);font-size:28px;font-weight:800;color:#fff;margin-bottom:8px;}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:32px;}
+input[type=password],input[type=text],input[type=number],select,textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:13px;
+  outline:none;transition:border-color 0.2s;resize:vertical;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);}
+label{display:block;font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;margin-top:12px;}
+label:first-child{margin-top:0;}
+.err{font-size:13px;color:var(--red);margin-top:10px;min-height:20px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 16px;border-radius:8px;font-family:var(--display);font-size:12px;
+  font-weight:700;letter-spacing:0.5px;cursor:pointer;border:none;
+  transition:opacity 0.15s,transform 0.1s;user-select:none;}
+.btn:active{transform:scale(0.97);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-gold{background:var(--gold);color:#000;}
+.btn-green{background:var(--green);color:#000;}
+.btn-red{background:var(--red);color:#fff;}
+.btn-blue{background:var(--blue);color:#000;}
+.btn-orange{background:var(--orange);color:#000;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--text);color:var(--text);}
+.btn-full{width:100%;}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:6px;}
+#app{display:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;
+  border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10;}
+.topbar-title{font-family:var(--display);font-size:17px;font-weight:800;color:var(--gold);}
+.topbar-stats{display:flex;gap:20px;}
+.ts{display:flex;flex-direction:column;align-items:flex-end;}
+.ts-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.ts-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);}
+.ts-val.gold{color:var(--gold);} .ts-val.green{color:var(--green);} .ts-val.red{color:var(--red);}
+.main{display:grid;grid-template-columns:320px 1fr;gap:0;min-height:calc(100vh - 57px);}
+.sidebar{border-right:1px solid var(--border);padding:16px;background:var(--surface);display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
+.content{padding:16px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.card-title{font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.phase-banner{border-radius:10px;padding:12px 16px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;border:1px solid;}
+.ph-lobby{background:rgba(240,180,41,0.07);border-color:rgba(240,180,41,0.25);color:var(--gold);}
+.ph-trading{background:rgba(38,194,129,0.07);border-color:rgba(38,194,129,0.25);color:var(--green);}
+.ph-break{background:rgba(240,136,62,0.07);border-color:rgba(240,136,62,0.25);color:var(--orange);}
+.ph-ended{background:rgba(229,83,75,0.07);border-color:rgba(229,83,75,0.25);color:var(--red);}
+.progress-wrap{background:rgba(255,255,255,0.07);border-radius:99px;height:6px;overflow:hidden;margin-top:8px;}
+.progress-bar{height:100%;border-radius:99px;transition:width 1s linear,background 0.6s;}
+.price-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
+.price-tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.pt-sym{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.5px;margin-bottom:3px;}
+.pt-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pt-price{font-family:var(--mono);font-size:16px;font-weight:500;color:#fff;}
+.pt-chg{font-size:11px;margin-top:2px;}
+.up{color:var(--green);}.dn{color:var(--red);}.nc{color:var(--muted);}
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);margin-bottom:5px;}
+.lb-rank{font-family:var(--mono);font-size:12px;color:var(--muted);width:24px;flex-shrink:0;}
+.lb-rank.gold{color:#ffd700;font-weight:700;}.lb-rank.silver{color:#c0c0c0;font-weight:700;}.lb-rank.bronze{color:#cd7f32;font-weight:700;}
+.lb-name{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-code{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.lb-nw{font-family:var(--mono);font-size:13px;font-weight:500;}
+.lb-kick{background:rgba(229,83,75,0.1);color:var(--red);border:1px solid rgba(229,83,75,0.3);font-size:10px;padding:3px 7px;border-radius:5px;cursor:pointer;flex-shrink:0;}
+.lb-kick:hover{background:rgba(229,83,75,0.2);}
+.code-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.code-chip{background:var(--surface);border:1px solid var(--border);border-radius:5px;font-family:var(--mono);font-size:12px;padding:4px 9px;display:flex;align-items:center;gap:6px;}
+.code-chip.used{border-color:rgba(38,194,129,0.3);color:var(--green);}
+.code-chip .del{cursor:pointer;color:var(--muted);font-size:13px;}.code-chip .del:hover{color:var(--red);}
+.chaos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.chaos-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:left;transition:border-color 0.15s,background 0.15s;}
+.chaos-btn:hover{background:var(--surface2);border-color:var(--gold);}
+.chaos-btn .cb-icon{font-size:20px;margin-bottom:5px;}
+.chaos-btn .cb-name{font-size:12px;font-weight:700;color:var(--text);}
+.chaos-btn .cb-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.chaos-btn.disabled-btn{opacity:0.35;pointer-events:none;}
+.ipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:var(--display);font-size:17px;font-weight:800;color:#fff;margin-bottom:14px;}
+.modal-actions{display:flex;gap:8px;margin-top:16px;}
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+.toast{padding:9px 14px;border-radius:8px;font-size:12px;font-weight:500;animation:slideIn 0.2s ease;max-width:300px;}
+.toast.ok{background:rgba(38,194,129,0.15);border:1px solid rgba(38,194,129,0.4);color:var(--green);}
+.toast.err{background:rgba(229,83,75,0.15);border:1px solid rgba(229,83,75,0.4);color:var(--red);}
+.toast.info{background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:var(--blue);}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.sec-hdr{font-family:var(--display);font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;}
+.tab-nav{display:flex;border-bottom:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap;}
+.tab-btn{padding:9px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;white-space:nowrap;}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab-panel{display:none;}.tab-panel.active{display:block;}
+.news-log-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;}
+.news-tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:99px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;}
+.tag-v{background:rgba(38,194,129,0.1);color:var(--green);border:1px solid rgba(38,194,129,0.2);}
+.tag-u{background:rgba(240,136,62,0.1);color:var(--orange);border:1px solid rgba(240,136,62,0.2);}
+.bank-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.bank-title{font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;}
+.player-loan-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.player-loan-row:last-child{border-bottom:none;}
+.sentiment-bar{display:flex;height:8px;border-radius:99px;overflow:hidden;margin-top:6px;}
+@media(max-width:900px){.main{grid-template-columns:1fr;}.sidebar{border-right:none;border-bottom:1px solid var(--border);}.form-row{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 
-<!-- ── Auth screen ── -->
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-title">Host Panel</div>
-    <div class="auth-sub">Market Mayhem — Inceptia · Restricted access</div>
+    <div class="auth-sub">Market Mayhem — Inceptia</div>
     <label>Password</label>
     <input type="password" id="pw-input" placeholder="Enter host password" onkeydown="if(event.key==='Enter')authSubmit()">
     <div class="err" id="auth-err"></div>
-    <button class="btn btn-gold btn-full" style="margin-top:16px" onclick="authSubmit()">Unlock →</button>
+    <button class="btn btn-gold btn-full" style="margin-top:14px" onclick="authSubmit()">Unlock →</button>
   </div>
 </div>
 
-<!-- ── Main app ── -->
+<!-- APP -->
 <div id="app">
   <div class="topbar">
-    <div>
-      <div class="topbar-title">⚡ Market Mayhem Host</div>
-    </div>
+    <div class="topbar-title">⚡ Market Mayhem Host</div>
     <div class="topbar-stats">
       <div class="ts"><span class="ts-label">Phase</span><span class="ts-val gold" id="stat-phase">Lobby</span></div>
       <div class="ts"><span class="ts-label">Round</span><span class="ts-val" id="stat-round">0 / 6</span></div>
@@ -209,57 +148,55 @@ label:first-child { margin-top: 0; }
   </div>
 
   <div class="main">
-    <!-- ── Sidebar ── -->
+    <!-- SIDEBAR -->
     <div class="sidebar">
 
-      <!-- Phase + round control -->
+      <!-- Game state -->
       <div class="card">
         <div class="card-title">Game State</div>
         <div class="phase-banner ph-lobby" id="phase-banner">⏳ Lobby — waiting to start</div>
         <div class="progress-wrap"><div class="progress-bar" id="timer-bar" style="width:0%;background:var(--green)"></div></div>
-        <div style="font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:8px" id="timer-label">—</div>
-        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px" id="timer-label">—</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
           <button class="btn btn-green" id="btn-start" onclick="startRound()" style="flex:1">▶ Start Round 1</button>
           <button class="btn btn-ghost" id="btn-end"   onclick="endRound()"  style="flex:1" disabled>⏸ End Round</button>
         </div>
-        <button class="btn btn-blue btn-full" style="margin-top:8px" id="btn-end-game" onclick="endGame()" disabled>🏁 End Game & Reveal</button>
-        <button class="btn btn-ghost btn-sm btn-full" style="margin-top:10px;color:var(--red);border-color:rgba(229,83,75,0.3)" onclick="confirmReset()">⚠ Reset Entire Game</button>
+        <button class="btn btn-blue btn-full" style="margin-top:8px" id="btn-end-game" onclick="endGame()" disabled>🏁 End Game</button>
+        <button class="btn btn-ghost btn-sm btn-full" style="margin-top:8px;color:var(--red);border-color:rgba(229,83,75,0.3)" onclick="confirmReset()">⚠ Reset Entire Game</button>
       </div>
 
       <!-- Codes -->
       <div class="card">
         <div class="card-title">Player Codes</div>
-        <div style="display:flex;gap:8px;margin-bottom:12px">
-          <input type="number" id="code-count" value="10" min="1" max="80" style="width:70px">
-          <button class="btn btn-gold" style="flex:1" onclick="genCodes()">Generate Codes</button>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input type="number" id="code-count" value="10" min="1" max="80" style="width:64px">
+          <button class="btn btn-gold" style="flex:1" onclick="genCodes()">Generate</button>
         </div>
         <div class="code-grid" id="code-grid"><div style="font-size:13px;color:var(--muted)">No codes yet.</div></div>
       </div>
 
-      <!-- Quick price bump -->
+      <!-- Manual price -->
       <div class="card">
         <div class="card-title">Manual Price Override</div>
         <label>Stock</label>
         <select id="manual-stock" onchange="prefillPrice()"></select>
         <label>New Price (₹)</label>
         <input type="number" id="manual-price" min="1" placeholder="e.g. 500">
-        <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="manualPrice()">Set Price</button>
+        <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="manualPrice()">Set Price</button>
       </div>
 
-      <!-- Round guide -->
+      <!-- Round playbook -->
       <div class="card">
         <div class="card-title">Round Playbook</div>
-        <div id="round-guide" style="display:flex;flex-direction:column;gap:8px">
-          <!-- populated by JS -->
-        </div>
+        <div id="round-guide" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
 
-    </div>
+    </div><!-- end sidebar -->
 
-    <!-- ── Content ── -->
+    <!-- CONTENT -->
     <div class="content">
 
-      <!-- Prices -->
+      <!-- Live prices -->
       <div>
         <div class="sec-hdr">Live Prices</div>
         <div class="price-grid" id="price-grid">Loading...</div>
@@ -269,28 +206,28 @@ label:first-child { margin-top: 0; }
       <div class="card" style="padding:0;overflow:hidden">
         <div class="tab-nav">
           <div class="tab-btn active" onclick="switchTab('leaderboard',this)">Leaderboard</div>
-          <div class="tab-btn" onclick="switchTab('news',this)">Inject News</div>
-          <div class="tab-btn" onclick="switchTab('chaos',this)">Chaos Events</div>
-          <div class="tab-btn" onclick="switchTab('quiz',this)">Quiz</div>
-          <div class="tab-btn" onclick="switchTab('intel',this)">Secret Intel</div>
+          <div class="tab-btn" onclick="switchTab('news',this)">News</div>
+          <div class="tab-btn" onclick="switchTab('chaos',this)">Chaos</div>
+          <div class="tab-btn" onclick="switchTab('ipo',this)">IPO Drops</div>
+          <div class="tab-btn" onclick="switchTab('predict',this)">Predictions</div>
+          <div class="tab-btn" onclick="switchTab('intel',this)">Intel</div>
           <div class="tab-btn" onclick="switchTab('loans',this)">Loans</div>
         </div>
 
-        <!-- Leaderboard tab -->
-        <div class="tab-panel active" id="tab-leaderboard" style="padding:16px">
+        <!-- LEADERBOARD TAB -->
+        <div class="tab-panel active" id="tab-leaderboard" style="padding:14px">
           <div id="lb-list"><div style="color:var(--muted);font-size:13px">No players yet.</div></div>
         </div>
 
-        <!-- News tab -->
-        <div class="tab-panel" id="tab-news" style="padding:16px">
+        <!-- NEWS TAB -->
+        <div class="tab-panel" id="tab-news" style="padding:14px">
           <div class="sec-hdr">Inject a News Event</div>
           <div class="form-row">
             <div>
-              <label>Type</label>
-              <select id="news-type">
-                <option value="event">Market Event</option>
-                <option value="rumour">Unverified Rumour</option>
-                <option value="insider">Insider Hint</option>
+              <label>Category</label>
+              <select id="news-verified">
+                <option value="1">✅ Verified — always affects price</option>
+                <option value="0">⚠️ Unverified — may or may not be real</option>
               </select>
             </div>
             <div>
@@ -307,182 +244,146 @@ label:first-child { margin-top: 0; }
               </select>
             </div>
             <div>
-              <label>Is Real?</label>
-              <select id="news-real">
-                <option value="1">Yes — strong price impact</option>
-                <option value="0">No — fake / weak impact</option>
-              </select>
+              <label>Strength (0.07–0.15)</label>
+              <input type="number" id="news-strength" value="0.10" step="0.01" min="0.01" max="0.30">
             </div>
           </div>
           <label>News Text</label>
-          <textarea id="news-text" rows="3" placeholder="e.g. BREAKING: RBI freezes all transactions above ₹50,000..."></textarea>
-          <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="injectNews()">Inject Event</button>
-
-          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-            <div class="sec-hdr" style="font-size:13px">Fake Analyst Report</div>
-            <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Drops to ALL players. You mark it real/fake — only you know.</p>
-            <textarea id="fake-report-text" rows="2" placeholder="Analyst report text..."></textarea>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn btn-gold" style="flex:1" onclick="injectFakeReport(false)">Drop as REAL</button>
-              <button class="btn btn-ghost" style="flex:1" onclick="injectFakeReport(true)">Drop as FAKE</button>
-            </div>
+          <textarea id="news-text" rows="3" placeholder="e.g. BREAKING: RBI issues notice to NovaPay..."></textarea>
+          <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="injectNews()">Inject News</button>
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+            <div class="sec-hdr" style="font-size:13px">Released News (truth visible here only)</div>
+            <div id="news-log"><div style="color:var(--muted);font-size:13px">No news yet.</div></div>
           </div>
         </div>
 
-        <!-- Chaos tab -->
-        <div class="tab-panel" id="tab-chaos" style="padding:16px">
-          <div class="sec-hdr">Chaos Events</div>
+        <!-- CHAOS TAB -->
+        <div class="tab-panel" id="tab-chaos" style="padding:14px">
+          <div class="sec-hdr">Stage 2 Chaos Events</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">These are the 4 active chaos events for this game. Old events (Tax Raid, Market Crash, etc.) are removed.</p>
           <div class="chaos-grid">
-            <div class="chaos-btn" onclick="openChaosModal('circuit')">
-              <div class="cb-icon">⚡</div>
-              <div class="cb-name">Circuit Breaker</div>
-              <div class="cb-desc">Halt trading on one stock for 2 minutes.</div>
+
+            <div class="chaos-btn" onclick="openModal('modal-reg-freeze')">
+              <div class="cb-icon">🚫</div>
+              <div class="cb-name">Regulatory Freeze</div>
+              <div class="cb-desc">Halt all trading in a sector for the rest of this round.</div>
             </div>
-            <div class="chaos-btn" onclick="triggerChaos('tax_raid')">
-              <div class="cb-icon">🚨</div>
-              <div class="cb-name">Tax Raid</div>
-              <div class="cb-desc">All players lose 10% of cash instantly.</div>
+
+            <div class="chaos-btn" onclick="openModal('modal-dividend')">
+              <div class="cb-icon">💰</div>
+              <div class="cb-name">Dividend Declared</div>
+              <div class="cb-desc">Pay ₹X per share to all holders of a company.</div>
             </div>
-            <div class="chaos-btn" onclick="triggerChaos('ipo_drop')">
-              <div class="cb-icon">🚀</div>
-              <div class="cb-name">IPO Drop</div>
-              <div class="cb-desc">NovaPay lists on the exchange mid-game.</div>
+
+            <div class="chaos-btn" onclick="openModal('modal-acquisition')">
+              <div class="cb-icon">🤝</div>
+              <div class="cb-name">Acquisition Rumour</div>
+              <div class="cb-desc">Two companies rumoured to merge — prices correlate this round.</div>
             </div>
-            <div class="chaos-btn" onclick="openChaosModal('insider_scandal')">
-              <div class="cb-icon">🔒</div>
-              <div class="cb-name">Insider Scandal</div>
-              <div class="cb-desc">Freeze the #1 player's portfolio for 1 round.</div>
-            </div>
-            <div class="chaos-btn" onclick="triggerChaos('market_crash')">
-              <div class="cb-icon">📉</div>
-              <div class="cb-name">Market Crash</div>
-              <div class="cb-desc">All prices drop 20% simultaneously.</div>
-            </div>
-            <div class="chaos-btn" onclick="openChaosModal('bull_run')">
-              <div class="cb-icon">🐂</div>
-              <div class="cb-name">Bull Run</div>
-              <div class="cb-desc">Pick a sector — all stocks in it +30%.</div>
-            </div>
-            <div class="chaos-btn" onclick="openChaosModal('hostile')">
-              <div class="cb-icon">⚔️</div>
-              <div class="cb-name">Hostile Takeover</div>
-              <div class="cb-desc">Force a player to sell all of one stock.</div>
-            </div>
-            <div class="chaos-btn" onclick="openChaosModal('blackout')">
-              <div class="cb-icon">🌑</div>
-              <div class="cb-name">Blackout Round</div>
-              <div class="cb-desc">Toggle price visibility on/off.</div>
+
+            <div class="chaos-btn" onclick="triggerCreditCrunch()">
+              <div class="cb-icon">💸</div>
+              <div class="cb-name">Credit Crunch</div>
+              <div class="cb-desc">All bank rates +5% for this round. Bharat→10%, VCX→14%, Shadow→21%.</div>
             </div>
           </div>
         </div>
 
-        <!-- Quiz tab -->
-        <div class="tab-panel" id="tab-quiz" style="padding:16px">
-          <div class="sec-hdr">Flash Quiz</div>
-          <div class="buzz-alert" id="buzz-alert">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:4px">FIRST BUZZ</div>
-            <div class="buzz-name" id="buzz-name">—</div>
+        <!-- IPO DROPS TAB -->
+        <div class="tab-panel" id="tab-ipo" style="padding:14px">
+          <div class="sec-hdr">IPO Drops</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Each IPO is a separate event. Drop them one at a time mid-game for maximum impact.</p>
+          <div class="ipo-grid">
+            <div class="chaos-btn" id="ipo-btn-novapay" onclick="dropIPO('novapay')">
+              <div class="cb-icon">💳</div>
+              <div class="cb-name">NovaPay</div>
+              <div class="cb-desc">Fintech · High · IPO ₹200</div>
+            </div>
+            <div class="chaos-btn" id="ipo-btn-greenleaf" onclick="dropIPO('greenleaf')">
+              <div class="cb-icon">🌿</div>
+              <div class="cb-name">GreenLeaf Agri</div>
+              <div class="cb-desc">Agriculture · Medium · IPO ₹150</div>
+            </div>
+            <div class="chaos-btn" id="ipo-btn-armorinc" onclick="dropIPO('armorinc')">
+              <div class="cb-icon">🛡️</div>
+              <div class="cb-name">ArmorInc</div>
+              <div class="cb-desc">Defence · Low · IPO ₹380</div>
+            </div>
+            <div class="chaos-btn" id="ipo-btn-bytecorp" onclick="dropIPO('bytecorp')">
+              <div class="cb-icon">🤖</div>
+              <div class="cb-name">ByteCorp AI</div>
+              <div class="cb-desc">Technology · Very High · IPO ₹650</div>
+            </div>
           </div>
-          <label>Question</label>
-          <textarea id="quiz-q" rows="2" placeholder="Leave blank for a random finance question..."></textarea>
-          <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="launchQuiz()">Launch Quiz (all players see buzzer)</button>
-          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-            <div class="sec-hdr" style="font-size:13px">Award Result</div>
-            <div class="form-row">
-              <div>
-                <label>Winner Name</label>
-                <input type="text" id="quiz-winner" placeholder="Player name">
-              </div>
-              <div>
-                <label>Amount (₹)</label>
-                <input type="number" id="quiz-amount" value="50000">
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn btn-green" style="flex:1" onclick="awardQuiz(true)">✓ Correct — Award</button>
-              <button class="btn btn-red"   style="flex:1" onclick="awardQuiz(false)">✗ Wrong — No award</button>
-            </div>
+          <div style="margin-top:12px;font-size:12px;color:var(--muted)" id="ipo-status-label">No IPOs listed yet.</div>
+        </div>
+
+        <!-- PREDICTIONS TAB -->
+        <div class="tab-panel" id="tab-predict" style="padding:14px">
+          <div class="sec-hdr">Market Sentiment</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Live UP/DOWN bet sentiment per stock. Visible to players on their screens.</p>
+          <div id="sentiment-grid"></div>
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+            <div class="sec-hdr" style="font-size:13px">All Active Bets</div>
+            <div id="bets-list"><div style="color:var(--muted);font-size:13px">No bets placed yet.</div></div>
           </div>
         </div>
 
-        <!-- Secret intel tab -->
-        <div class="tab-panel" id="tab-intel" style="padding:16px">
+        <!-- INTEL TAB -->
+        <div class="tab-panel" id="tab-intel" style="padding:14px">
           <div class="sec-hdr">Secret Intel</div>
-          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Send a private news tip to ONE player. Nobody else sees it.</p>
-          <label>Target Player Code</label>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Send a private news tip to ONE player. Nobody else sees it.</p>
+          <label>Target Player</label>
           <select id="intel-code"></select>
           <label>Intel Text</label>
-          <textarea id="intel-text" rows="3" placeholder="e.g. SkyLink is about to crash next round. Trust me."></textarea>
-          <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="sendIntel()">Send Secret Intel</button>
+          <textarea id="intel-text" rows="3" placeholder="e.g. SkyLink about to crash next round. Trust me."></textarea>
+          <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="sendIntel()">Send Secret Intel</button>
         </div>
 
-        <!-- Loans tab -->
-        <div class="tab-panel" id="tab-loans" style="padding:16px">
-          <div class="sec-hdr">Player Loans Overview</div>
-          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
-            Players can take a ₹50,000 loan from their own screen. 10% interest is charged automatically at the end of each round.
-            If their net worth drops below their loan balance → margin call (auto-liquidation).
-            If net worth hits zero → bankruptcy (restart with ₹25,000, loan cleared).
+        <!-- LOANS TAB -->
+        <div class="tab-panel" id="tab-loans" style="padding:14px">
+          <div class="sec-hdr">Player Loans — 3 Banks</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">
+            Players can borrow from all 3 banks simultaneously. Interest is charged per bank at round end.
+            Repayment only during breaks. No forced liquidation — players can go negative.
           </p>
-          <div id="loans-list">
-            <div style="color:var(--muted);font-size:13px">No active loans.</div>
-          </div>
-          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <div id="loans-list"><div style="color:var(--muted);font-size:13px">No active loans.</div></div>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
             <div class="sec-hdr" style="font-size:13px">Manual Cash Adjustment</div>
-            <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Give or take cash from a player (for quiz awards, penalties, etc.)</p>
             <label>Player</label>
             <select id="adj-code"></select>
             <div class="form-row" style="margin-top:0">
               <div>
                 <label>Amount (₹)</label>
-                <input type="number" id="adj-amount" placeholder="e.g. 10000">
+                <input type="number" id="adj-amount" placeholder="10000">
               </div>
               <div>
                 <label>Direction</label>
                 <select id="adj-dir">
-                  <option value="1">Add cash ↑</option>
-                  <option value="-1">Deduct cash ↓</option>
+                  <option value="1">Add ↑</option>
+                  <option value="-1">Deduct ↓</option>
                 </select>
               </div>
             </div>
-            <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="adjustCash()">Apply Adjustment</button>
+            <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="adjustCash()">Apply</button>
           </div>
         </div>
 
       </div><!-- end tabs card -->
 
-      <!-- News log -->
-      <div>
-        <div class="sec-hdr">News Released (truth visible to host)</div>
-        <div id="news-log" style="display:flex;flex-direction:column;gap:8px">
-          <div style="font-size:13px;color:var(--muted)">No news yet.</div>
-        </div>
-      </div>
-
     </div><!-- end content -->
   </div><!-- end main -->
 </div><!-- end app -->
 
-<!-- ── Modals ── -->
-<!-- Circuit breaker -->
-<div class="modal-overlay" id="modal-circuit">
-  <div class="modal-box">
-    <div class="modal-title">⚡ Circuit Breaker</div>
-    <label>Stock to halt</label>
-    <select id="circuit-stock"></select>
-    <div class="modal-actions">
-      <button class="btn btn-gold" onclick="triggerCircuit()">Trigger</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-circuit')">Cancel</button>
-    </div>
-  </div>
-</div>
+<!-- MODALS -->
 
-<!-- Bull run -->
-<div class="modal-overlay" id="modal-bull">
+<!-- Regulatory Freeze -->
+<div class="modal-overlay" id="modal-reg-freeze">
   <div class="modal-box">
-    <div class="modal-title">🐂 Bull Run</div>
-    <label>Sector to boost (+30%)</label>
-    <select id="bull-sector">
+    <div class="modal-title">🚫 Regulatory Freeze</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">All trading in the selected sector halts for the rest of this round. Cards greyed out on player screens.</p>
+    <label>Sector to Freeze</label>
+    <select id="freeze-sector">
       <option>Manufacturing</option>
       <option>Media / OTT</option>
       <option>FMCG</option>
@@ -490,53 +391,45 @@ label:first-child { margin-top: 0; }
       <option>Pharma</option>
       <option>Technology</option>
       <option>Logistics</option>
-      <option>Retail</option>
       <option>Defence</option>
       <option>Fintech</option>
+      <option>Agriculture</option>
     </select>
     <div class="modal-actions">
-      <button class="btn btn-gold" onclick="triggerBullRun()">Trigger</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-bull')">Cancel</button>
+      <button class="btn btn-red" onclick="triggerRegulatoryFreeze()">Trigger Freeze</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-reg-freeze')">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- Hostile takeover -->
-<div class="modal-overlay" id="modal-hostile">
+<!-- Dividend -->
+<div class="modal-overlay" id="modal-dividend">
   <div class="modal-box">
-    <div class="modal-title">⚔️ Hostile Takeover</div>
-    <label>Target player name</label>
-    <input type="text" id="hostile-target" placeholder="Exact display name">
-    <label>Stock to force-sell</label>
-    <select id="hostile-stock"></select>
+    <div class="modal-title">💰 Dividend Declared</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Pay a cash dividend to all holders of a specific company. The more shares they hold, the more they get.</p>
+    <label>Company</label>
+    <select id="dividend-stock"></select>
+    <label>Dividend Per Share (₹)</label>
+    <input type="number" id="dividend-per-share" placeholder="e.g. 25" min="1">
     <div class="modal-actions">
-      <button class="btn btn-red" onclick="triggerHostile()">Execute</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-hostile')">Cancel</button>
+      <button class="btn btn-green" onclick="triggerDividend()">Pay Dividend</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-dividend')">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- Insider scandal confirm -->
-<div class="modal-overlay" id="modal-insider-scandal">
+<!-- Acquisition Rumour -->
+<div class="modal-overlay" id="modal-acquisition">
   <div class="modal-box">
-    <div class="modal-title">🔒 Insider Scandal</div>
-    <p style="color:var(--muted);font-size:14px;line-height:1.5">This will freeze the #1 ranked player's portfolio for the current round. They cannot buy or sell anything. Confirm?</p>
+    <div class="modal-title">🤝 Acquisition Rumour</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px">Pick two companies. Their prices become correlated for this round. Broadcasts as Unverified news.</p>
+    <label>Company 1</label>
+    <select id="acq-stock1"></select>
+    <label>Company 2</label>
+    <select id="acq-stock2"></select>
     <div class="modal-actions">
-      <button class="btn btn-red" onclick="triggerInsiderScandal()">Confirm — Freeze #1</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-insider-scandal')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Blackout toggle -->
-<div class="modal-overlay" id="modal-blackout">
-  <div class="modal-box">
-    <div class="modal-title">🌑 Blackout Round</div>
-    <p style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:8px">Hide all prices from players. They trade completely blind. Toggle again to reveal.</p>
-    <p style="font-size:13px;color:var(--gold)" id="blackout-status">Status: Prices visible</p>
-    <div class="modal-actions">
-      <button class="btn btn-gold" id="btn-blackout-toggle" onclick="triggerBlackout()">Enable Blackout</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-blackout')">Cancel</button>
+      <button class="btn btn-gold" onclick="triggerAcquisition()">Spread Rumour</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-acquisition')">Cancel</button>
     </div>
   </div>
 </div>
@@ -545,7 +438,7 @@ label:first-child { margin-top: 0; }
 <div class="modal-overlay" id="modal-reset">
   <div class="modal-box">
     <div class="modal-title" style="color:var(--red)">⚠ Reset Entire Game</div>
-    <p style="color:var(--muted);font-size:14px;line-height:1.5">This wipes ALL teams, codes, prices, and news. Cannot be undone. Are you absolutely sure?</p>
+    <p style="color:var(--muted);font-size:13px;line-height:1.5">Wipes ALL teams, codes, prices, loans, news. Cannot be undone.</p>
     <div class="modal-actions">
       <button class="btn btn-red" onclick="resetGame()">Yes — Wipe Everything</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-reset')">Cancel</button>
@@ -556,633 +449,506 @@ label:first-child { margin-top: 0; }
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────────────
-let pw           = '';
-let state        = null;
-let board        = [];
-let ws           = null;
-let timerInt     = null;
-let blackoutActive = false;
-let nameToCode   = {};   // display name → join code, kept fresh
+// ── State ──────────────────────────────────────────────────────────────────────
+let pw = '', state = null, board = [], ws = null, timerInt = null;
+let nameToCode = {}, sentimentData = {}, betsData = [];
+let listedIPOs = new Set();
 
 const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
+const SECTORS = ['Manufacturing','Media / OTT','FMCG','Renewable Energy','Pharma','Technology','Logistics','Defence','Fintech','Agriculture'];
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+const PLAYBOOK = [
+  { r:1, tip:"Drop 2 news. Let players settle in. No chaos yet. Drop an IPO if crowd is engaged." },
+  { r:2, tip:"Great round for Dividend Declared or Acquisition Rumour. Inject 1 unverified rumour." },
+  { r:3, tip:"Mid-game. Regulatory Freeze on a hot sector. Drop another IPO. Stir the market." },
+  { r:4, tip:"Credit Crunch hits borrowers hard. Inject strong verified news. Drop ByteCorp if not yet listed." },
+  { r:5, tip:"Second Acquisition Rumour. Inject contradictory unverified news on the same stock." },
+  { r:6, tip:"Final round. Big verified news. Dividend for surprise. No more IPO drops — focus on drama." },
+];
+
+// ── Auth ───────────────────────────────────────────────────────────────────────
 function authSubmit() {
   const val = document.getElementById('pw-input').value.trim();
   if (!val) return;
   pw = val;
-  // Quick verify via API
-  fetch('/api/state', {
-    headers: { 'X-Host-PW': pw }
-  }).then(r => {
-    if (r.status === 403) {
-      document.getElementById('auth-err').textContent = 'Wrong password.';
-      pw = '';
-      return;
-    }
+  fetch('/api/state').then(() => {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     init();
   }).catch(() => {
-    // Try connecting anyway — password checked on actions
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     init();
   });
 }
-document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') authSubmit(); });
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key==='Enter') authSubmit(); });
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────────────────
 function init() {
   connectWS();
   loadCodes();
   refreshPlayers();
-  setInterval(loadCodes, 15000);
-  setInterval(refreshPlayers, 10000);
-  setInterval(refreshLoans, 8000);
-  startTimerTick();
+  renderPlaybook(0);
 }
 
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   ws = new WebSocket(`${proto}://${location.host}/ws/host`);
-  ws.onopen = () => toast('Connected', 'ok');
   ws.onmessage = e => {
     const msg = JSON.parse(e.data);
-    if (msg.type === 'state_update') {
-      state = msg.state;
-      board = msg.board || [];
-      render();
-    } else if (msg.type === 'prices_bulk') {
-      if (state && msg.prices) {
-        for (const [k, v] of Object.entries(msg.prices)) {
-          if (state.companies[k]) state.companies[k].price = v;
-        }
-      }
-      if (msg.board) board = msg.board;
-      renderPrices();
-      renderLeaderboard();
-    } else if (msg.type === 'player_joined') {
-      toast(`${msg.name} joined (${msg.code})`, 'info');
-      document.getElementById('stat-players').textContent = parseInt(document.getElementById('stat-players').textContent || '0') + 1;
-      loadCodes();
-      refreshPlayers();
-    } else if (msg.type === 'player_kicked') {
-      toast(`${msg.name} was kicked.`, 'info');
-      if (msg.board) board = msg.board;
-      refreshPlayers();
-      renderLeaderboard();
-    } else if (msg.type === 'quiz_buzzed') {
-      const el = document.getElementById('buzz-alert');
-      document.getElementById('buzz-name').textContent = msg.name;
-      el.classList.add('show');
-      toast(`⚡ ${msg.name} buzzed first!`, 'ok');
-    } else if (msg.type === 'reset') {
-      location.reload();
+    if (msg.type === 'state_update' || msg.type === 'prices_bulk') {
+      if (msg.state) { state = msg.state; applyState(); }
+      if (msg.board) { board = msg.board; renderLeaderboard(); }
+      if (msg.player_count !== undefined) document.getElementById('stat-players').textContent = msg.player_count;
+      if (msg.sentiment) { sentimentData = msg.sentiment; renderSentiment(); }
     }
+    if (msg.type === 'player_kicked') {
+      toast(`Kicked: ${msg.name}`, 'info');
+      refreshPlayers();
+    }
+    if (msg.type === 'reset') location.reload();
   };
-  ws.onclose = () => {
-    toast('WS disconnected. Reconnecting...', 'err');
-    setTimeout(connectWS, 2000);
-  };
+  ws.onclose = () => setTimeout(connectWS, 2000);
+  // Ping every 5s for live updates
+  setInterval(() => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({type:'ping'})); }, 5000);
 }
 
-function ping() {
-  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ping' }));
-}
-setInterval(ping, 3000);
-
-// ── Render ────────────────────────────────────────────────────────────────────
-function render() {
+// ── State apply ────────────────────────────────────────────────────────────────
+function applyState() {
   if (!state) return;
-  renderPhase();
-  renderPrices();
-  renderLeaderboard();
-  renderNewsLog();
-  renderRoundGuide();
-  populateSelects();
-  const pcount = board.length;
-  document.getElementById('stat-players').textContent = pcount;
-  document.getElementById('stat-round').textContent   = state.round + ' / 6';
-  document.getElementById('stat-phase').textContent   = { lobby:'Lobby', trading:'Trading', break:'Break', ended:'Ended' }[state.phase] || state.phase;
-}
-
-function renderPhase() {
+  const ph = state.phase;
+  // Phase banner
   const banner = document.getElementById('phase-banner');
-  const labels = {
-    lobby:   ['ph-lobby',   '⏳ Lobby — waiting to start'],
-    trading: ['ph-trading', '🟢 ROUND ' + state.round + ' — Trading Open'],
-    break:   ['ph-break',   '☕ Break — Round ' + state.round + ' ended'],
-    ended:   ['ph-ended',   '🏁 Game Over'],
-  };
-  const [cls, txt] = labels[state.phase] || labels.lobby;
-  banner.className = 'phase-banner ' + cls;
-  banner.textContent = txt;
+  const phMap  = { lobby:'ph-lobby', trading:'ph-trading', break:'ph-break', ended:'ph-ended' };
+  const phTxt  = { lobby:'⏳ Lobby — waiting to start', trading:`🟢 Round ${state.round} — TRADING`,
+                   break:`⏸ Break after Round ${state.round}`, ended:'🏁 Game Over' };
+  banner.className = 'phase-banner ' + (phMap[ph] || 'ph-lobby');
+  banner.textContent = phTxt[ph] || ph;
 
-  const btnStart   = document.getElementById('btn-start');
-  const btnEnd     = document.getElementById('btn-end');
-  const btnEndGame = document.getElementById('btn-end-game');
+  document.getElementById('stat-phase').textContent  = ph.charAt(0).toUpperCase() + ph.slice(1);
+  document.getElementById('stat-round').textContent  = state.round + ' / 6';
+  document.getElementById('btn-start').textContent   = ph === 'break' ? `▶ Start Round ${state.round + 1}` : `▶ Start Round 1`;
+  document.getElementById('btn-start').disabled  = ph === 'trading' || ph === 'ended';
+  document.getElementById('btn-end').disabled    = ph !== 'trading';
+  document.getElementById('btn-end-game').disabled = ph === 'lobby' || ph === 'ended';
 
-  if (state.phase === 'lobby') {
-    btnStart.textContent = '▶ Start Round 1';
-    btnStart.disabled = false;
-    btnEnd.disabled   = true;
-    btnEndGame.disabled = true;
-  } else if (state.phase === 'trading') {
-    btnStart.textContent = '▶ Round ' + state.round;
-    btnStart.disabled = true;
-    btnEnd.disabled   = false;
-    btnEndGame.disabled = (state.round < 6);
-  } else if (state.phase === 'break') {
-    const next = state.round + 1;
-    btnStart.textContent = next <= 6 ? '▶ Start Round ' + next : '(All rounds done)';
-    btnStart.disabled = next > 6;
-    btnEnd.disabled   = true;
-    btnEndGame.disabled = (state.round < 6);
+  // Timer
+  clearInterval(timerInt);
+  if (ph === 'trading' && state.round_end_time) {
+    updateTimer(state.round_end_time, 1200, 'var(--green)');
+  } else if (ph === 'break' && state.break_end_time) {
+    updateTimer(state.break_end_time, 300, 'var(--orange)');
   } else {
-    btnStart.disabled = true;
-    btnEnd.disabled   = true;
-    btnEndGame.disabled = true;
+    document.getElementById('timer-bar').style.width = '0%';
+    document.getElementById('timer-label').textContent = '—';
   }
+
+  renderPlaybook(state.round);
+  renderPrices();
+  populateStockSelects();
+
+  // IPO listed status
+  listedIPOs = new Set(state.ipo_listed || []);
+  updateIPOButtons();
 }
 
-function renderPrices() {
-  if (!state) return;
-  const grid = document.getElementById('price-grid');
-  let html = '';
-  for (const [cid, c] of Object.entries(state.companies)) {
-    const chg = c.price - (c.prev_price || c.price);
-    const pct = c.prev_price ? ((chg / c.prev_price) * 100).toFixed(1) : '0.0';
-    const dir = chg > 0 ? 'up' : chg < 0 ? 'dn' : 'nc';
-    const arr = chg > 0 ? '▲' : chg < 0 ? '▼' : '—';
-    html += `<div class="price-tile">
-      <div class="pt-sym">${cid.toUpperCase()}</div>
-      <div class="pt-name">${c.name}</div>
-      <div class="pt-price">${fmt(c.price)}</div>
-      <div class="pt-chg ${dir}">${arr} ${pct}%</div>
-    </div>`;
-  }
-  grid.innerHTML = html;
-}
-
-function renderLeaderboard() {
-  const list = document.getElementById('lb-list');
-  if (!board.length) { list.innerHTML = '<div style="color:var(--muted);font-size:13px">No players yet.</div>'; return; }
-  const rankCls = ['gold','silver','bronze'];
-  list.innerHTML = board.map(p => {
-    const code = nameToCode[p.name] || '';
-    return `
-    <div class="lb-row">
-      <div class="lb-rank ${rankCls[p.rank-1]||''}">${p.rank}</div>
-      <div style="display:flex;flex-direction:column;flex:1;min-width:0">
-        <div class="lb-name">${p.name}</div>
-        ${code ? `<div class="lb-code">${code}</div>` : ''}
-      </div>
-      <div class="lb-nw">${fmt(p.net_worth)}</div>
-      <button class="lb-kick" onclick="kickPlayer('${p.name}','${code}')">Kick</button>
-    </div>`;
-  }).join('');
-}
-
-function renderNewsLog() {
-  if (!state) return;
-  const log = document.getElementById('news-log');
-  if (!state.news || !state.news.length) return;
-  log.innerHTML = [...state.news].reverse().map(n => {
-    const realTag = n.real !== undefined
-      ? (n.real ? '<span style="color:var(--green);font-size:11px">✅ Real</span>' : '<span style="color:var(--red);font-size:11px">❌ Fake</span>')
-      : '';
-    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-        <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">${n.label||n.type}</span>
-        ${realTag}
-        <span style="font-size:11px;color:var(--muted);margin-left:auto">${(n.affects||'').toUpperCase()}</span>
-      </div>
-      <div style="font-size:13px;color:var(--text);line-height:1.5">${n.text}</div>
-    </div>`;
-  }).join('');
-}
-
-function populateSelects() {
-  if (!state) return;
-  const companies = state.companies;
-  const opts = Object.entries(companies).map(([k, c]) => `<option value="${k}">${c.name}</option>`).join('');
-  ['news-stock','manual-stock','circuit-stock','hostile-stock'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = opts;
-  });
-}
-
-// ── Timer tick ────────────────────────────────────────────────────────────────
-function startTimerTick() {
-  setInterval(() => {
-    if (!state) return;
-    const bar   = document.getElementById('timer-bar');
-    const label = document.getElementById('timer-label');
-    let remaining = 0, total = 1200;
-    if (state.phase === 'trading' && state.round_end_time) {
-      remaining = Math.max(0, state.round_end_time - Date.now()/1000);
-      total     = 1200;
-    } else if (state.phase === 'break' && state.break_end_time) {
-      remaining = Math.max(0, state.break_end_time - Date.now()/1000);
-      total     = 300;
-    } else {
-      bar.style.width = '0%';
-      label.textContent = '—';
-      return;
-    }
-    const pct    = Math.min(100, ((total - remaining) / total) * 100);
-    const mins   = Math.floor(remaining / 60);
-    const secs   = Math.floor(remaining % 60);
+function updateTimer(endTime, duration, color) {
+  const bar   = document.getElementById('timer-bar');
+  const label = document.getElementById('timer-label');
+  bar.style.background = color;
+  timerInt = setInterval(() => {
+    const remaining = Math.max(0, endTime - Date.now() / 1000);
+    const pct = (remaining / duration) * 100;
     bar.style.width = pct + '%';
-    label.textContent = remaining > 0 ? `${mins}m ${String(secs).padStart(2,'0')}s remaining` : 'Time up — advance manually';
-    // Colour shift
-    if (state.phase === 'trading') {
-      bar.style.background = pct < 50 ? 'var(--green)' : pct < 75 ? 'var(--gold)' : 'var(--red)';
-    } else {
-      bar.style.background = 'var(--blue)';
-    }
+    const m = Math.floor(remaining / 60), s = Math.floor(remaining % 60);
+    label.textContent = remaining > 0 ? `${m}:${s.toString().padStart(2,'0')} remaining` : 'Time up';
+    if (remaining <= 0) clearInterval(timerInt);
   }, 1000);
 }
 
-// ── API calls ─────────────────────────────────────────────────────────────────
-async function apiPost(path, body={}) {
-  const url = `${path}?pw=${encodeURIComponent(pw)}`;
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.detail || 'Error');
-  return data;
+// ── Prices ─────────────────────────────────────────────────────────────────────
+function renderPrices() {
+  if (!state?.companies) return;
+  const grid = document.getElementById('price-grid');
+  let html = '';
+  for (const [cid, c] of Object.entries(state.companies)) {
+    const prev = c.prev_price || c.price;
+    const chg  = c.price - prev;
+    const pct  = prev ? ((chg / prev) * 100).toFixed(1) : '0.0';
+    const dir  = chg > 0 ? 'up' : chg < 0 ? 'dn' : 'nc';
+    const arrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '—';
+    html += `<div class="price-tile">
+      <div class="pt-sym">${cid.toUpperCase()}</div>
+      <div class="pt-name">${c.name}</div>
+      <div class="pt-price">₹${c.price.toLocaleString('en-IN')}</div>
+      <div class="pt-chg ${dir}">${arrow} ${pct}%</div>
+    </div>`;
+  }
+  grid.innerHTML = html || '<div style="color:var(--muted)">No companies loaded.</div>';
 }
 
-async function apiDelete(path) {
-  const r = await fetch(`${path}?pw=${encodeURIComponent(pw)}`, { method: 'DELETE' });
-  return r.json();
+// ── Leaderboard ────────────────────────────────────────────────────────────────
+function renderLeaderboard() {
+  const list = document.getElementById('lb-list');
+  if (!board.length) { list.innerHTML = '<div style="color:var(--muted);font-size:13px">No players yet.</div>'; return; }
+  const cls = ['gold','silver','bronze'];
+  list.innerHTML = board.map(p => `
+    <div class="lb-row">
+      <div class="lb-rank ${cls[p.rank-1]||''}">${p.rank}</div>
+      <div>
+        <div class="lb-name">${p.name}</div>
+        <div class="lb-code">${nameToCode[p.name] || ''}</div>
+      </div>
+      <div class="lb-nw" style="flex:1;text-align:right">${fmt(p.net_worth)}</div>
+      <button class="lb-kick" onclick="kickPlayer('${nameToCode[p.name]}','${p.name}')">Kick</button>
+    </div>`).join('');
 }
 
-// ── Round controls ────────────────────────────────────────────────────────────
-async function startRound() {
-  try {
-    await apiPost('/api/host/start_round');
-    toast('Round started!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
+// ── Codes ──────────────────────────────────────────────────────────────────────
+async function loadCodes() {
+  const r = await fetch('/api/codes');
+  const d = await r.json();
+  const grid = document.getElementById('code-grid');
+  if (!d.codes.length) { grid.innerHTML = '<div style="font-size:13px;color:var(--muted)">No codes yet.</div>'; return; }
+  const used = new Set(d.used);
+  grid.innerHTML = d.codes.map(c => `
+    <div class="code-chip ${used.has(c)?'used':''}">
+      ${c}
+      <span class="del" onclick="deleteCode('${c}')">✕</span>
+    </div>`).join('');
 }
 
-async function endRound() {
-  try {
-    await apiPost('/api/host/end_round');
-    toast('Round ended. Break started.', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function endGame() {
-  try {
-    await apiPost('/api/host/end_game');
-    toast('Game over! Final leaderboard pushed.', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function resetGame() {
-  closeModal('modal-reset');
-  try {
-    await fetch('/api/reset', { method: 'POST' });
-    location.reload();
-  } catch(e) { toast('Reset failed.', 'err'); }
-}
-function confirmReset() { document.getElementById('modal-reset').classList.add('open'); }
-
-// ── Codes ─────────────────────────────────────────────────────────────────────
 async function genCodes() {
   const n = parseInt(document.getElementById('code-count').value) || 10;
-  try {
-    await apiPost(`/api/codes/generate?count=${n}`);
-    await loadCodes();
-    toast(`Generated ${n} codes`, 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function loadCodes() {
-  try {
-    const data = await (await fetch('/api/codes')).json();
-    const grid = document.getElementById('code-grid');
-    // Also populate intel select
-    const sel = document.getElementById('intel-code');
-    if (sel) sel.innerHTML = data.codes.map(c => `<option value="${c}">${c}${data.used.includes(c)?'  ✓':''}</option>`).join('');
-    if (!data.codes.length) { grid.innerHTML = '<div style="font-size:13px;color:var(--muted)">No codes yet.</div>'; return; }
-    grid.innerHTML = data.codes.map(c => {
-      const used = data.used.includes(c);
-      return `<div class="code-chip ${used?'used':''}">
-        ${c}${used?' ✓':''}
-        <span class="del" onclick="deleteCode('${c}')" title="Remove">×</span>
-      </div>`;
-    }).join('');
-  } catch(e) {}
+  await fetch(`/api/codes/generate?count=${n}`, { method:'POST' });
+  await loadCodes();
+  toast(`Generated ${n} codes`, 'ok');
 }
 
 async function deleteCode(code) {
-  if (!confirm(`Remove code ${code}?`)) return;
-  await apiDelete(`/api/codes/${code}`);
-  loadCodes();
-  toast(`Removed ${code}`, 'info');
+  await fetch(`/api/codes/${code}`, { method:'DELETE' });
+  await loadCodes();
 }
 
-// ── Manual price ──────────────────────────────────────────────────────────────
-function prefillPrice() {
-  const stock = document.getElementById('manual-stock').value;
-  if (state && state.companies[stock]) {
-    document.getElementById('manual-price').value = state.companies[stock].price;
+// ── Players / name→code map ────────────────────────────────────────────────────
+async function refreshPlayers() {
+  const r = await fetch('/api/players');
+  const d = await r.json();
+  nameToCode = d.players || {};
+  // Populate selects
+  const codes = Object.entries(nameToCode); // [name, code]
+  for (const id of ['intel-code','adj-code']) {
+    const sel = document.getElementById(id);
+    if (!sel) continue;
+    sel.innerHTML = codes.map(([name,code]) => `<option value="${code}">${name} (${code})</option>`).join('');
   }
+  if (d.board) { board = d.board; renderLeaderboard(); }
+  // Refresh loans
+  refreshLoans();
+}
+
+async function refreshLoans() {
+  const r = await fetch('/api/players/detail');
+  const d = await r.json();
+  const BANKS = { bharat:'Bharat Bank', vcx:'VentureCapX', shadow:'ShadowCredit' };
+  const playersWithLoans = (d.players || []).filter(p => p.total_loan > 0);
+  const list = document.getElementById('loans-list');
+  if (!playersWithLoans.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px">No active loans.</div>';
+    return;
+  }
+  let html = '';
+  for (const [bankId, bankName] of Object.entries(BANKS)) {
+    const holders = playersWithLoans.filter(p => p.loans?.[bankId] > 0);
+    if (!holders.length) continue;
+    html += `<div class="bank-section"><div class="bank-title">${bankName}</div>`;
+    for (const p of holders) {
+      html += `<div class="player-loan-row">
+        <div><span style="font-weight:600;font-size:13px">${p.name}</span><span style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px">${p.code}</span></div>
+        <div style="font-family:var(--mono);font-size:13px;color:var(--red)">${fmt(p.loans[bankId])}</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  // Total interest due
+  const totalLoan = playersWithLoans.reduce((s,p) => s + p.total_loan, 0);
+  html += `<div style="margin-top:8px;font-size:12px;color:var(--muted)">Total outstanding across all players: <span style="color:var(--red);font-family:var(--mono)">${fmt(totalLoan)}</span></div>`;
+  list.innerHTML = html;
+}
+
+// ── Sentiment ──────────────────────────────────────────────────────────────────
+async function renderSentiment() {
+  const grid = document.getElementById('sentiment-grid');
+  if (!Object.keys(sentimentData).length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:13px">No bets placed yet.</div>';
+    return;
+  }
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">';
+  const companies = state?.companies || {};
+  for (const [cid, s] of Object.entries(sentimentData)) {
+    const name = companies[cid]?.name || cid;
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">${name}</div>
+      <div class="sentiment-bar">
+        <div style="flex:${s.up_pct};background:var(--green);border-radius:99px 0 0 99px"></div>
+        <div style="flex:${s.down_pct};background:var(--red);border-radius:0 99px 99px 0"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:4px">
+        <span style="color:var(--green)">▲ ${s.up_pct}%</span>
+        <span style="color:var(--red)">▼ ${s.down_pct}%</span>
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  grid.innerHTML = html;
+
+  // Bets list refresh from API
+  const r = await fetch('/api/predictions/overview');
+  const d = await r.json();
+  const bl = document.getElementById('bets-list');
+  if (!d.bets?.length) { bl.innerHTML = '<div style="color:var(--muted);font-size:13px">No bets placed yet.</div>'; return; }
+  bl.innerHTML = d.bets.map(b => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:4px">
+      <div><span style="font-weight:600;font-size:13px">${b.player}</span> <span style="color:var(--muted);font-size:11px">on ${b.stock_name}</span></div>
+      <div style="text-align:right">
+        <span style="color:${b.direction==='up'?'var(--green)':'var(--red)'};font-weight:700">${b.direction==='up'?'▲':'▼'} ${b.direction?.toUpperCase()}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px">→₹${Math.round(b.target||0).toLocaleString('en-IN')} · bet ${fmt(b.amount||0)}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── Stock selects ──────────────────────────────────────────────────────────────
+function populateStockSelects() {
+  if (!state?.companies) return;
+  const options = Object.entries(state.companies).map(([k,c]) => `<option value="${k}">${c.name}</option>`).join('');
+  for (const id of ['news-stock','manual-stock','dividend-stock','acq-stock1','acq-stock2']) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = options;
+  }
+  const manualSel = document.getElementById('manual-stock');
+  if (manualSel) manualSel.onchange = prefillPrice;
+}
+
+function prefillPrice() {
+  const cid = document.getElementById('manual-stock')?.value;
+  if (cid && state?.companies?.[cid]) {
+    document.getElementById('manual-price').value = state.companies[cid].price;
+  }
+}
+
+// ── Playbook ───────────────────────────────────────────────────────────────────
+function renderPlaybook(currentRound) {
+  const el = document.getElementById('round-guide');
+  el.innerHTML = PLAYBOOK.map(p => `
+    <div style="padding:10px 12px;border-radius:8px;border:1px solid ${p.r===currentRound?'rgba(240,180,41,0.4)':' var(--border)'};background:${p.r===currentRound?'rgba(240,180,41,0.06)':'var(--surface)'}">
+      <div style="font-weight:700;font-size:12px;color:${p.r===currentRound?'var(--gold)':'var(--muted)'}">Round ${p.r}${p.r===currentRound?' ← CURRENT':''}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">${p.tip}</div>
+    </div>`).join('');
+}
+
+// ── Game controls ──────────────────────────────────────────────────────────────
+async function startRound() {
+  const r = await fetch(`/api/host/start_round?pw=${encodeURIComponent(pw)}`, {method:'POST'});
+  if (!r.ok) { const d=await r.json(); toast(d.detail||'Error','err'); return; }
+  toast('Round started!','ok');
+  refreshPlayers();
+}
+
+async function endRound() {
+  if (!confirm('End this round? Interest will be charged on all loans.')) return;
+  const r = await fetch(`/api/host/end_round?pw=${encodeURIComponent(pw)}`, {method:'POST'});
+  if (!r.ok) { const d=await r.json(); toast(d.detail||'Error','err'); return; }
+  toast('Round ended. Break started.','ok');
+  refreshPlayers();
+}
+
+async function endGame() {
+  if (!confirm('End the game and reveal final leaderboard?')) return;
+  await fetch(`/api/host/end_game?pw=${encodeURIComponent(pw)}`, {method:'POST'});
+  toast('Game ended!','ok');
+}
+
+async function kickPlayer(code, name) {
+  if (!confirm(`Kick ${name}?`)) return;
+  const r = await fetch(`/api/players/${code}?pw=${encodeURIComponent(pw)}`, {method:'DELETE'});
+  if (!r.ok) { toast('Error kicking player','err'); return; }
+  toast(`Kicked ${name}`,'ok');
+  refreshPlayers();
 }
 
 async function manualPrice() {
   const stock = document.getElementById('manual-stock').value;
   const price = parseInt(document.getElementById('manual-price').value);
-  if (!price || price < 1) return toast('Enter a valid price.', 'err');
-  try {
-    await apiPost('/api/host/manual_price', { stock, price });
-    toast('Price updated!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
+  if (!stock || !price) return toast('Select stock and enter price','err');
+  const r = await fetch(`/api/host/manual_price?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({stock, price})
+  });
+  toast(r.ok ? `Price set ✓` : 'Error','ok');
 }
 
-// ── News injection ────────────────────────────────────────────────────────────
+// ── News ───────────────────────────────────────────────────────────────────────
 async function injectNews() {
-  const text = document.getElementById('news-text').value.trim();
-  if (!text) return toast('Enter news text.', 'err');
-  try {
-    await apiPost('/api/host/inject_news', {
-      type:      document.getElementById('news-type').value,
-      label:     { event: 'Market Event', rumour: 'Unverified Rumour', insider: 'Insider Hint' }[document.getElementById('news-type').value],
-      text,
-      affects:   document.getElementById('news-stock').value,
-      direction: parseInt(document.getElementById('news-dir').value),
-      real:      document.getElementById('news-real').value === '1',
-    });
-    document.getElementById('news-text').value = '';
-    toast('News injected!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
+  const verified  = document.getElementById('news-verified').value === '1';
+  const stock     = document.getElementById('news-stock').value;
+  const direction = parseInt(document.getElementById('news-dir').value);
+  const strength  = parseFloat(document.getElementById('news-strength').value);
+  const text      = document.getElementById('news-text').value.trim();
+  if (!text || !stock) return toast('Fill all news fields','err');
+  const r = await fetch(`/api/host/inject_news?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({verified, affects: stock, direction, strength, text})
+  });
+  if (!r.ok) { toast('Error','err'); return; }
+  toast('News injected ✓','ok');
+  document.getElementById('news-text').value = '';
+  // Add to log
+  const log = document.getElementById('news-log');
+  const div = document.createElement('div');
+  div.className = 'news-log-item';
+  div.innerHTML = `<span class="news-tag ${verified?'tag-v':'tag-u'}">${verified?'Verified':'Unverified'}</span>
+    <div style="font-size:12px;color:var(--text);margin-top:2px">${text}</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">${stock} · ${direction>0?'↑ Up':'↓ Down'} · strength ${strength} · ${new Date().toLocaleTimeString()}</div>`;
+  if (log.querySelector('div[style]')) log.innerHTML = '';
+  log.prepend(div);
 }
 
-async function injectFakeReport(isFake) {
-  const text = document.getElementById('fake-report-text').value.trim();
-  if (!text) return toast('Enter report text.', 'err');
-  // Drops to all players as "Analyst Report" but marks real/fake for host visibility
-  try {
-    await apiPost('/api/host/inject_news', {
-      type:      'rumour',
-      label:     'Analyst Report',
-      text,
-      affects:   document.getElementById('news-stock').value,
-      direction: isFake ? -1 : 1,
-      real:      !isFake,
-    });
-    document.getElementById('fake-report-text').value = '';
-    toast('Report dropped to all players.', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
+// ── Chaos events ───────────────────────────────────────────────────────────────
+async function triggerRegulatoryFreeze() {
+  const sector = document.getElementById('freeze-sector').value;
+  const r = await fetch(`/api/chaos/regulatory_freeze?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({sector})
+  });
+  const d = await r.json();
+  if (!r.ok) { toast(d.detail||'Error','err'); return; }
+  closeModal('modal-reg-freeze');
+  toast(`🚫 Regulatory Freeze on ${sector}!`, 'ok');
 }
 
-// ── Secret intel ──────────────────────────────────────────────────────────────
+async function triggerDividend() {
+  const stock     = document.getElementById('dividend-stock').value;
+  const per_share = parseInt(document.getElementById('dividend-per-share').value);
+  if (!per_share) return toast('Enter dividend amount','err');
+  const r = await fetch(`/api/chaos/dividend?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({stock, per_share})
+  });
+  const d = await r.json();
+  if (!r.ok) { toast(d.detail||'Error','err'); return; }
+  closeModal('modal-dividend');
+  toast(`💰 Dividend paid! Total: ${fmt(d.total_paid||0)}`, 'ok');
+  refreshPlayers();
+}
+
+async function triggerAcquisition() {
+  const stock1 = document.getElementById('acq-stock1').value;
+  const stock2 = document.getElementById('acq-stock2').value;
+  if (stock1 === stock2) return toast('Pick two different stocks','err');
+  const r = await fetch(`/api/chaos/acquisition_rumour?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({stock1, stock2})
+  });
+  if (!r.ok) { toast('Error','err'); return; }
+  closeModal('modal-acquisition');
+  toast('🤝 Acquisition Rumour spread!','ok');
+}
+
+async function triggerCreditCrunch() {
+  if (!confirm('Trigger Credit Crunch? All bank rates +5% this round.')) return;
+  const r = await fetch(`/api/chaos/credit_crunch?pw=${encodeURIComponent(pw)}`, {method:'POST'});
+  toast(r.ok ? '💸 Credit Crunch triggered!' : 'Error', r.ok ? 'ok' : 'err');
+}
+
+// ── IPO Drops ──────────────────────────────────────────────────────────────────
+async function dropIPO(ipoId) {
+  if (listedIPOs.has(ipoId)) { toast('Already listed','err'); return; }
+  const names = { novapay:'NovaPay', greenleaf:'GreenLeaf Agri', armorinc:'ArmorInc', bytecorp:'ByteCorp AI' };
+  if (!confirm(`Drop ${names[ipoId]} IPO now?`)) return;
+  const r = await fetch(`/api/chaos/ipo_drop/${ipoId}?pw=${encodeURIComponent(pw)}`, {method:'POST'});
+  const d = await r.json();
+  if (!r.ok) { toast(d.detail||'Error','err'); return; }
+  toast(`🚀 ${names[ipoId]} listed!`, 'ok');
+  listedIPOs.add(ipoId);
+  updateIPOButtons();
+}
+
+function updateIPOButtons() {
+  const ids = ['novapay','greenleaf','armorinc','bytecorp'];
+  const lbl = document.getElementById('ipo-status-label');
+  const listed = ids.filter(id => listedIPOs.has(id));
+  lbl.textContent = listed.length ? `Listed: ${listed.map(id=>({novapay:'NovaPay',greenleaf:'GreenLeaf Agri',armorinc:'ArmorInc',bytecorp:'ByteCorp AI'}[id])).join(', ')}` : 'No IPOs listed yet.';
+  for (const id of ids) {
+    const btn = document.getElementById(`ipo-btn-${id}`);
+    if (!btn) continue;
+    if (listedIPOs.has(id)) {
+      btn.classList.add('disabled-btn');
+      btn.querySelector('.cb-name').textContent += ' ✓ Listed';
+    }
+  }
+}
+
+// ── Secret Intel ───────────────────────────────────────────────────────────────
 async function sendIntel() {
   const code = document.getElementById('intel-code').value;
   const text = document.getElementById('intel-text').value.trim();
-  if (!code || !text) return toast('Fill both fields.', 'err');
-  try {
-    await apiPost('/api/host/secret_intel', { code, text });
-    document.getElementById('intel-text').value = '';
-    toast('Intel sent privately.', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
+  if (!code || !text) return toast('Fill all fields','err');
+  const r = await fetch(`/api/host/secret_intel?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({code, text})
+  });
+  if (!r.ok) { toast('Error sending intel','err'); return; }
+  toast('🔒 Secret intel sent!','ok');
+  document.getElementById('intel-text').value = '';
 }
 
-// ── Chaos ─────────────────────────────────────────────────────────────────────
-async function triggerChaos(event) {
-  const map = {
-    tax_raid:     '/api/chaos/tax_raid',
-    ipo_drop:     '/api/chaos/ipo_drop',
-    market_crash: '/api/chaos/market_crash',
-  };
-  if (!map[event]) return;
-  if (!confirm(`Trigger ${event.replace(/_/g,' ')}?`)) return;
-  try {
-    await apiPost(map[event]);
-    toast(`${event} triggered!`, 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
+// secret_intel endpoint doesn't exist yet — add it to main.py
+// For now it uses the existing /api/host/secret_intel route
 
-function openChaosModal(type) {
-  const modals = { circuit:'modal-circuit', bull_run:'modal-bull', hostile:'modal-hostile', insider_scandal:'modal-insider-scandal', blackout:'modal-blackout' };
-  const id = modals[type];
-  if (id) document.getElementById(id).classList.add('open');
-}
-
-async function triggerCircuit() {
-  const stock = document.getElementById('circuit-stock').value;
-  closeModal('modal-circuit');
-  try {
-    await apiPost('/api/chaos/circuit_breaker', { stock });
-    toast('Circuit breaker triggered!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function triggerBullRun() {
-  const sector = document.getElementById('bull-sector').value;
-  closeModal('modal-bull');
-  try {
-    await apiPost('/api/chaos/bull_run', { sector });
-    toast('Bull run triggered!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function triggerHostile() {
-  const target = document.getElementById('hostile-target').value.trim();
-  const stock  = document.getElementById('hostile-stock').value;
-  closeModal('modal-hostile');
-  try {
-    await apiPost('/api/chaos/hostile_takeover', { target, stock });
-    toast('Hostile takeover executed!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function triggerInsiderScandal() {
-  closeModal('modal-insider-scandal');
-  try {
-    await apiPost('/api/chaos/insider_scandal');
-    toast('Top player frozen!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function triggerBlackout() {
-  blackoutActive = !blackoutActive;
-  closeModal('modal-blackout');
-  try {
-    await apiPost('/api/chaos/blackout', { active: blackoutActive });
-    toast(`Blackout ${blackoutActive ? 'enabled' : 'disabled'}`, 'ok');
-    document.getElementById('blackout-status').textContent = blackoutActive ? 'Status: ⚠ BLACKOUT ACTIVE' : 'Status: Prices visible';
-    document.getElementById('btn-blackout-toggle').textContent = blackoutActive ? 'Disable Blackout' : 'Enable Blackout';
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-// ── Quiz ──────────────────────────────────────────────────────────────────────
-async function launchQuiz() {
-  const q = document.getElementById('quiz-q').value.trim();
-  document.getElementById('buzz-alert').classList.remove('show');
-  document.getElementById('buzz-name').textContent = '—';
-  try {
-    const data = await apiPost('/api/chaos/quiz', { question: q || null });
-    toast(`Quiz launched: "${data.question}"`, 'ok');
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-async function awardQuiz(correct) {
-  const winner = document.getElementById('quiz-winner').value.trim();
-  const amount = parseInt(document.getElementById('quiz-amount').value) || 50000;
-  if (!winner) return toast('Enter winner name.', 'err');
-  try {
-    await apiPost('/api/chaos/quiz_award', { winner, correct, amount });
-    toast(correct ? `+₹${amount.toLocaleString()} awarded to ${winner}` : 'No award.', 'ok');
-    document.getElementById('buzz-alert').classList.remove('show');
-    document.getElementById('quiz-winner').value = '';
-  } catch(e) { toast(e.message, 'err'); }
-}
-
-// ── Players ───────────────────────────────────────────────────────────────────
-async function refreshPlayers() {
-  try {
-    const data = await (await fetch('/api/players')).json();
-    nameToCode = data.players || {};
-    if (data.board) {
-      board = data.board;
-      renderLeaderboard();
-    }
-    // Refresh intel select with names + codes
-    const sel = document.getElementById('intel-code');
-    if (sel) {
-      sel.innerHTML = Object.entries(nameToCode)
-        .map(([name, code]) => `<option value="${code}">${name} (${code})</option>`)
-        .join('');
-    }
-    // Refresh adj-code select
-    const adj = document.getElementById('adj-code');
-    if (adj) {
-      adj.innerHTML = Object.entries(nameToCode)
-        .map(([name, code]) => `<option value="${code}">${name} (${code})</option>`)
-        .join('');
-    }
-  } catch(e) {}
-  // Also refresh loans tab
-  refreshLoans();
-}
-
-async function refreshLoans() {
-  try {
-    const data = await (await fetch('/api/players/detail')).json();
-    const list = document.getElementById('loans-list');
-    const withLoans = data.players.filter(p => p.loan > 0);
-    if (!withLoans.length) {
-      list.innerHTML = '<div style="color:var(--muted);font-size:13px">No active loans.</div>';
-      return;
-    }
-    list.innerHTML = withLoans.map(p => `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:12px">
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:600">${p.name}</div>
-          <div style="font-size:11px;color:var(--muted)">${p.code}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:var(--mono);font-size:14px;color:var(--red)">Loan: ${fmt(p.loan)}</div>
-          <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">NW: ${fmt(p.net_worth)}</div>
-        </div>
-        ${p.net_worth < p.loan ? '<div style="font-size:11px;font-weight:700;color:var(--red);padding:3px 8px;background:rgba(229,83,75,0.1);border-radius:5px">⚠ MARGIN RISK</div>' : ''}
-        ${p.frozen ? '<div style="font-size:11px;font-weight:700;color:var(--orange);padding:3px 8px;background:rgba(240,136,62,0.1);border-radius:5px">🔒 FROZEN</div>' : ''}
-      </div>`).join('');
-  } catch(e) {}
-}
-
+// ── Cash adjustment ────────────────────────────────────────────────────────────
 async function adjustCash() {
-  const code   = document.getElementById('adj-code').value;
-  const amount = parseInt(document.getElementById('adj-amount').value);
-  const dir    = parseInt(document.getElementById('adj-dir').value);
-  if (!code || !amount || amount < 1) return toast('Fill in player and amount.', 'err');
-  try {
-    await apiPost('/api/host/adjust_cash', { code, amount, direction: dir });
-    const name = Object.entries(nameToCode).find(([n,c]) => c === code)?.[0] || code;
-    toast(`${dir > 0 ? '+' : '-'}₹${amount.toLocaleString()} applied to ${name}.`, 'ok');
-    document.getElementById('adj-amount').value = '';
-  } catch(e) { toast(e.message, 'err'); }
+  const code      = document.getElementById('adj-code').value;
+  const amount    = parseInt(document.getElementById('adj-amount').value);
+  const direction = parseInt(document.getElementById('adj-dir').value);
+  if (!code || !amount) return toast('Fill all fields','err');
+  const r = await fetch(`/api/host/adjust_cash?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({code, amount, direction})
+  });
+  toast(r.ok ? 'Cash adjusted ✓' : 'Error', r.ok ? 'ok' : 'err');
+  refreshPlayers();
 }
 
-// ── Round guide ───────────────────────────────────────────────────────────────
-const ROUND_GUIDE = [
-  { round: 1, theme: "Stable Market",    colour: "var(--green)",  tips: ["Stable prices, small drift","Drop 2 news events","Let players learn the companies","No chaos yet — let them settle"] },
-  { round: 2, theme: "First Crash",      colour: "var(--orange)", tips: ["Drop a negative news on 1-2 stocks","Trigger Market Crash chaos","Watch panic selling begin","Good time for a secret intel tip"] },
-  { round: 3, theme: "Flash Quiz",       colour: "var(--blue)",   tips: ["Run Flash Quiz between rounds","Inject 3 news events at start","Trigger Bull Run on a random sector","IPO Drop is good here"] },
-  { round: 4, theme: "Blackout Round",   colour: "var(--purple)",  tips: ["Enable Blackout at round start","Players trade completely blind","Trigger Circuit Breaker mid-round","Disable blackout at round end"] },
-  { round: 5, theme: "IPO + Circuit",    colour: "var(--gold)",   tips: ["Drop NovaPay IPO if not done yet","Trigger Circuit Breaker on top stock","Insider Scandal on #1 player","Tax Raid keeps cash in check"] },
-  { round: 6, theme: "Final Round",      colour: "var(--red)",    tips: ["All news revealed — mark real/fake","Force-cover all shorts at game end","Hostile Takeover for drama","End game → final leaderboard"] },
-];
+// ── Reset ──────────────────────────────────────────────────────────────────────
+function confirmReset() { openModal('modal-reset'); }
 
-function renderRoundGuide() {
-  const el = document.getElementById('round-guide');
-  if (!el || !state) return;
-  const current = state.round;
-  el.innerHTML = ROUND_GUIDE.map(r => {
-    const active  = r.round === current && state.phase === 'trading';
-    const done    = r.round < current || (r.round === current && state.phase === 'break');
-    return `<div style="border-radius:8px;border:1px solid ${active ? r.colour : 'var(--border)'};
-      background:${active ? `rgba(0,0,0,0.4)` : 'transparent'};padding:10px 12px;
-      opacity:${done ? '0.45' : '1'};transition:all 0.3s">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${active?'8':'0'}px">
-        <span style="font-family:var(--mono);font-size:11px;color:${r.colour};font-weight:700">R${r.round}</span>
-        <span style="font-size:13px;font-weight:600;color:${active?'#fff':'var(--muted)'}">${r.theme}</span>
-        ${done ? '<span style="font-size:11px;color:var(--green);margin-left:auto">✓</span>' : ''}
-        ${active ? '<span style="font-size:11px;color:'+r.colour+';margin-left:auto;font-weight:700">NOW</span>' : ''}
-      </div>
-      ${active ? `<ul style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:3px">
-        ${r.tips.map(t => `<li style="font-size:12px;color:var(--muted);line-height:1.4">${t}</li>`).join('')}
-      </ul>` : ''}
-    </div>`;
-  }).join('');
+async function resetGame() {
+  await fetch('/api/reset', {method:'POST'});
+  closeModal('modal-reset');
+  toast('Game reset!','info');
+  location.reload();
 }
 
-async function kickPlayer(name, code) {
-  if (!code) {
-    // Fallback: try to look up from nameToCode
-    code = nameToCode[name];
-  }
-  if (!code) {
-    toast(`Can't find code for ${name}. Try refreshing.`, 'err');
-    return;
-  }
-  if (!confirm(`Kick ${name} (${code})? This removes them from the game and invalidates their code.`)) return;
-  try {
-    const r = await fetch(`/api/players/${code}?pw=${encodeURIComponent(pw)}`, { method: 'DELETE' });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.detail || 'Failed');
-    toast(`${name} has been kicked.`, 'ok');
-    delete nameToCode[name];
-    await refreshPlayers();
-    await loadCodes();
-  } catch(e) { toast(e.message, 'err'); }
-}
+// ── Modal helpers ──────────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
 
-// ── Utilities ─────────────────────────────────────────────────────────────────
+// ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
+  const panel = document.getElementById('tab-' + name);
+  if (panel) panel.classList.add('active');
+  if (btn)   btn.classList.add('active');
+  if (name === 'predict') renderSentiment();
+  if (name === 'loans')   refreshLoans();
+  if (name === 'leaderboard') refreshPlayers();
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-// Close modal on overlay click
-document.querySelectorAll('.modal-overlay').forEach(el => {
-  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
-});
-
+// ── Toast ──────────────────────────────────────────────────────────────────────
 function toast(msg, type='info') {
   const wrap = document.getElementById('toast-wrap');
   const el   = document.createElement('div');
@@ -1190,6 +956,15 @@ function toast(msg, type='info') {
   el.textContent = msg;
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 3500);
+}
+
+// ── secret_intel shim (host endpoint) ─────────────────────────────────────────
+// Added to main.py as /api/host/secret_intel
+async function secret_intel_shim(code, text) {
+  return fetch(`/api/host/secret_intel?pw=${encodeURIComponent(pw)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({code, text})
+  });
 }
 </script>
 </body>
