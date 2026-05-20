@@ -1,10 +1,17 @@
 """
-Market Mayhem — main.py  (Stage 2)
+Market Mayhem — main.py  (Stage 3)
 FastAPI + WebSockets + SQLite
-Run: uvicorn main:app --reload --port 8000
-Team view:  http://localhost:8000
-Host panel: http://localhost:8000/host
-Black mkt:  http://localhost:8000/bm  (skeleton, items in Stage 3)
+
+Local:   uvicorn main:app --reload --port 8000
+Railway: started automatically via Procfile (reads $PORT env var)
+
+Team view:    http://localhost:8000
+Host panel:   http://localhost:8000/host   (password via HOST_PASSWORD env var)
+Black market: http://localhost:8000/bm
+
+Env vars (set in Railway dashboard):
+  DB_PATH        = /data/game.db   (persistent volume mount)
+  HOST_PASSWORD  = <your password>
 """
 
 import asyncio, json, os, random, time, uuid
@@ -1035,28 +1042,8 @@ async def serve_host():
 
 @app.get("/bm", response_class=HTMLResponse)
 async def serve_bm():
-    # Black market skeleton — items built in Stage 3
-    return HTMLResponse("""<!DOCTYPE html><html><head><meta charset='UTF-8'>
-<meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>Black Market</title>
-<style>
-body{background:#0a0006;color:#e0c8f0;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box;}
-.c{text-align:center;max-width:360px;}
-.skull{font-size:64px;margin-bottom:24px;}
-h1{font-size:24px;color:#d1a6f7;margin-bottom:8px;}
-p{font-size:14px;color:rgba(255,255,255,0.4);line-height:1.6;}
-.enter-btn{margin-top:32px;padding:14px 32px;background:rgba(163,113,247,0.15);border:1px solid rgba(163,113,247,0.4);color:#d1a6f7;border-radius:8px;font-family:monospace;font-size:14px;cursor:pointer;}
-.code-input{width:100%;margin-top:16px;background:#0d0010;border:1px solid rgba(163,113,247,0.3);border-radius:8px;padding:12px;color:#e0c8f0;font-family:monospace;font-size:16px;text-align:center;outline:none;}
-</style></head><body>
-<div class='c'>
-  <div class='skull'>🖤</div>
-  <h1>Black Market</h1>
-  <p>You found it. Not everyone does.</p>
-  <p style='margin-top:16px;color:rgba(163,113,247,0.5)'>Items coming online soon. Check back mid-game.</p>
-  <input class='code-input' placeholder='Enter BM code' maxlength='8'>
-  <button class='enter-btn'>Enter</button>
-</div>
-</body></html>""")
+    p = BASE_DIR / "bm.html"
+    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>bm.html not found</h1>", status_code=200 if p.exists() else 404)
 
 # ── REST: code management ──────────────────────────────────────────────────────
 @app.post("/api/codes/generate")
@@ -1488,6 +1475,230 @@ async def wipe_loan(data: dict, pw: str):
     await manager.send_player(code, {"type": "player_update", "player": player_view(p, state)})
     return {"ok": True}
 
+# ── Black Market ──────────────────────────────────────────────────────────────
+BM_ITEMS = {
+    "insider_hint": {
+        "id":    "insider_hint",
+        "name":  "Insider Hint",
+        "icon":  "🔍",
+        "cost":  15_000,
+        "desc":  "A private, unverified tip on one stock — only you see it. Could be gold. Could be noise.",
+    },
+    "spread_rumour": {
+        "id":    "spread_rumour",
+        "name":  "Spread Rumour",
+        "icon":  "📢",
+        "cost":  10_000,
+        "desc":  "Plant an anonymous Unverified news item. You write the headline, pick the stock. Server applies a random price effect. No one knows it was you.",
+    },
+    "leak_card": {
+        "id":    "leak_card",
+        "name":  "Leak Card",
+        "icon":  "🃏",
+        "cost":  25_000,
+        "desc":  "One-time use. Broadcast a Verified-looking (but still Unverified badge) headline with a stronger price effect than a rumour. Maximum 1 per player per game.",
+    },
+}
+
+# Insider hints pool — drawn randomly when player buys one
+INSIDER_HINTS = [
+    ("zora",      1,  0.12, "A bulk order for Zora's industrial components just landed from a defence subcontractor. Unconfirmed but credible."),
+    ("zora",     -1,  0.10, "Zora's largest manufacturing plant reportedly running at 60% capacity due to a parts shortage. Not public yet."),
+    ("streamvx",  1,  0.13, "Word is StreamVerse's next original just wrapped production and early test screenings are exceptional."),
+    ("streamvx", -1,  0.11, "StreamVerse's latest subscriber data allegedly shows churn accelerating. Results due soon."),
+    ("freshco",   1,  0.10, "FreshCo's rural distribution numbers for this quarter are reportedly far ahead of estimates."),
+    ("freshco",  -1,  0.09, "A FreshCo manufacturing unit in Odisha is dealing with a quiet quality control issue. Not disclosed publicly."),
+    ("voltex",    1,  0.12, "Government officials have reportedly signed off internally on Voltex's subsidy renewal — announcement imminent."),
+    ("voltex",   -1,  0.11, "Voltex's Rajasthan solar project reportedly 4 months behind schedule due to grid connection delays."),
+    ("mediq",     1,  0.14, "MediQ's Zytravax trial data is reportedly clean and strong. Submission to DCGI is imminent."),
+    ("mediq",    -1,  0.13, "Rumoured adverse event in MediQ's Phase 3 trial being quietly reviewed internally. Nothing filed yet."),
+    ("skylink",   1,  0.13, "SkyLink's Q3 deal pipeline is reportedly the strongest in company history. Earnings surprise likely."),
+    ("skylink",  -1,  0.12, "SkyLink is quietly losing two enterprise clients to IndraNet. No public statement expected."),
+    ("swifthaul", 1,  0.11, "SwiftHaul's cold-chain pharma division just onboarded its first 3 hospital chains. Revenue starts next quarter."),
+    ("swifthaul",-1,  0.10, "SwiftHaul's primary e-commerce partner is reportedly in talks with a rival logistics firm."),
+    ("crownmart", 1,  0.11, "CrownMart's Q3 private-label sales are reportedly tracking 30% ahead of target."),
+    ("crownmart",-1,  0.10, "CrownMart is about to announce 40 more store closures beyond the previously disclosed 120."),
+    ("shieldgen", 1,  0.12, "ShieldGen's classified drone maintenance contract — widely rumoured — has reportedly been signed and sealed."),
+    ("indranet",  1,  0.11, "IndraNet just closed 3 large enterprise renewals at 20% higher ARR. Not announced yet."),
+    ("indranet", -1,  0.09, "A key IndraNet engineering team is reportedly being poached by SkyLink en masse."),
+    ("novapay",   1,  0.13, "NovaPay's RBI KYC issue has reportedly been resolved behind closed doors. Formal clearance expected soon."),
+    ("bytecorp",  1,  0.14, "ByteCorp's government contract — the big one — is in final legal sign-off. Announcement within days."),
+    ("bytecorp", -1,  0.13, "ByteCorp's lead model engineer has quietly resigned. Harder to replace than the market realises."),
+    ("greenleaf", 1,  0.11, "GreenLeaf's Gulf export deal is reportedly finalised. ₹2,000 crore annually — transformative if confirmed."),
+    ("armorinc",  1,  0.11, "ArmorInc's surveillance tech acquisition is almost done. Completion expected before next round."),
+]
+
+@app.get("/api/bm/items")
+async def bm_items(code: str):
+    """Return BM items + player's purchase history for this game."""
+    p = await get_player(code.upper())
+    if not p:
+        raise HTTPException(404, "Player not found")
+    used_leak = any(e["item"] == "leak_card" for e in p.get("bm_log", []))
+    items = []
+    for item in BM_ITEMS.values():
+        items.append({**item, "locked": item["id"] == "leak_card" and used_leak})
+    return {"items": items, "cash": p["cash"], "name": p["name"]}
+
+@app.post("/api/bm/buy")
+async def bm_buy(data: dict):
+    """
+    Purchase a black market item.
+    data: { code, item_id, stock (for spread_rumour/leak_card), direction, text (for spread_rumour/leak_card) }
+    """
+    code    = data.get("code", "").upper()
+    item_id = data.get("item_id")
+    p = await get_player(code)
+    if not p or not p["name"]:
+        raise HTTPException(400, "Invalid player")
+    if item_id not in BM_ITEMS:
+        raise HTTPException(400, "Unknown item")
+    item  = BM_ITEMS[item_id]
+    cost  = item["cost"]
+    state = await read_state()
+
+    if p["cash"] < cost:
+        raise HTTPException(400, f"Not enough cash. Need ₹{cost:,}, have ₹{int(p['cash']):,}.")
+
+    # Leak card: one per game
+    if item_id == "leak_card":
+        if any(e["item"] == "leak_card" for e in p.get("bm_log", [])):
+            raise HTTPException(400, "You've already used your Leak Card this game.")
+
+    p["cash"] -= cost
+    log_entry = {
+        "item": item_id, "cost": cost,
+        "ts": time.time(), "player": p["name"],
+    }
+
+    # ── Insider Hint ──────────────────────────────────────────────────────────
+    if item_id == "insider_hint":
+        # Pick a random hint for a listed stock
+        listed = set(state.get("ipo_listed", []))
+        pool   = [h for h in INSIDER_HINTS if h[0] in state["companies"]]
+        if not pool:
+            raise HTTPException(500, "No hints available right now.")
+        hint = random.choice(pool)
+        cid, direction, strength, text = hint
+        log_entry["stock"]     = cid
+        log_entry["direction"] = direction
+        log_entry["text"]      = text
+        # Deliver private news to the buyer
+        await manager.send_player(code, {
+            "type":    "news",
+            "label":   "🔍 Insider Hint",
+            "text":    text,
+            "private": True,
+            "type_tag": "unverified",
+        })
+
+    # ── Spread Rumour ─────────────────────────────────────────────────────────
+    elif item_id == "spread_rumour":
+        stock     = data.get("stock")
+        direction = int(data.get("direction", 1))
+        text      = data.get("text", "").strip()[:200]
+        if not stock or stock not in state["companies"]:
+            raise HTTPException(400, "Pick a valid stock.")
+        if not text:
+            raise HTTPException(400, "Rumour text is required.")
+        log_entry["stock"]     = stock
+        log_entry["direction"] = direction
+        log_entry["text"]      = text
+        # Broadcast as anonymous Unverified news — no player attribution visible
+        n = {
+            "type":      "unverified",
+            "label":     "Unverified Rumour",
+            "affects":   stock,
+            "direction": direction,
+            "strength":  random.uniform(0.06, 0.12),
+            "real":      random.random() < 0.5,   # 50% chance it actually moves price
+            "text":      text,
+        }
+        state["news"].append(n)
+        # Apply price effect if real and trading
+        c = state["companies"].get(stock)
+        if c and n["real"] and state["phase"] == "trading":
+            c["prev_price"] = c["price"]
+            c["price"] = max(10, round(c["price"] * (1 + direction * n["strength"])))
+        await write_state(state)
+        await manager.broadcast_all({"type": "news", **n})
+        players_all = await all_players()
+        board_now   = leaderboard(players_all, state)
+        await manager.broadcast_all({
+            "type":   "prices_bulk",
+            "prices": {k: v["price"] for k, v in state["companies"].items()},
+            "board":  board_now,
+        })
+        # Confirm privately to buyer
+        await manager.send_player(code, {
+            "type": "info",
+            "msg":  f"📢 Your rumour about {state['companies'][stock]['name']} is out. Anonymous. Untraceable.",
+        })
+
+    # ── Leak Card ─────────────────────────────────────────────────────────────
+    elif item_id == "leak_card":
+        stock     = data.get("stock")
+        direction = int(data.get("direction", 1))
+        text      = data.get("text", "").strip()[:200]
+        if not stock or stock not in state["companies"]:
+            raise HTTPException(400, "Pick a valid stock.")
+        if not text:
+            raise HTTPException(400, "Leak text is required.")
+        log_entry["stock"]     = stock
+        log_entry["direction"] = direction
+        log_entry["text"]      = text
+        # Stronger effect than a rumour, still Unverified badge
+        strength = random.uniform(0.10, 0.18)
+        n = {
+            "type":      "unverified",
+            "label":     "Unverified Rumour",
+            "affects":   stock,
+            "direction": direction,
+            "strength":  strength,
+            "real":      True,   # Leak card always moves price
+            "text":      text,
+        }
+        state["news"].append(n)
+        c = state["companies"].get(stock)
+        if c and state["phase"] == "trading":
+            c["prev_price"] = c["price"]
+            c["price"] = max(10, round(c["price"] * (1 + direction * strength)))
+        await write_state(state)
+        await manager.broadcast_all({"type": "news", **n})
+        players_all = await all_players()
+        board_now   = leaderboard(players_all, state)
+        await manager.broadcast_all({
+            "type":   "prices_bulk",
+            "prices": {k: v["price"] for k, v in state["companies"].items()},
+            "board":  board_now,
+        })
+        await manager.send_player(code, {
+            "type": "info",
+            "msg":  f"🃏 Leak Card deployed on {state['companies'][stock]['name']}. One-time use — gone.",
+        })
+
+    # Save log + deduct cash
+    p["bm_log"] = p.get("bm_log", []) + [log_entry]
+    await save_player(p)
+
+    # Broadcast host BM log update
+    await manager.broadcast_hosts({"type": "bm_log_update", "entry": log_entry})
+
+    return {"ok": True, "cash": p["cash"], "item": item_id}
+
+@app.get("/api/bm/log")
+async def bm_log(pw: str):
+    """Host-only: full BM transaction log across all players."""
+    if pw != HOST_PASSWORD:
+        raise HTTPException(403)
+    players = await all_players()
+    log = []
+    for p in players:
+        for entry in (p.get("bm_log") or []):
+            log.append({**entry, "player": p["name"], "code": p["code"]})
+    log.sort(key=lambda x: x.get("ts", 0), reverse=True)
+    return {"log": log}
+
 # ── WebSocket: player ──────────────────────────────────────────────────────────
 @app.websocket("/ws/player/{code}")
 async def ws_player(websocket: WebSocket, code: str):
@@ -1816,6 +2027,77 @@ async def ws_player(websocket: WebSocket, code: str):
                 await manager.send_player(bid["partner_code"], {"type": "player_update", "player": player_view(p_resp, state)})
                 await manager.send_player(bid["from_code"],    {"type": "info", "msg": f"Merger complete! Bought {qty}× {cname} jointly."})
                 await websocket.send_text(json.dumps({"type": "info", "msg": f"Merger complete! {bid['from_name']} got {qty}× {cname}."}))
+
+            # ── BM purchase (via WS for real-time cash update) ─────────────────
+            elif action == "bm_purchase":
+                if not player:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                item_id   = msg.get("item_id")
+                bm_stock  = msg.get("stock")
+                bm_dir    = int(msg.get("direction", 1))
+                bm_text   = msg.get("text", "").strip()[:200]
+                if item_id not in BM_ITEMS:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Unknown item."})); continue
+                item = BM_ITEMS[item_id]
+                if player["cash"] < item["cost"]:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{item['cost']:,}. You have ₹{int(player['cash']):,}."})); continue
+                if item_id == "leak_card" and any(e["item"] == "leak_card" for e in player.get("bm_log", [])):
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "You've already used your Leak Card this game."})); continue
+
+                player["cash"] -= item["cost"]
+                log_entry = {"item": item_id, "cost": item["cost"], "ts": time.time(), "player": player["name"]}
+
+                if item_id == "insider_hint":
+                    pool = [h for h in INSIDER_HINTS if h[0] in state["companies"]]
+                    if pool:
+                        cid, direction, strength, hint_text = random.choice(pool)
+                        log_entry.update({"stock": cid, "direction": direction, "text": hint_text})
+                        await websocket.send_text(json.dumps({
+                            "type": "news", "label": "🔍 Insider Hint",
+                            "text": hint_text, "private": True, "type_tag": "unverified",
+                        }))
+
+                elif item_id in ("spread_rumour", "leak_card"):
+                    if not bm_stock or bm_stock not in state["companies"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Pick a valid stock."})); continue
+                    if not bm_text:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Text is required."})); continue
+                    strength = random.uniform(0.10, 0.18) if item_id == "leak_card" else random.uniform(0.06, 0.12)
+                    is_real  = True if item_id == "leak_card" else random.random() < 0.5
+                    n = {
+                        "type": "unverified", "label": "Unverified Rumour",
+                        "affects": bm_stock, "direction": bm_dir,
+                        "strength": strength, "real": is_real, "text": bm_text,
+                    }
+                    log_entry.update({"stock": bm_stock, "direction": bm_dir, "text": bm_text})
+                    state["news"].append(n)
+                    c = state["companies"].get(bm_stock)
+                    if c and is_real and state["phase"] == "trading":
+                        c["prev_price"] = c["price"]
+                        c["price"] = max(10, round(c["price"] * (1 + bm_dir * strength)))
+                    await write_state(state)
+                    await manager.broadcast_all({"type": "news", **n})
+                    players_all = await all_players()
+                    board_now   = leaderboard(players_all, state)
+                    await manager.broadcast_all({
+                        "type": "prices_bulk",
+                        "prices": {k: v["price"] for k, v in state["companies"].items()},
+                        "board": board_now,
+                    })
+                    icon = "🃏" if item_id == "leak_card" else "📢"
+                    await websocket.send_text(json.dumps({
+                        "type": "info",
+                        "msg": f"{icon} {'Leak Card deployed' if item_id=='leak_card' else 'Rumour spread'} on {state['companies'][bm_stock]['name']}. Anonymous.",
+                    }))
+
+                player["bm_log"] = player.get("bm_log", []) + [log_entry]
+                await save_player(player)
+                pv = player_view(player, state)
+                await websocket.send_text(json.dumps({
+                    "type": "bm_ok", "player": pv,
+                    "msg": f"✅ {item['name']} purchased for ₹{item['cost']:,}.",
+                }))
+                await manager.broadcast_hosts({"type": "bm_log_update", "entry": log_entry})
 
     except WebSocketDisconnect:
         pass
