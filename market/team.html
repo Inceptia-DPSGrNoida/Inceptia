@@ -22,21 +22,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 #join-screen{display:flex;flex-direction:column;min-height:100vh;}
 
 /* Ticker */
-.ticker-wrap{background:rgba(13,17,23,0.97);border-bottom:1px solid var(--border);overflow:hidden;height:36px;display:flex;align-items:center;flex-shrink:0;}
-.ticker-inner{display:flex;gap:48px;white-space:nowrap;animation:ticker-scroll 38s linear infinite;}
+.ticker-wrap{background:rgba(13,17,23,0.97);border-bottom:1px solid var(--border);overflow:hidden;height:48px;display:flex;align-items:center;flex-shrink:0;}
+.ticker-inner{display:flex;gap:56px;white-space:nowrap;animation:ticker-scroll 38s linear infinite;}
 .ticker-inner:hover{animation-play-state:paused;}
 @keyframes ticker-scroll{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
-.ticker-item{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;}
-.ticker-dot{width:5px;height:5px;border-radius:99px;background:var(--green);}
-.ticker-sym{color:rgba(255,255,255,0.45);font-size:10px;letter-spacing:0.5px;}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:15px;}
+.ticker-dot{width:6px;height:6px;border-radius:99px;background:var(--green);}
+.ticker-sym{color:rgba(255,255,255,0.45);font-size:13px;letter-spacing:0.5px;}
 .ticker-price{color:var(--text);}
-.ticker-chg.up{color:var(--green);font-size:11px;} .ticker-chg.dn{color:var(--red);font-size:11px;}
+.ticker-chg.up{color:var(--green);font-size:14px;} .ticker-chg.dn{color:var(--red);font-size:14px;}
 
 /* Hero */
 .hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#0d1a2a 0%,#080b10 100%);border-bottom:1px solid var(--border);padding:56px 24px 52px;text-align:center;flex-shrink:0;}
 .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(38,194,129,0.10) 0%,transparent 70%);pointer-events:none;}
 .hero-badge{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--green);border:1px solid rgba(38,194,129,0.35);border-radius:99px;padding:5px 16px;margin-bottom:24px;}
-.hero-title{font-family:var(--display);font-size:clamp(40px,10vw,72px);font-weight:800;color:var(--green);line-height:1.0;margin-bottom:16px;text-shadow:0 0 60px rgba(38,194,129,0.25);}
+.hero-title{font-family:var(--display);font-size:clamp(32px,8vw,60px);font-weight:800;color:var(--green);line-height:1.0;margin-bottom:16px;text-shadow:0 0 60px rgba(38,194,129,0.25);letter-spacing:-1px;}
 .hero-sub{font-family:var(--mono);font-size:14px;color:var(--muted);max-width:480px;margin:0 auto;line-height:1.6;}
 
 /* Join card */
@@ -443,7 +443,7 @@ function joinStep() {
     joinStep1Done = true;
     document.getElementById('name-input').focus();
     showJoinErr('');
-  } else {
+  } else { 
     const name = document.getElementById('name-input').value.trim();
     if (!name) return showJoinErr('Pick a display name.');
     myName = name; connectWS();
@@ -460,7 +460,15 @@ function connectWS() {
   ws = new WebSocket(`${proto}://${location.host}/ws/player/${myCode}`);
   ws.onmessage = e => handleMsg(JSON.parse(e.data));
   ws.onerror = () => { showJoinErr('Connection failed. Try again.'); btn.disabled=false; btn.textContent='Enter Market →'; };
-  ws.onclose = () => { if(document.getElementById('app').style.display==='flex'){ toast('Disconnected. Reconnecting...','err'); setTimeout(connectWS,2500); } };
+  ws.onclose = () => {
+    if(document.getElementById('app').style.display==='flex'){
+      toast('Disconnected. Reconnecting...','err'); setTimeout(connectWS,2500);
+    } else {
+      // Still on join screen — reset button so user can try again
+      if(!document.getElementById('join-err').textContent) showJoinErr('Connection closed. Check your code and try again.');
+      btn.disabled=false; btn.textContent='Enter Market →';
+    }
+  };
 }
 
 // ── Message handler ────────────────────────────────────────────────────────────
