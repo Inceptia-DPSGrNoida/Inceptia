@@ -1,73 +1,125 @@
 """
-Market Mayhem — main.py  (Stage 3)
-FastAPI + WebSockets + SQLite
+Market Mayhem — main.py
+FastAPI + WebSockets + SQLite (aiosqlite)
 
 Local:   uvicorn main:app --reload --port 8000
-Railway: started automatically via Procfile (reads $PORT env var)
+Railway: uvicorn main:app --host 0.0.0.0 --port $PORT
 
-Team view:    http://localhost:8000
-Host panel:   http://localhost:8000/host   (password via HOST_PASSWORD env var)
-Black market: http://localhost:8000/bm
+Routes:
+  /          →  team.html   (player trading UI)
+  /host      →  host.html   (password-protected host panel)
+  /bm        →  bm.html     (black market)
 
-Env vars (set in Railway dashboard):
-  DB_PATH        = /data/game.db   (persistent volume mount)
+Env vars (Railway dashboard):
+  DB_PATH        = /data/game.db      (persistent volume)
   HOST_PASSWORD  = <your password>
 """
 
-import asyncio, json, os, random, time, uuid
-from pathlib import Path
+import asyncio
+import json
+import os
+import random
+import time
+import uuid
+from collections import defaultdict
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Dict, Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.responses import HTMLResponse
 import aiosqlite
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
 
-# ── Config ─────────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+#  CONFIG
+# ═══════════════════════════════════════════════════════════════
 DB_PATH            = Path(os.getenv("DB_PATH", "game.db"))
 HOST_PASSWORD      = os.getenv("HOST_PASSWORD", "InceptiaHost2025")
 STARTING_CASH      = 50_000
-ROUND_DURATION     = 1200      # seconds (20 min) — host can end early
+ROUND_DURATION     = 1200        # 20 min — host can end early
+BREAK_DURATION     = 300         # 5 min between rounds
 BANKRUPTCY_RESTART = 25_000
-DRIFT_INTERVAL     = 120       # seconds between passive price drifts
+DRIFT_INTERVAL     = 90          # seconds between passive micro-drifts (reduced magnitude)
+MAX_ROUNDS         = 4
 
-# ── 3-Bank config ──────────────────────────────────────────────────────────────
+# Per-player asyncio lock to prevent concurrent buy/sell race conditions
+_player_locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+
+# ═══════════════════════════════════════════════════════════════
+#  BANKS
+# ═══════════════════════════════════════════════════════════════
 BANKS = {
     "bharat": {
         "name":    "Bharat Bank",
         "limit":   90_000,
         "options": [20_000, 40_000, 60_000, 90_000],
-        "rate":    0.05,   # 5% per round
+        "rate":    0.05,    # 5% per round, compounds on balance
+        "desc":    "Safe, government-backed. Low rate, low limit. The sensible choice.",
     },
     "vcx": {
         "name":    "VentureCapX",
         "limit":   1_50_000,
         "options": [50_000, 75_000, 1_00_000, 1_50_000],
-        "rate":    0.09,
+        "rate":    0.09,    # 9% per round
+        "desc":    "Aggressive growth lender. Higher limit, higher cost. For calculated risks.",
     },
     "shadow": {
         "name":    "ShadowCredit",
         "limit":   3_00_000,
         "options": [1_00_000, 1_50_000, 2_00_000, 3_00_000],
-        "rate":    0.16,
+        "rate":    0.16,    # 16% per round — compounding is brutal over 4 rounds
+        "desc":    "No questions asked. Maximum leverage. Minimum mercy. 4-round compound: ~2.7×.",
     },
 }
 
-# ── Sector groupings for ripple effects ────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+#  SECTORS
+# ═══════════════════════════════════════════════════════════════
 SECTORS = {
-    "Technology":     ["skylink", "indranet", "bytecorp"],
-    "FMCG":           ["freshco", "crownmart"],
-    "Defence":        ["shieldgen", "armorinc"],
+    "Technology":       ["skylink", "indranet", "bytecorp"],
+    "FMCG":             ["freshco", "crownmart"],
+    "Defence":          ["shieldgen", "armorinc"],
     "Renewable Energy": ["voltex"],
-    "Pharma":         ["mediq"],
-    "Logistics":      ["swifthaul"],
-    "Manufacturing":  ["zora"],
-    "Media / OTT":    ["streamvx"],
-    "Fintech":        ["novapay"],
-    "Agriculture":    ["greenleaf"],
+    "Pharma":           ["mediq"],
+    "Logistics":        ["swifthaul"],
+    "Manufacturing":    ["zora"],
+    "Media / OTT":      ["streamvx"],
+    "Fintech":          ["novapay"],
+    "Agriculture":      ["greenleaf"],
 }
 
-# ── Companies ──────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+#  VOLATILITY PROFILES  (min_drift, max_drift, down_bias)
+#  down_bias > 0.5  →  stock drifts down more often (higher risk)
+# ═══════════════════════════════════════════════════════════════
+COMPANY_VOL = {
+    "zora":      (0.004, 0.016, 0.48),   # Low risk, steady
+    "streamvx":  (0.025, 0.075, 0.45),   # High vol, slight upward
+    "freshco":   (0.003, 0.014, 0.49),   # Very stable
+    "voltex":    (0.018, 0.055, 0.44),   # Growth, upward bias
+    "mediq":     (0.018, 0.065, 0.46),   # Binary-event stock
+    "skylink":   (0.030, 0.085, 0.44),   # High vol, narrative-driven
+    "swifthaul": (0.010, 0.038, 0.46),   # Medium vol
+    "crownmart": (0.022, 0.070, 0.45),   # Turnaround risk
+    "shieldgen": (0.004, 0.018, 0.49),   # Very stable
+    "indranet":  (0.008, 0.030, 0.47),   # Quiet compounder
+    "novapay":   (0.038, 0.095, 0.43),   # High vol fintech
+    "greenleaf": (0.015, 0.055, 0.46),   # Subsidy-dependent
+    "armorinc":  (0.006, 0.025, 0.48),   # Stable defence
+    "bytecorp":  (0.055, 0.140, 0.44),   # Pure speculative — extreme vol
+}
+
+# Price floors per company (20% of IPO price — prevents absurd crashes)
+PRICE_FLOORS = {
+    "zora":      84,   "streamvx": 62,  "freshco": 37,  "voltex":   112,
+    "mediq":     55,   "skylink":  178, "swifthaul": 68, "crownmart": 44,
+    "shieldgen": 98,   "indranet": 86,  "novapay":  40,  "greenleaf": 30,
+    "armorinc":  76,   "bytecorp": 130,
+}
+
+# ═══════════════════════════════════════════════════════════════
+#  BASE COMPANIES  (always in game from Round 1)
+# ═══════════════════════════════════════════════════════════════
 BASE_COMPANIES = {
     "zora": {
         "name": "Zora Industries", "sector": "Manufacturing", "risk": "Low", "price": 420,
@@ -183,8 +235,7 @@ BASE_COMPANIES = {
             "government-contracted with multi-year lock-ins. Border escalations are, bluntly, "
             "good news for the stock. Every defence budget hike adds to the order book. "
             "The promoter family holds 62% and hasn't sold a single share in a decade. "
-            "ShieldGen doesn't surprise you — it just quietly compounds. Analysts call it "
-            "the most boring stock with the most reliable upward drift."
+            "ShieldGen doesn't surprise you — it just quietly compounds."
         ),
         "trait": "Fear is their product. Stability is their promise.",
     },
@@ -204,6 +255,9 @@ BASE_COMPANIES = {
     },
 }
 
+# ═══════════════════════════════════════════════════════════════
+#  IPO COMPANIES  (host drops these during the game)
+# ═══════════════════════════════════════════════════════════════
 IPO_COMPANIES = {
     "novapay": {
         "name": "NovaPay", "sector": "Fintech", "risk": "High", "price": 200,
@@ -214,8 +268,7 @@ IPO_COMPANIES = {
             "The B2B merchant side — payment gateway, POS terminals, BNPL rails — is where the "
             "real revenue sits. The problem: NovaPay has never posted a profit. It spends "
             "aggressively on user acquisition and international expansion. Now it's listing, "
-            "and the market must decide: PhonePe successor, or overvalued promise? "
-            "Volume is real. Profitability is a question mark."
+            "and the market must decide: PhonePe successor, or overvalued promise?"
         ),
         "trait": "Could be the next PhonePe. Or the next cautionary tale.",
     },
@@ -228,8 +281,7 @@ IPO_COMPANIES = {
             "income by an average of 22%. Operations span 8 states, with cold storage "
             "facilities at 140 mandis. The model is subsidy-dependent: three government "
             "agritech schemes currently fund 31% of operating costs. If those schemes "
-            "renew, GreenLeaf scales fast. If they're cut, margins collapse. "
-            "The impact story is real. The financial risk is also real."
+            "renew, GreenLeaf scales fast. If they're cut, margins collapse."
         ),
         "trait": "The field is fertile. So is the risk.",
     },
@@ -240,10 +292,8 @@ IPO_COMPANIES = {
             "and surprisingly profitable. Its product lines focus on personal protection: "
             "bulletproof vests, helmets, blast-resistant vehicle panels, and a growing "
             "surveillance equipment division used by state police forces and paramilitary "
-            "units. Revenue is ₹3,200 crore with 19% net margins — lean, efficient, and "
-            "contract-backed. The company recently won its first central paramilitary "
-            "contract worth ₹840 crore. Management is disciplined, promoter stake is 71%, "
-            "and expansion into exports is the next chapter. Under the radar — for now."
+            "units. Revenue is ₹3,200 crore with 19% net margins. The company recently won "
+            "its first central paramilitary contract worth ₹840 crore. Under the radar — for now."
         ),
         "trait": "Not ShieldGen. But close enough.",
     },
@@ -256,39 +306,18 @@ IPO_COMPANIES = {
             "BharatGPT — is genuinely impressive: trained on 22 Indian languages with "
             "performance benchmarks that beat several international models on regional tasks. "
             "The thesis is that India's linguistic diversity creates a moat no foreign AI "
-            "can easily replicate. That thesis may be correct. But right now it's all "
-            "potential and no profit. ByteCorp is pure speculative momentum. "
-            "Either this is the ground floor of something enormous, or it's nothing."
+            "can easily replicate. Either this is the ground floor of something enormous, "
+            "or it's nothing. No in-between."
         ),
         "trait": "The future. Or a ₹0 stock. No in-between.",
     },
 }
 
-# Volatility: (min_drift, max_drift, down_bias)
-COMPANY_VOL = {
-    "zora":      (0.004, 0.016, 0.48),
-    "streamvx":  (0.025, 0.075, 0.45),
-    "freshco":   (0.003, 0.014, 0.49),
-    "voltex":    (0.018, 0.055, 0.44),
-    "mediq":     (0.018, 0.065, 0.46),
-    "skylink":   (0.030, 0.085, 0.44),
-    "swifthaul": (0.010, 0.038, 0.46),
-    "crownmart": (0.022, 0.070, 0.45),
-    "shieldgen": (0.004, 0.018, 0.49),
-    "indranet":  (0.008, 0.030, 0.47),
-    "novapay":   (0.038, 0.095, 0.43),
-    "greenleaf": (0.015, 0.055, 0.46),
-    "armorinc":  (0.006, 0.025, 0.48),
-    "bytecorp":  (0.055, 0.140, 0.44),
-}
-
-# ── News pool ──────────────────────────────────────────────────────────────────
-# type: "verified" | "unverified"
-# real: True = always moves price, False = 40% chance for unverified
+# ═══════════════════════════════════════════════════════════════
+#  NEWS POOL
+# ═══════════════════════════════════════════════════════════════
 NEWS_POOL = [
-    # ════════════════════════════════════════════════════════════════
-    # ZORA INDUSTRIES  (8 items)
-    # ════════════════════════════════════════════════════════════════
+    # ── ZORA (8)
     {"type":"verified",   "label":"Market Event",      "affects":"zora", "direction": 1, "strength":0.10, "real":True,
      "text":"Zora Industries secures ₹2,800 crore defence infrastructure contract from the Ministry of Defence — its third major government award this fiscal year."},
     {"type":"verified",   "label":"Market Event",      "affects":"zora", "direction":-1, "strength":0.09, "real":True,
@@ -305,10 +334,7 @@ NEWS_POOL = [
      "text":"Insider tip: Zora is in the final stage of negotiations for a ₹4,000 crore highway bridge contract. Award expected within days."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"zora", "direction": 1, "strength":0.10, "real":False,
      "text":"Rumour: A large sovereign wealth fund is accumulating Zora shares quietly ahead of an expected Q4 earnings beat."},
-
-    # ════════════════════════════════════════════════════════════════
-    # STREAMVERSE  (9 items)
-    # ════════════════════════════════════════════════════════════════
+    # ── STREAMVERSE (9)
     {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction":-1, "strength":0.12, "real":True,
      "text":"BREAKING: StreamVerse reports a 14% jump in subscriber churn after hiking monthly subscription prices by ₹100. Net adds turn negative for the first time."},
     {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction": 1, "strength":0.13, "real":True,
@@ -327,10 +353,7 @@ NEWS_POOL = [
      "text":"Insider tip: StreamVerse is close to signing an exclusive cricket streaming deal for 3 IPL seasons — a contract reportedly worth ₹4,200 crore."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"streamvx", "direction": 1, "strength":0.12, "real":False,
      "text":"Rumour: A US streaming giant is in preliminary acquisition talks for StreamVerse at a 45% premium to current market price. Both sides unconfirmed."},
-
-    # ════════════════════════════════════════════════════════════════
-    # FRESHCO  (8 items)
-    # ════════════════════════════════════════════════════════════════
+    # ── FRESHCO (8)
     {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.08, "real":True,
      "text":"Rural FMCG consumption hits a 6-year high. FreshCo's 6 million kirana distribution network gives it unmatched last-mile reach in the surge."},
     {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction":-1, "strength":0.10, "real":True,
@@ -338,219 +361,178 @@ NEWS_POOL = [
     {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.09, "real":True,
      "text":"FreshCo's new premium biscuit line sells out in 48 hours across modern trade. Early data suggests 22% margin improvement over base SKUs."},
     {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction":-1, "strength":0.08, "real":True,
-     "text":"Palm oil and wheat prices spike 18% globally. FreshCo's input costs set to rise sharply, threatening Q3 margin guidance."},
-    {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.07, "real":True,
-     "text":"FreshCo launches direct-to-consumer app in 12 cities. Analyst notes this could add ₹800 crore in high-margin revenue within 18 months."},
+     "text":"BREAKING: Palm oil prices surge 19% globally. FreshCo's input costs rise materially — margin guidance cut for the next two quarters."},
+    {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.09, "real":True,
+     "text":"FreshCo announces entry into the premium skincare segment targeting urban millennials. Analysts project ₹1,200 crore in incremental revenue by Year 3."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"freshco", "direction":-1, "strength":0.09, "real":False,
-     "text":"Rumour: A viral social media post claims FreshCo biscuits contain banned additives. The company says the post is completely fabricated."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"freshco", "direction": 1, "strength":0.12, "real":True,
-     "text":"Insider tip: FreshCo is preparing to launch a premium skincare line targeting urban millennials. Could add ₹1,200 crore in new revenues."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"freshco", "direction":-1, "strength":0.09, "real":False,
-     "text":"Rumour: FreshCo's distribution deal with a major modern trade chain is up for renegotiation and may not be renewed at existing terms."},
-
-    # ════════════════════════════════════════════════════════════════
-    # VOLTEX ENERGY  (9 items)
-    # ════════════════════════════════════════════════════════════════
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.13, "real":True,
-     "text":"BREAKING: Government announces a ₹4,200 crore renewable energy subsidy package. Voltex is named as primary beneficiary in the policy gazette."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.12, "real":True,
-     "text":"BREAKING: Two Voltex solar parks in Rajasthan fail safety inspections. Ministry of New Energy has suspended project clearances pending review."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.11, "real":True,
-     "text":"Voltex signs its largest single contract — a 900MW solar park for the Tamil Nadu State Electricity Board. Price target revised up 35%."},
+     "text":"Rumour: A viral social media post claims FreshCo's popular biscuit brand contains banned additives. Company calls it fabricated and is pursuing legal action."},
+    {"type":"unverified", "label":"Insider Hint",      "affects":"freshco", "direction": 1, "strength":0.11, "real":True,
+     "text":"Insider tip: FreshCo's rural distribution numbers for this quarter are reportedly far ahead of estimates. Formal guidance upgrade expected next week."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"freshco", "direction": 1, "strength":0.09, "real":False,
+     "text":"Rumour: A global FMCG giant is reportedly in talks to acquire FreshCo's branded foods division at a significant premium. Unverified."},
+    # ── VOLTEX (8)
+    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.12, "real":True,
+     "text":"BREAKING: Government announces ₹4,200 crore renewable energy subsidy expansion. Voltex Energy named explicitly in the policy document as a primary beneficiary."},
+    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.11, "real":True,
+     "text":"BREAKING: Two Voltex solar parks in Rajasthan fail safety inspections. Ministry of New Energy suspends project clearances pending a full review."},
+    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.10, "real":True,
+     "text":"Voltex Energy signs its largest contract yet — a 900MW solar park for a state electricity board. Analysts revise price target upward by 35%."},
+    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.09, "real":True,
+     "text":"Solar panel import tariffs hiked by 12%. Voltex's upcoming projects face a cost overrun of approximately ₹600 crore. Capex guidance raised."},
     {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.09, "real":True,
-     "text":"India raises its 2030 solar target to 500GW. Voltex, with the largest installed base, is the most direct beneficiary of the revised policy."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.10, "real":True,
-     "text":"Voltex refinances ₹6,200 crore of debt at higher-than-expected rates due to rising bond yields. Interest burden increases materially."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.08, "real":True,
-     "text":"Voltex wins 600MW wind energy bid in Gujarat at a competitive tariff. Analysts upgrade from Hold to Buy citing improved project pipeline."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction": 1, "strength":0.11, "real":False,
-     "text":"Rumour: Voltex is allegedly in merger talks with a UAE sovereign wealth fund. Could value the company at 3× current market cap. Unconfirmed."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"voltex", "direction":-1, "strength":0.10, "real":True,
-     "text":"Insider tip: Voltex's key government subsidy renewal is reportedly stalled in parliamentary committee. A 6-month delay looks likely."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction":-1, "strength":0.09, "real":False,
-     "text":"Rumour: Land acquisition disputes are delaying three major Voltex solar projects, with local protests intensifying in Andhra Pradesh."},
-
-    # ════════════════════════════════════════════════════════════════
-    # MEDIQ  (8 items)
-    # ════════════════════════════════════════════════════════════════
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction":-1, "strength":0.14, "real":True,
-     "text":"BREAKING: DCGI rejects MediQ's Zytravax drug application. Additional Phase 3 trials required — approval timeline pushed back 18 months."},
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.15, "real":True,
-     "text":"BREAKING: DCGI grants fast-track approval to MediQ's Zytravax. The stock is halted for 30 minutes as buy orders flood the exchange."},
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.09, "real":True,
-     "text":"MediQ files 4 new patents for next-generation oncology compounds — a pipeline the market has not yet priced in."},
+     "text":"India achieves a new solar installation record. REC prices jump 14%, directly boosting Voltex's near-term revenue per MW."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction": 1, "strength":0.13, "real":False,
+     "text":"Rumour: Voltex Energy allegedly in advanced merger talks with a UAE sovereign wealth fund. Could value the company at 3× current market cap. Unconfirmed."},
+    {"type":"unverified", "label":"Insider Hint",      "affects":"voltex", "direction": 1, "strength":0.12, "real":True,
+     "text":"Insider tip: Government officials have reportedly signed off internally on Voltex's subsidy renewal — announcement expected before close of quarter."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction":-1, "strength":0.10, "real":False,
+     "text":"Rumour: Voltex's Rajasthan solar project is reportedly 4 months behind schedule due to grid connection delays. Penalty clauses may apply."},
+    # ── MEDIQ (8)
+    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.14, "real":True,
+     "text":"MediQ's Phase 3 drug trial results submitted to DCGI. Internal sources describe the efficacy data as 'exceptionally strong'. Approval timeline: 30 days."},
+    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction":-1, "strength":0.15, "real":True,
+     "text":"BREAKING: DCGI rejects MediQ's blockbuster drug application citing insufficient long-term safety data. Additional trials required — timeline pushed back 18 months."},
+    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.10, "real":True,
+     "text":"MediQ quietly files 4 new patents for next-generation oncology drugs. Pipeline depth far exceeds what the market has priced in."},
     {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction":-1, "strength":0.10, "real":True,
-     "text":"A competing pharma company announces a rival oncology drug trial with early data showing superior efficacy to MediQ's Zytravax."},
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.08, "real":True,
-     "text":"MediQ's existing generic API division reports 22% revenue growth, providing a stable floor while the market awaits Zytravax news."},
+     "text":"US FDA issues import alerts on MediQ's Hyderabad API manufacturing plant. Export revenues at risk until remediation is certified."},
+    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.09, "real":True,
+     "text":"WHO qualifies MediQ as a preferred supplier for generic oncology APIs in 40 developing nations. Long-term export revenue locked in."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction": 1, "strength":0.14, "real":False,
+     "text":"Rumour: A global pharma giant is reportedly in acquisition talks for MediQ at a 60% premium to current price. Neither company has confirmed."},
     {"type":"unverified", "label":"Insider Hint",      "affects":"mediq", "direction": 1, "strength":0.14, "real":True,
-     "text":"Insider tip: MediQ's Phase 3 Zytravax results are being submitted to DCGI this week. Internal sources describe the data as 'exceptionally strong'."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction": 1, "strength":0.13, "real":False,
-     "text":"Rumour: A major global pharma company is in acquisition talks for MediQ at a 60% premium to market price. Neither side has commented."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction":-1, "strength":0.11, "real":False,
-     "text":"Rumour: Anonymous leak claims MediQ's Zytravax trial data was selectively reported. Company calls it 'defamatory and false'."},
-
-    # ════════════════════════════════════════════════════════════════
-    # SKYLINK TECH  (9 items)
-    # ════════════════════════════════════════════════════════════════
+     "text":"Insider tip: MediQ's Zytravax trial data is reportedly clean and strong. DCGI submission is imminent. Management unusually confident internally."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction":-1, "strength":0.12, "real":False,
+     "text":"Rumour: An adverse event in MediQ's Phase 3 trial is being reviewed internally. Nothing has been filed yet but whispers are spreading."},
+    # ── SKYLINK (8)
     {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction": 1, "strength":0.11, "real":True,
-     "text":"SkyLink posts 34% YoY revenue growth in Q2, beating analyst consensus by ₹420 crore. Full-year guidance raised by 12%."},
+     "text":"SkyLink Tech posts 34% YoY revenue growth in Q2, beating analyst consensus by ₹420 crore. Founder announces entry into Southeast Asian markets."},
     {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.13, "real":True,
-     "text":"BREAKING: A massive data breach at SkyLink exposes 11 million user records. Government issues a show-cause notice; three regulators open investigations."},
+     "text":"BREAKING: A massive data breach at SkyLink exposes 11 million user records. Government issues show-cause notice. Fines expected to exceed ₹800 crore."},
+    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.10, "real":True,
+     "text":"SkyLink loses two large enterprise contracts to IndraNet in a competitive rebid. Churn at the top of the client book raises retention concerns."},
     {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction": 1, "strength":0.12, "real":True,
-     "text":"SkyLink announces a $400M AI partnership with a top US tech firm — the largest cross-border deal in Indian enterprise software history."},
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.11, "real":True,
-     "text":"SkyLink's Southeast Asia expansion stalls as two major enterprise clients in Singapore terminate contracts citing product reliability issues."},
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction": 1, "strength":0.10, "real":True,
-     "text":"SkyLink wins a ₹3,200 crore cloud infrastructure contract with three central government ministries — largest PSU deal in company history."},
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.12, "real":True,
-     "text":"BREAKING: Founder Aryan Mehta sells ₹900 crore of SkyLink shares at market. No explanation given. Retail sentiment turns sharply negative."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction":-1, "strength":0.10, "real":False,
-     "text":"Rumour: Three of SkyLink's senior engineering leads have resigned citing 'toxic leadership' and founder interference. Company calls it standard attrition."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"skylink", "direction": 1, "strength":0.14, "real":True,
-     "text":"Insider tip: SkyLink is finalising a major product launch for next week that will directly target IndraNet's core B2B SaaS market."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction": 1, "strength":0.11, "real":False,
-     "text":"Rumour: A Nasdaq-listed tech company is reportedly building a strategic stake in SkyLink as part of an India market entry strategy."},
-
-    # ════════════════════════════════════════════════════════════════
-    # SWIFTHAUL LOGISTICS  (8 items)
-    # ════════════════════════════════════════════════════════════════
+     "text":"SkyLink announces an AI product partnership with a top US tech firm — a deal that could fundamentally revalue the company's TAM story."},
+    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.09, "real":True,
+     "text":"BREAKING: SkyLink founder sells ₹800 crore of personal stock. Insider selling at this scale typically signals concern about near-term outlook."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction":-1, "strength":0.11, "real":False,
+     "text":"Rumour: Three senior SkyLink engineers have resigned en masse over a dispute with the founder. Anonymous posts describe 'toxic leadership'. Unverified."},
+    {"type":"unverified", "label":"Insider Hint",      "affects":"skylink", "direction": 1, "strength":0.13, "real":True,
+     "text":"Insider tip: SkyLink's Q3 deal pipeline is reportedly the strongest in company history. An earnings surprise is quietly expected internally."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction": 1, "strength":0.12, "real":False,
+     "text":"Rumour: A global tech giant has submitted a non-binding indicative offer for SkyLink at 2.2× current price. Completely unverified."},
+    # ── SWIFTHAUL (8)
     {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.10, "real":True,
-     "text":"SwiftHaul reports a 28% surge in same-day delivery volume and signs an exclusive 3-year logistics contract with India's largest e-commerce platform."},
-    {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction":-1, "strength":0.11, "real":True,
-     "text":"BREAKING: Global crude oil surges 18%. SwiftHaul's 18,000-vehicle fleet faces severe margin compression. Management withdraws guidance."},
+     "text":"SwiftHaul reports a 28% surge in same-day delivery volume as festive season kicks off. Signs exclusive 3-year contract with India's largest e-commerce platform."},
+    {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction":-1, "strength":0.10, "real":True,
+     "text":"BREAKING: Fuel prices rise 12% following a global crude oil surge. SwiftHaul's fleet of 18,000 vehicles faces immediate margin compression."},
     {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.09, "real":True,
-     "text":"SwiftHaul launches cold-chain pharma logistics division. First 3 contracts signed with top hospital chains. Analysts call it a margin game-changer."},
+     "text":"SwiftHaul's cold-chain pharma division signs its first hospital chain client. High-margin recurring revenue materialises ahead of analyst forecasts."},
     {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction":-1, "strength":0.09, "real":True,
-     "text":"A new government-backed logistics startup receives ₹800 crore in funding and targets SwiftHaul's core e-commerce delivery business."},
+     "text":"A competing logistics firm poaches SwiftHaul's head of enterprise sales along with the team managing three key accounts. Client at-risk notices issued."},
     {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.08, "real":True,
-     "text":"SwiftHaul signs cross-border delivery agreement covering Nepal, Bangladesh, and Sri Lanka — first international revenue in company history."},
+     "text":"GST Council simplifies e-way bill compliance. SwiftHaul estimates ₹120 crore in annual cost savings from reduced administrative overhead."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"swifthaul", "direction":-1, "strength":0.10, "real":False,
+     "text":"Rumour: SwiftHaul allegedly under-reporting delivery failure rates to maintain contract metrics. An internal audit is said to be underway."},
+    {"type":"unverified", "label":"Insider Hint",      "affects":"swifthaul", "direction": 1, "strength":0.11, "real":True,
+     "text":"Insider tip: SwiftHaul's cold-chain pharma division has onboarded 3 hospital chains. Revenue starts next quarter — not in consensus estimates."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"swifthaul", "direction":-1, "strength":0.09, "real":False,
-     "text":"Rumour: SwiftHaul has been under-reporting delivery failure rates to retain contracts. A regulatory audit has allegedly been quietly initiated."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"swifthaul", "direction": 1, "strength":0.12, "real":True,
-     "text":"Insider tip: SwiftHaul is finalising a ₹600 crore pharma cold-chain JV with a state government. Margins could improve 3–4 percentage points."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"swifthaul", "direction": 1, "strength":0.10, "real":False,
-     "text":"Rumour: Amazon India is in talks to acquire a 26% strategic stake in SwiftHaul to secure supply chain independence in India."},
-
-    # ════════════════════════════════════════════════════════════════
-    # CROWNMART  (8 items)
-    # ════════════════════════════════════════════════════════════════
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.12, "real":True,
-     "text":"BREAKING: Blinkit announces 10-minute grocery delivery expansion to 50 new cities, directly targeting CrownMart's core customer base."},
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.10, "real":True,
-     "text":"CrownMart's new CEO unveils Phase 2 restructuring: 120 loss-making stores shuttered, private label target raised to 40% of revenue. Market approves."},
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.09, "real":True,
-     "text":"CrownMart's private label personal care line outsells national brands in 340 stores — first time in company history. Analysts raise target price."},
+     "text":"Rumour: SwiftHaul's primary e-commerce partner is running a quiet RFQ process with rival logistics firms. Contract renewal may not be automatic."},
+    # ── CROWNMART (8)
+    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.11, "real":True,
+     "text":"CrownMart's new CEO unveils a restructuring plan: closing 120 loss-making stores and doubling down on high-margin private label products. Analysts react positively."},
+    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.11, "real":True,
+     "text":"BREAKING: Blinkit announces 10-minute grocery delivery expansion to 50 new cities — directly attacking CrownMart's core customer base in Tier-2 markets."},
     {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.10, "real":True,
-     "text":"Zepto and Swiggy Instamart report combined grocery GMV surpassing CrownMart's total revenue for the first time. Sentiment hits a 2-year low."},
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.08, "real":True,
-     "text":"CrownMart announces profitable Q3 — first positive EBITDA quarter in six. CEO calls it a 'turning point'. Market watches cautiously."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction": 1, "strength":0.11, "real":False,
-     "text":"Rumour: A private equity firm is quietly accumulating CrownMart shares ahead of an alleged management-led buyout at a 30% premium."},
+     "text":"CrownMart's Q3 same-store sales data shows a 9% decline. Results below guidance for the second consecutive quarter. Analysts cut targets."},
+    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.10, "real":True,
+     "text":"CrownMart's private label division posts 34% revenue growth. Margins on own-brand products are 18 percentage points above branded equivalents."},
+    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.09, "real":True,
+     "text":"CrownMart announces 40 additional store closures beyond the previously disclosed 120, citing structurally unviable lease terms."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction": 1, "strength":0.12, "real":False,
+     "text":"Rumour: A major private equity firm is building a stake in CrownMart ahead of an alleged management buyout. Unusual after-hours trading activity spotted."},
     {"type":"unverified", "label":"Insider Hint",      "affects":"crownmart", "direction":-1, "strength":0.11, "real":True,
-     "text":"Insider tip: CrownMart Q3 same-store sales are down 9%. Results due next week. Senior management are quietly reducing personal holdings."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction":-1, "strength":0.10, "real":False,
-     "text":"Rumour: Two of CrownMart's key anchor stores in metro malls are facing lease non-renewal — landlords allegedly prefer quick-commerce dark store tenants."},
-
-    # ════════════════════════════════════════════════════════════════
-    # SHIELDGEN DEFENCE  (8 items)
-    # ════════════════════════════════════════════════════════════════
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.11, "real":True,
-     "text":"BREAKING: Escalating border tensions prompt ₹18,000 crore emergency defence procurement. ShieldGen named as primary supplier across 3 of 5 categories."},
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.09, "real":True,
-     "text":"ShieldGen receives export clearance to supply radar systems to two allied nations — the company's first international defence contracts."},
+     "text":"Insider tip: CrownMart's Q3 same-store sales data, not yet public, shows a 9% decline. Insiders are quietly reducing positions ahead of results."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction": 1, "strength":0.10, "real":False,
+     "text":"Rumour: CrownMart is in preliminary talks with a GCC-based sovereign retailer about a strategic investment and regional expansion partnership."},
+    # ── SHIELDGEN (8)
+    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.12, "real":True,
+     "text":"BREAKING: Escalating border tensions prompt the government to fast-track ₹18,000 crore in emergency defence procurement. ShieldGen is primary supplier for 3 of 5 categories."},
     {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.10, "real":True,
-     "text":"Defence budget hiked 18% in supplementary demands. ShieldGen's existing multi-year contracts automatically indexed to the higher allocation."},
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction":-1, "strength":0.08, "real":True,
-     "text":"India signs a defence procurement agreement with a foreign OEM, bypassing the domestic industry for a high-value radar contract ShieldGen had expected to win."},
+     "text":"ShieldGen receives export clearance to supply radar systems to two allied nations — India's defence export push directly boosts order visibility."},
+    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction":-1, "strength":0.09, "real":True,
+     "text":"A parliamentary committee review flags ShieldGen's pricing on a recent armoured vehicle contract. Overpricing investigation formally initiated."},
+    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.11, "real":True,
+     "text":"Defence budget hiked 18% in supplementary demands. ShieldGen's order book grows by ₹6,800 crore in a single day of inbound procurement notices."},
     {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.09, "real":True,
-     "text":"ShieldGen wins 5-year maintenance contract for active army armoured fleet — recurring, high-margin revenue worth ₹4,200 crore over the period."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction":-1, "strength":0.09, "real":False,
-     "text":"Rumour: A parliamentary committee is reviewing ShieldGen's pricing on an armoured vehicle contract, alleging 40% cost inflation. Company denies."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"shieldgen", "direction": 1, "strength":0.13, "real":True,
-     "text":"Insider tip: ShieldGen has secured a classified 7-year maintenance contract for India's new drone programme — worth an estimated ₹6,000 crore."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction": 1, "strength":0.10, "real":False,
-     "text":"Rumour: ShieldGen is in talks to set up a joint venture with an Israeli defence firm to manufacture advanced surveillance drones in India."},
-
-    # ════════════════════════════════════════════════════════════════
-    # INDRANET  (8 items)
-    # ════════════════════════════════════════════════════════════════
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.09, "real":True,
-     "text":"IndraNet announces 18% growth in enterprise ARR and renews multi-year SaaS contracts with 3 PSU banks worth ₹900 crore in total."},
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction":-1, "strength":0.10, "real":True,
-     "text":"BREAKING: IndraNet loses a ₹1,200 crore telecom infrastructure contract to a foreign competitor in a government tender. CFO resigns citing 'strategic differences'."},
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.09, "real":True,
-     "text":"IndraNet launches an AI workflow automation layer — early enterprise pilots show 40% efficiency gains. Analysts call it a potential re-rating catalyst."},
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.08, "real":True,
-     "text":"IndraNet expands into Southeast Asia — first 4 enterprise clients signed in Singapore and Malaysia. International revenue target set at 15% of total by FY27."},
+     "text":"'Make in India' defence mandate raises domestic content requirement to 70%. ShieldGen, as a fully domestic manufacturer, gains a structural competitive advantage."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction":-1, "strength":0.10, "real":False,
+     "text":"Rumour: A parliamentary committee is allegedly reviewing ShieldGen's pricing on a recent armoured vehicle contract. Government has not confirmed any probe."},
+    {"type":"unverified", "label":"Insider Hint",      "affects":"shieldgen", "direction": 1, "strength":0.12, "real":True,
+     "text":"Insider tip: ShieldGen has secured a 7-year maintenance contract for a classified drone programme worth ₹6,000 crore. Announcement expected post budget session."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction": 1, "strength":0.11, "real":False,
+     "text":"Rumour: A further ₹12,000 crore supplementary defence allocation is being discussed in Cabinet. ShieldGen would be the single largest beneficiary."},
+    # ── INDRANET (7)
+    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.10, "real":True,
+     "text":"IndraNet closes 3 large enterprise renewals at 20% higher ARR. Net revenue retention at 118% for the fourth consecutive quarter."},
     {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction":-1, "strength":0.09, "real":True,
-     "text":"SkyLink announces a competing B2B SaaS platform at 20% lower pricing, directly targeting IndraNet's mid-market enterprise client base."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"indranet", "direction": 1, "strength":0.12, "real":True,
-     "text":"Insider tip: IndraNet is quietly preparing a product launch that will directly compete in SkyLink's core cloud infrastructure segment."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"indranet", "direction":-1, "strength":0.08, "real":False,
-     "text":"Rumour: IndraNet's largest banking client is reviewing its SaaS contract renewal. A 20% revenue reduction in that account could hit annual earnings hard."},
+     "text":"SkyLink launches a competing workflow automation product at 30% lower pricing, directly targeting IndraNet's mid-market client base."},
+    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.09, "real":True,
+     "text":"IndraNet wins a ₹480 crore 5-year contract with a major public sector bank — its largest PSU deal ever. Management raises full-year guidance."},
+    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.08, "real":True,
+     "text":"Gartner names IndraNet a Leader in its Asia-Pacific Workflow Automation Magic Quadrant for the third consecutive year. International inbounds accelerate."},
+    {"type":"unverified", "label":"Unverified Rumour", "affects":"indranet", "direction":-1, "strength":0.10, "real":False,
+     "text":"Rumour: A key IndraNet engineering team is reportedly being poached by SkyLink en masse, including the architect of the core automation engine."},
+    {"type":"unverified", "label":"Insider Hint",      "affects":"indranet", "direction": 1, "strength":0.11, "real":True,
+     "text":"Insider tip: IndraNet just closed 3 large enterprise renewals at 20% higher ARR. Not announced yet — formal guidance upgrade expected next quarter."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"indranet", "direction": 1, "strength":0.10, "real":False,
-     "text":"Rumour: A mid-size US PE firm is running due diligence on IndraNet for a potential take-private transaction at a significant premium."},
-
-    # ════════════════════════════════════════════════════════════════
-    # NOVAPAY  (8 items — IPO, only after listed)
-    # ════════════════════════════════════════════════════════════════
-    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.13, "real":True,
-     "text":"NovaPay crosses 1 billion transactions in a single day — the first Indian fintech to hit this milestone. Listing premium jumps sharply."},
-    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction":-1, "strength":0.12, "real":True,
-     "text":"BREAKING: RBI issues a show-cause notice to NovaPay over KYC compliance gaps affecting 4.2 million accounts. Operations partially restricted."},
-    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.11, "real":True,
-     "text":"NovaPay B2B payment gateway signs 3 major e-commerce platforms — combined GMV of ₹1.4 lakh crore. Path to profitability now visible."},
+     "text":"Rumour: A global enterprise software firm is running diligence on IndraNet as an acquisition target. Premium to current price estimated at 40%."},
+    # ── NOVAPAY (IPO, 7)
+    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction":-1, "strength":0.13, "real":True,
+     "text":"BREAKING: RBI sends NovaPay a show-cause notice over KYC compliance gaps in its BNPL product. ₹200 crore fine and product pause possible."},
+    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.12, "real":True,
+     "text":"NovaPay's monthly transaction volume crosses ₹1 lakh crore for the first time. Market share vs PhonePe narrows to 4 percentage points."},
     {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction":-1, "strength":0.11, "real":True,
-     "text":"PhonePe announces zero-fee merchant payments, directly attacking NovaPay's B2B revenue model. Analysts cut NovaPay price targets by 15%."},
+     "text":"BREAKING: UPI interchange fee framework revised downward by RBI. NovaPay's core revenue per transaction drops 18%. Profitability timeline extends."},
     {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.10, "real":True,
      "text":"NovaPay BNPL product reaches 8 million users in 5 months — fastest adoption for any credit product in Indian fintech history."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"novapay", "direction": 1, "strength":0.14, "real":False,
-     "text":"Rumour: A Singapore sovereign fund is eyeing a 20% strategic stake in NovaPay at a valuation of 2× current market price. Unconfirmed."},
+     "text":"Rumour: A Singapore sovereign fund is eyeing a 20% strategic stake in NovaPay at a valuation of 2× current market price. Completely unconfirmed."},
     {"type":"unverified", "label":"Insider Hint",      "affects":"novapay", "direction":-1, "strength":0.12, "real":True,
      "text":"Insider tip: NovaPay's internal audit has flagged irregularities in transaction fee reporting that may require a revenue restatement."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"novapay", "direction": 1, "strength":0.11, "real":False,
      "text":"Rumour: NovaPay has quietly applied for a small finance bank licence — if granted, this transforms it from a fintech into a fully regulated bank."},
-
-    # ════════════════════════════════════════════════════════════════
-    # GREENLEAF AGRI  (7 items — IPO, only after listed)
-    # ════════════════════════════════════════════════════════════════
+    # ── GREENLEAF (IPO, 7)
     {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.11, "real":True,
      "text":"GreenLeaf Agri onboards 200,000 new farmers this season. The government farm-to-fork subsidy scheme has been renewed for 3 more years."},
     {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction":-1, "strength":0.12, "real":True,
-     "text":"BREAKING: Drought conditions declared across 3 of GreenLeaf's key operating states. Crop yield outlook revised down by 28%. Revenue guidance cut."},
+     "text":"BREAKING: Drought conditions declared across 3 of GreenLeaf's key operating states. Crop yield outlook revised down 28%. Revenue guidance cut."},
     {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.10, "real":True,
      "text":"GreenLeaf signs supply agreements with 6 major retail chains, securing offtake for 40% of its produce network for the next 2 years."},
     {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction":-1, "strength":0.10, "real":True,
      "text":"A government review of agritech subsidies proposes 30% cuts in allocation. GreenLeaf, which relies on these for 31% of operating costs, faces margin risk."},
-    {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.09, "real":True,
-     "text":"GreenLeaf expands cold storage network to 40 new mandis. Post-harvest losses drop 18% — a key metric buyers and subsidisers track closely."},
     {"type":"unverified", "label":"Insider Hint",      "affects":"greenleaf", "direction": 1, "strength":0.11, "real":True,
-     "text":"Insider tip: GreenLeaf is in advanced talks with a Gulf sovereign food security fund for a long-term export offtake agreement worth ₹2,000 crore annually."},
+     "text":"Insider tip: GreenLeaf's Gulf export deal is reportedly finalised at ₹2,000 crore annually. Transformative if confirmed — not in any public guidance."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"greenleaf", "direction":-1, "strength":0.09, "real":False,
      "text":"Rumour: A government audit has flagged GreenLeaf's subsidy claims as potentially inflated. A formal investigation may be underway."},
-
-    # ════════════════════════════════════════════════════════════════
-    # ARMORINC  (7 items — IPO, only after listed)
-    # ════════════════════════════════════════════════════════════════
+    {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.09, "real":True,
+     "text":"GreenLeaf expands cold storage to 40 new mandis. Post-harvest losses drop 18% — a key metric that directly affects subsidy renewal prospects."},
+    # ── ARMORINC (IPO, 7)
     {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.10, "real":True,
-     "text":"ArmorInc wins its first central paramilitary contract — 50,000 bulletproof vests for CRPF at ₹840 crore. Recurring procurement expected annually."},
+     "text":"ArmorInc wins its first central paramilitary contract — 50,000 bulletproof vests for CRPF at ₹840 crore. Recurring annual procurement expected."},
     {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.09, "real":True,
-     "text":"ArmorInc's surveillance equipment division signs a ₹420 crore contract with 3 state police forces. High-margin, recurring service revenue begins."},
+     "text":"ArmorInc's surveillance division signs a ₹420 crore contract with 3 state police forces. High-margin, recurring service revenue begins."},
     {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction":-1, "strength":0.09, "real":True,
      "text":"A foreign OEM wins an import tender for personal protective equipment that ArmorInc had expected to secure. 12% revenue shortfall anticipated."},
-    {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.08, "real":True,
-     "text":"ArmorInc receives defence export licence for personal protection equipment. First shipment of ₹120 crore to an African nation dispatched."},
     {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.10, "real":True,
      "text":"Escalating internal security concerns prompt ₹3,200 crore state government equipment procurement. ArmorInc wins the largest single order in its history."},
     {"type":"unverified", "label":"Insider Hint",      "affects":"armorinc", "direction": 1, "strength":0.12, "real":True,
      "text":"Insider tip: ArmorInc is in advanced acquisition talks for a Pune-based surveillance tech startup. A deal could double its addressable market overnight."},
     {"type":"unverified", "label":"Unverified Rumour", "affects":"armorinc", "direction": 1, "strength":0.10, "real":False,
-     "text":"Rumour: ShieldGen is in preliminary talks to acquire ArmorInc at a 35% premium as part of a consolidation play in the domestic defence space."},
-
-    # ════════════════════════════════════════════════════════════════
-    # BYTECORP AI  (8 items — IPO, only after listed)
-    # ════════════════════════════════════════════════════════════════
+     "text":"Rumour: ShieldGen is in preliminary talks to acquire ArmorInc at a 35% premium as part of a domestic defence consolidation play."},
+    {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.08, "real":True,
+     "text":"ArmorInc receives defence export licence. First shipment of ₹120 crore of personal protection equipment to an African nation dispatched."},
+    # ── BYTECORP (IPO, 8)
     {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.15, "real":True,
      "text":"ByteCorp AI's BharatGPT demo goes viral after a prominent US tech analyst calls it 'the most impressive multilingual AI model built outside the US'. Retail frenzy begins."},
     {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.14, "real":True,
@@ -558,7 +540,7 @@ NEWS_POOL = [
     {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.13, "real":True,
      "text":"ByteCorp signs its first revenue-generating enterprise contract — a 2-year deal with a government ministry for AI-powered document processing at ₹180 crore."},
     {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.13, "real":True,
-     "text":"OpenAI launches an Indian-language optimised model that benchmarks above BharatGPT on 7 of 11 regional language tests. ByteCorp's moat narrative cracks."},
+     "text":"OpenAI launches an Indian-language optimised model that benchmarks above BharatGPT on 7 of 11 regional language tests. ByteCorp's core moat narrative cracks."},
     {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.12, "real":True,
      "text":"ByteCorp partners with India's largest telecom to embed BharatGPT across 480 million mobile users. Distribution reach far exceeds any competitor."},
     {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.11, "real":True,
@@ -567,58 +549,102 @@ NEWS_POOL = [
      "text":"Rumour: Microsoft is in serious talks to invest ₹2,000 crore in ByteCorp AI. The CEO responded 'no comment'. Market has fully priced in the best case."},
     {"type":"unverified", "label":"Insider Hint",      "affects":"bytecorp", "direction": 1, "strength":0.14, "real":True,
      "text":"Insider tip: ByteCorp is weeks away from announcing a government AI contract worth ₹800 crore — the company's first large public-sector revenue deal."},
-
-    # ════════════════════════════════════════════════════════════════
-    # SECTOR-WIDE EVENTS  (20 items)
-    # ════════════════════════════════════════════════════════════════
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology", "direction": 1, "strength":0.08, "real":True,
+    # ── SECTOR-WIDE (20)
+    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction": 1, "strength":0.08, "real":True,
      "text":"SECTOR: Government launches a ₹10,000 crore Digital India 3.0 push. Cloud, SaaS, and AI companies are the primary intended beneficiaries."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology", "direction":-1, "strength":0.08, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction":-1, "strength":0.08, "real":True,
      "text":"SECTOR: A sweeping data localisation bill clears Rajya Sabha. Compliance costs for tech companies estimated at ₹4,000–8,000 crore industry-wide."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology", "direction": 1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: India climbs to #3 globally in tech startup funding. Analyst upgrades across the sector as global capital inflows accelerate."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology", "direction":-1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: Global tech selloff after US Fed signals higher-for-longer rates. Indian tech stocks, with high P/E multiples, bear the sharpest correction."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:FMCG",       "direction": 1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:FMCG",             "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: Rural consumption surges 11% YoY as crop prices rise and rural wages hit a 5-year high. FMCG companies are broadly re-rated upward."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:FMCG",       "direction":-1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:FMCG",             "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: Palm oil and edible oil prices spike 22% globally. Input cost pressure hits all FMCG manufacturers simultaneously."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Defence",    "direction": 1, "strength":0.09, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Defence",          "direction": 1, "strength":0.09, "real":True,
      "text":"SECTOR: Defence budget hiked 18% in supplementary demands. Domestic manufacturers across the sector receive order upgrades."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Defence",    "direction": 1, "strength":0.08, "real":True,
-     "text":"SECTOR: Government announces 'Make in India' defence mandate requiring 70% domestic content. Foreign OEMs must partner with Indian firms."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Pharma",     "direction":-1, "strength":0.07, "real":True,
-     "text":"SECTOR: US FDA issues import alerts on 4 Indian pharmaceutical manufacturing plants. Export revenue for several companies at risk."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Pharma",     "direction": 1, "strength":0.07, "real":True,
-     "text":"SECTOR: WHO qualifies 3 more Indian generic drug manufacturers for global supply. Export opportunity worth ₹12,000 crore opens up."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Logistics",  "direction":-1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Defence",          "direction": 1, "strength":0.08, "real":True,
+     "text":"SECTOR: 'Make in India' defence mandate requires 70% domestic content. Foreign OEMs must partner with Indian firms — domestic players gain structural edge."},
+    {"type":"verified", "label":"Market Event", "affects":"sector:Pharma",           "direction":-1, "strength":0.07, "real":True,
+     "text":"SECTOR: US FDA issues import alerts on 4 Indian pharmaceutical plants. Export revenue for multiple companies at immediate risk."},
+    {"type":"verified", "label":"Market Event", "affects":"sector:Pharma",           "direction": 1, "strength":0.07, "real":True,
+     "text":"SECTOR: WHO qualifies 3 more Indian generic manufacturers for global supply. Export opportunity worth ₹12,000 crore opens up across the sector."},
+    {"type":"verified", "label":"Market Event", "affects":"sector:Logistics",        "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: New national highway toll policy hikes rates by 15%. All logistics and trucking companies face immediate cost increases."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Logistics",  "direction": 1, "strength":0.07, "real":True,
-     "text":"SECTOR: GST Council announces simplified e-way bill process, reducing logistics compliance costs. Entire sector benefits from efficiency gains."},
+    {"type":"verified", "label":"Market Event", "affects":"sector:Logistics",        "direction": 1, "strength":0.07, "real":True,
+     "text":"SECTOR: GST Council announces simplified e-way bill process, reducing logistics compliance costs. Entire sector benefits from the efficiency gain."},
     {"type":"verified", "label":"Market Event", "affects":"sector:Renewable Energy", "direction": 1, "strength":0.08, "real":True,
-     "text":"SECTOR: India achieves new solar installation record. Government doubles renewable energy subsidies for the next 3 fiscal years."},
+     "text":"SECTOR: India achieves a new solar installation record. Government doubles renewable energy subsidies for the next 3 fiscal years."},
     {"type":"verified", "label":"Market Event", "affects":"sector:Renewable Energy", "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: Solar panel import tariffs hiked 12%. Domestic project costs rise for all renewable energy companies."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Fintech",    "direction": 1, "strength":0.08, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Fintech",          "direction": 1, "strength":0.08, "real":True,
      "text":"SECTOR: UPI transaction volume crosses 20 billion monthly. RBI announces new incentive framework for digital payment platforms."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Fintech",    "direction":-1, "strength":0.08, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Fintech",          "direction":-1, "strength":0.08, "real":True,
      "text":"SECTOR: RBI tightens digital lending norms. Fintech companies face new capital adequacy requirements that squeeze short-term profitability."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Agriculture","direction": 1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Agriculture",      "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: Government announces largest-ever agritech investment package at ₹8,500 crore. Agritech startups and listed companies both benefit."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Agriculture","direction":-1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Agriculture",      "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: A poor monsoon forecast triggers broad-based selling in agri-dependent businesses. Crop yield estimates revised down 15%."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Media / OTT","direction": 1, "strength":0.07, "real":True,
-     "text":"SECTOR: Internet penetration reaches 900 million users in India. OTT platforms are the biggest beneficiaries of the next wave of digital adoption."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Manufacturing","direction": 1, "strength":0.07, "real":True,
+    {"type":"verified", "label":"Market Event", "affects":"sector:Media / OTT",      "direction": 1, "strength":0.07, "real":True,
+     "text":"SECTOR: Internet penetration reaches 900 million users in India. OTT platforms are the biggest beneficiaries of the next digital adoption wave."},
+    {"type":"verified", "label":"Market Event", "affects":"sector:Manufacturing",    "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: PLI (Production Linked Incentive) scheme extended for 3 years. Manufacturing companies across steel, defence, and infrastructure to benefit."},
 ]
 
-# ── DB setup ───────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+#  BLACK MARKET ITEMS
+# ═══════════════════════════════════════════════════════════════
+BM_ITEMS = {
+    "insider_hint": {
+        "id": "insider_hint", "name": "Insider Hint", "icon": "🔍", "cost": 15_000,
+        "desc": "A private, unverified tip on one stock — only you see it. Could be gold. Could be noise.",
+    },
+    "spread_rumour": {
+        "id": "spread_rumour", "name": "Spread Rumour", "icon": "📢", "cost": 10_000,
+        "desc": "Plant an anonymous Unverified headline. You pick the stock and write the text. Random price effect. Untraceable.",
+    },
+    "leak_card": {
+        "id": "leak_card", "name": "Leak Card", "icon": "🃏", "cost": 25_000,
+        "desc": "One-time use per game. Broadcast a strong Unverified headline that always moves price. More powerful than a rumour.",
+    },
+}
+
+INSIDER_HINTS = [
+    ("zora",       1,  0.12, "A bulk order for Zora's industrial components just landed from a defence subcontractor. Unconfirmed but credible."),
+    ("zora",      -1,  0.10, "Zora's largest plant reportedly running at 60% capacity due to a parts shortage. Not public yet."),
+    ("streamvx",   1,  0.13, "Word is StreamVerse's next original just wrapped production and early test screenings are exceptional."),
+    ("streamvx",  -1,  0.11, "StreamVerse's latest subscriber data allegedly shows churn accelerating. Results due soon."),
+    ("freshco",    1,  0.10, "FreshCo's rural distribution numbers for this quarter are reportedly far ahead of estimates."),
+    ("freshco",   -1,  0.09, "A FreshCo manufacturing unit in Odisha is dealing with a quiet quality control issue. Not disclosed publicly."),
+    ("voltex",     1,  0.12, "Government officials have reportedly signed off internally on Voltex's subsidy renewal — announcement imminent."),
+    ("voltex",    -1,  0.11, "Voltex's Rajasthan solar project reportedly 4 months behind schedule due to grid connection delays."),
+    ("mediq",      1,  0.14, "MediQ's Zytravax trial data is reportedly clean and strong. Submission to DCGI is imminent."),
+    ("mediq",     -1,  0.13, "Rumoured adverse event in MediQ's Phase 3 trial being quietly reviewed internally. Nothing filed yet."),
+    ("skylink",    1,  0.13, "SkyLink's Q3 deal pipeline is reportedly the strongest in company history. Earnings surprise likely."),
+    ("skylink",   -1,  0.12, "SkyLink is quietly losing two enterprise clients to IndraNet. No public statement expected."),
+    ("swifthaul",  1,  0.11, "SwiftHaul's cold-chain pharma division just onboarded its first 3 hospital chains. Revenue starts next quarter."),
+    ("swifthaul", -1,  0.10, "SwiftHaul's primary e-commerce partner is reportedly in talks with a rival logistics firm."),
+    ("crownmart",  1,  0.11, "CrownMart's Q3 private-label sales are reportedly tracking 30% ahead of target."),
+    ("crownmart", -1,  0.10, "CrownMart is about to announce 40 more store closures beyond the previously disclosed 120."),
+    ("shieldgen",  1,  0.12, "ShieldGen's classified drone maintenance contract has reportedly been signed and sealed."),
+    ("indranet",   1,  0.11, "IndraNet just closed 3 large enterprise renewals at 20% higher ARR. Not announced yet."),
+    ("indranet",  -1,  0.09, "A key IndraNet engineering team is reportedly being poached by SkyLink en masse."),
+    ("novapay",    1,  0.13, "NovaPay's RBI KYC issue has reportedly been resolved behind closed doors. Formal clearance expected soon."),
+    ("bytecorp",   1,  0.14, "ByteCorp's government contract — the big one — is in final legal sign-off. Announcement within days."),
+    ("bytecorp",  -1,  0.13, "ByteCorp's lead model engineer has quietly resigned. Harder to replace than the market realises."),
+    ("greenleaf",  1,  0.11, "GreenLeaf's Gulf export deal is reportedly finalised. ₹2,000 crore annually — transformative if confirmed."),
+    ("armorinc",   1,  0.11, "ArmorInc's surveillance tech acquisition is almost done. Completion expected before next round."),
+]
+
+# ═══════════════════════════════════════════════════════════════
+#  DATABASE
+# ═══════════════════════════════════════════════════════════════
 async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS game (
-                key TEXT PRIMARY KEY,
+                key   TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             )
         """)
@@ -626,13 +652,13 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS players (
                 code     TEXT PRIMARY KEY,
                 name     TEXT,
-                cash     REAL DEFAULT 50000,
-                holdings TEXT DEFAULT '{}',
-                loans    TEXT DEFAULT '{}',
+                cash     REAL    DEFAULT 50000,
+                holdings TEXT    DEFAULT '{}',
+                loans    TEXT    DEFAULT '{}',
                 frozen   INTEGER DEFAULT 0,
-                avg_cost TEXT DEFAULT '{}',
-                bets     TEXT DEFAULT '{}',
-                bm_log   TEXT DEFAULT '[]'
+                avg_cost TEXT    DEFAULT '{}',
+                bets     TEXT    DEFAULT '{}',
+                bm_log   TEXT    DEFAULT '[]'
             )
         """)
         await db.execute("""
@@ -646,11 +672,13 @@ async def init_db():
             await _write_state(db, _default_state())
             await db.commit()
 
+
 async def _write_state(db, state: dict):
     await db.execute(
         "INSERT OR REPLACE INTO game (key, value) VALUES ('state', ?)",
-        (json.dumps(state),)
+        (json.dumps(state),),
     )
+
 
 async def read_state() -> dict:
     async with aiosqlite.connect(DB_PATH) as db:
@@ -659,33 +687,365 @@ async def read_state() -> dict:
             return json.loads(row[0])
     return _default_state()
 
+
 async def write_state(state: dict):
     async with aiosqlite.connect(DB_PATH) as db:
         await _write_state(db, state)
         await db.commit()
 
+
 def _default_state() -> dict:
     companies = {k: {**v, "prev_price": v["price"]} for k, v in BASE_COMPANIES.items()}
     return {
-        "phase":          "lobby",
-        "round":          0,
-        "round_end_time": None,
-        "break_end_time": None,
-        "companies":      companies,
-        "ipo_listed":     [],          # list of listed IPO ids
-        "news":           [],
-        "news_used":      [],
-        "regulatory_freeze": None,     # sector name or None
-        "acquisition_pair":  None,     # [cid1, cid2] or None
-        "credit_crunch":     False,
-        "merge_bids":        {},
+        "phase":              "lobby",
+        "round":              0,
+        "round_end_time":     None,
+        "break_end_time":     None,
+        "companies":          companies,
+        "ipo_listed":         [],
+        "news":               [],
+        "news_used":          [],
+        "regulatory_freeze":  None,
+        "acquisition_pair":   None,
+        "credit_crunch":      False,
+        "merge_bids":         {},
+        # Price history: {cid: [price_r1, price_r2, ...]}
+        "price_history":      {k: [v["price"]] for k, v in BASE_COMPANIES.items()},
     }
 
-# ── Connection manager ─────────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════
+#  PLAYER HELPERS
+# ═══════════════════════════════════════════════════════════════
+async def all_codes():
+    async with aiosqlite.connect(DB_PATH) as db:
+        rows = await (await db.execute("SELECT code FROM codes")).fetchall()
+    return {r[0] for r in rows}
+
+
+async def all_players():
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        rows = await (await db.execute("SELECT * FROM players")).fetchall()
+    return [_row_to_player(r) for r in rows]
+
+
+async def get_player(code: str) -> Optional[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        row = await (await db.execute("SELECT * FROM players WHERE code=?", (code,))).fetchone()
+        if not row:
+            return None
+        return _row_to_player(row)
+
+
+def _row_to_player(row) -> dict:
+    return {
+        "code":     row["code"],
+        "name":     row["name"],
+        "cash":     row["cash"],
+        "holdings": json.loads(row["holdings"]),
+        "loans":    json.loads(row["loans"]),
+        "frozen":   bool(row["frozen"]),
+        "avg_cost": json.loads(row["avg_cost"]),
+        "bets":     json.loads(row["bets"]),
+        "bm_log":   json.loads(row["bm_log"]),
+    }
+
+
+async def save_player(p: dict):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            """INSERT OR REPLACE INTO players
+               (code,name,cash,holdings,loans,frozen,avg_cost,bets,bm_log)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (
+                p["code"], p.get("name"), p["cash"],
+                json.dumps(p["holdings"]),
+                json.dumps(p.get("loans", {})),
+                int(p.get("frozen", False)),
+                json.dumps(p.get("avg_cost", {})),
+                json.dumps(p.get("bets", {})),
+                json.dumps(p.get("bm_log", [])),
+            ),
+        )
+        await db.commit()
+
+
+def player_loans_total(p: dict) -> float:
+    return sum(p.get("loans", {}).values())
+
+
+def player_view(p: dict, state: dict) -> dict:
+    companies   = state["companies"]
+    portfolio   = {}
+    for cid, qty in p["holdings"].items():
+        if qty > 0 and cid in companies:
+            c    = companies[cid]
+            avg  = p.get("avg_cost", {}).get(cid, c["price"])
+            price = c["price"]
+            val  = qty * price
+            portfolio[cid] = {
+                "qty":   qty,
+                "avg":   round(avg),
+                "price": price,
+                "value": val,
+                "pnl":   round(val - qty * avg),
+            }
+    port_value  = sum(h["value"] for h in portfolio.values())
+    total_loans = player_loans_total(p)
+    net_worth   = p["cash"] + port_value - total_loans
+    return {
+        "cash":       round(p["cash"]),
+        "loans":      p.get("loans", {}),
+        "total_loan": round(total_loans),
+        "frozen":     p["frozen"],
+        "net_worth":  round(net_worth),
+        "portfolio":  portfolio,
+        "bets":       p.get("bets", {}),
+    }
+
+
+def leaderboard(players: list, state: dict) -> list:
+    rows = []
+    for p in players:
+        if not p["name"]:
+            continue
+        pv = player_view(p, state)
+        rows.append({"name": p["name"], "net_worth": pv["net_worth"]})
+    rows.sort(key=lambda x: x["net_worth"], reverse=True)
+    for i, r in enumerate(rows):
+        r["rank"] = i + 1
+    return rows
+
+
+async def broadcast_prices(state: dict):
+    players = await all_players()
+    board   = leaderboard(players, state)
+    prices  = {k: c["price"] for k, c in state["companies"].items()}
+    msg = {"type": "prices_bulk", "prices": prices, "board": board}
+    await manager.broadcast_all(msg)
+    await manager.broadcast_hosts(msg)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  PRICE ENGINE
+# ═══════════════════════════════════════════════════════════════
+def fluctuate_prices(state: dict, news: list) -> None:
+    """
+    Apply one price tick. Called at round start and by the drift loop.
+
+    Realism improvements vs original:
+      - Per-company price floors (no stock below 20% of IPO price)
+      - Sector ripple only goes in the SAME direction (contagion),
+        not opposite (that was backwards)
+      - Acquisition correlation is bi-directional (both legs move)
+      - News strength is applied exactly (no double-random on verified)
+      - Unverified news: 40% chance it lands, 60% chance it's noise
+    """
+    companies = state["companies"]
+    freeze    = state.get("regulatory_freeze")
+    acq_pair  = state.get("acquisition_pair")
+    moved: dict[str, float] = {}
+
+    for cid, c in companies.items():
+        c["prev_price"] = c["price"]
+        if freeze and c.get("sector") == freeze:
+            continue
+        lo, hi, bias = COMPANY_VOL.get(cid, (0.02, 0.06, 0.45))
+        mag       = random.uniform(lo, hi)
+        direction = 1 if random.random() > bias else -1
+        change    = direction * mag
+
+        # ── News impact ──────────────────────────────────────────────
+        for n in news:
+            aff = n["affects"]
+            if aff == cid:
+                if n.get("real", True):
+                    # Verified or real-unverified: apply stated strength
+                    change += n["direction"] * n.get("strength", 0.10)
+                else:
+                    # False rumour: 40% chance of small random noise
+                    if random.random() < 0.4:
+                        change += n["direction"] * random.uniform(0.01, 0.03)
+            elif aff.startswith("sector:"):
+                sector = aff.split(":", 1)[1]
+                if c.get("sector") == sector and n.get("real", True):
+                    # Sector news affects all peers at 70% strength
+                    change += n["direction"] * n.get("strength", 0.07) * 0.70
+
+        # ── Acquisition pair: correlated movement ────────────────────
+        # Both legs move together (acquirer up, target up — M&A premium)
+        if acq_pair and cid in acq_pair:
+            partner = acq_pair[1] if cid == acq_pair[0] else acq_pair[0]
+            if partner in moved:
+                # Blend: 60% own movement, 40% partner's
+                change = 0.60 * change + 0.40 * moved[partner]
+
+        floor = PRICE_FLOORS.get(cid, 10)
+        c["price"] = max(floor, round(c["price"] * (1 + change)))
+        moved[cid] = change
+
+    # ── Sector ripple: large move drags peers in same direction ──────
+    # Models real-world sector contagion (e.g. a tech sell-off pulls all tech)
+    for sector, members in SECTORS.items():
+        for cid in members:
+            if cid not in companies or cid not in moved:
+                continue
+            pct = moved[cid]
+            if abs(pct) > 0.06:  # only ripple on significant moves
+                for peer in members:
+                    if peer == cid or peer not in companies:
+                        continue
+                    if freeze and companies[peer].get("sector") == freeze:
+                        continue
+                    # Peer moves in SAME direction at 30–50% magnitude
+                    ripple = pct * random.uniform(0.30, 0.50)
+                    floor  = PRICE_FLOORS.get(peer, 10)
+                    companies[peer]["price"] = max(
+                        floor,
+                        round(companies[peer]["price"] * (1 + ripple)),
+                    )
+
+
+# ═══════════════════════════════════════════════════════════════
+#  PASSIVE DRIFT LOOP
+# ═══════════════════════════════════════════════════════════════
+async def price_drift_loop():
+    await asyncio.sleep(30)
+    while True:
+        await asyncio.sleep(DRIFT_INTERVAL)
+        state = await read_state()
+        if state.get("phase") != "trading":
+            continue
+        freeze    = state.get("regulatory_freeze")
+        companies = state["companies"]
+        for cid, c in companies.items():
+            if freeze and c.get("sector") == freeze:
+                continue
+            lo, hi, bias = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
+            # Drift is a fraction of normal volatility — micro-movements
+            mag   = random.uniform(0.001, min(0.020, hi * 0.30))
+            direc = 1 if random.random() > bias else -1
+            floor = PRICE_FLOORS.get(cid, 10)
+            c["price"] = max(floor, round(c["price"] * (1 + direc * mag)))
+        await write_state(state)
+        players = await all_players()
+        board   = leaderboard(players, state)
+        await manager.broadcast_all({
+            "type":   "prices_bulk",
+            "prices": {k: v["price"] for k, v in companies.items()},
+            "board":  board,
+        })
+
+
+# ═══════════════════════════════════════════════════════════════
+#  NEWS PICKER
+# ═══════════════════════════════════════════════════════════════
+def pick_news(state: dict, count: int = 3) -> list:
+    listed = set(state.get("ipo_listed", []))
+    used   = set(state.get("news_used", []))
+    pool   = []
+    for n in NEWS_POOL:
+        if n["text"] in used:
+            continue
+        aff = n["affects"]
+        # Skip IPO company news if not yet listed
+        if aff in IPO_COMPANIES and aff not in listed:
+            continue
+        pool.append(n)
+    if not pool:
+        return []
+    chosen = random.sample(pool, min(count, len(pool)))
+    state["news_used"] = list(used) + [n["text"] for n in chosen]
+    return chosen
+
+
+# ═══════════════════════════════════════════════════════════════
+#  PREDICTION MARKET
+# ═══════════════════════════════════════════════════════════════
+def compute_sentiment(players: list, companies: dict) -> dict:
+    tally = {cid: {"up": 0, "down": 0} for cid in companies}
+    for p in players:
+        for cid, bet in (p.get("bets") or {}).items():
+            if cid not in tally:
+                tally[cid] = {"up": 0, "down": 0}
+            key = "up" if bet.get("direction") == "up" else "down"
+            tally[cid][key] += bet.get("amount", 0)
+    result = {}
+    for cid, t in tally.items():
+        total = t["up"] + t["down"]
+        if total > 0:
+            result[cid] = {
+                "up_pct":     round(t["up"] / total * 100),
+                "down_pct":   round(t["down"] / total * 100),
+                "total_bets": total,
+            }
+    return result
+
+
+async def resolve_predictions(state: dict, players: list) -> None:
+    """
+    Evaluate bets at round end.
+    Payout tiers:
+      - Correct direction AND target hit  → 3× stake
+      - Correct direction only            → 1.5× stake
+      - Wrong direction                   → stake lost (already deducted)
+    """
+    companies = state["companies"]
+    for p in players:
+        if not p.get("bets"):
+            continue
+        changed = False
+        for cid, bet in list(p["bets"].items()):
+            if cid not in companies:
+                continue
+            curr  = companies[cid]["price"]
+            prev  = companies[cid].get("prev_price", curr)
+            direc = bet.get("direction")
+            tgt   = bet.get("target", 0)
+            amt   = bet.get("amount", 0)
+            correct_dir = (
+                (direc == "up"   and curr > prev) or
+                (direc == "down" and curr < prev)
+            )
+            target_hit = (
+                (direc == "up"   and curr >= tgt) or
+                (direc == "down" and curr <= tgt)
+            )
+            cname = companies[cid]["name"]
+            if correct_dir and target_hit:
+                payout = amt * 3
+                p["cash"] += payout
+                await manager.send_player(p["code"], {
+                    "type": "info",
+                    "msg":  f"🎯 Prediction HIT! {cname} — direction + target correct. 3× payout: +₹{payout:,}",
+                })
+            elif correct_dir:
+                payout = int(amt * 1.5)
+                p["cash"] += payout
+                await manager.send_player(p["code"], {
+                    "type": "info",
+                    "msg":  f"✅ Prediction PARTIAL — direction correct, target not reached. 1.5× payout: +₹{payout:,}",
+                })
+            else:
+                await manager.send_player(p["code"], {
+                    "type": "info",
+                    "msg":  f"❌ Prediction WRONG on {cname}. Bet of ₹{amt:,} lost.",
+                })
+            changed = True
+        if changed:
+            p["bets"] = {}
+            await save_player(p)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  CONNECTION MANAGER
+# ═══════════════════════════════════════════════════════════════
 class ConnectionManager:
     def __init__(self):
         self.players: Dict[str, WebSocket] = {}
-        self.hosts:   list[WebSocket]      = []
+        self.hosts:   list = []
 
     async def connect_player(self, code: str, ws: WebSocket):
         await ws.accept()
@@ -730,329 +1090,66 @@ class ConnectionManager:
         for ws in dead:
             self.disconnect_host(ws)
 
+
 manager = ConnectionManager()
 
-# ── Player helpers ─────────────────────────────────────────────────────────────
-async def all_codes():
-    async with aiosqlite.connect(DB_PATH) as db:
-        rows = await (await db.execute("SELECT code FROM codes")).fetchall()
-    return {r[0] for r in rows}
 
-async def all_players():
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        rows = await (await db.execute("SELECT * FROM players")).fetchall()
-    result = []
-    for row in rows:
-        result.append({
-            "code":     row["code"],
-            "name":     row["name"],
-            "cash":     row["cash"],
-            "holdings": json.loads(row["holdings"]),
-            "loans":    json.loads(row["loans"]),
-            "frozen":   bool(row["frozen"]),
-            "avg_cost": json.loads(row["avg_cost"]),
-            "bets":     json.loads(row["bets"]),
-            "bm_log":   json.loads(row["bm_log"]),
-        })
-    return result
-
-async def get_player(code: str) -> Optional[dict]:
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        row = await (await db.execute("SELECT * FROM players WHERE code=?", (code,))).fetchone()
-        if not row:
-            return None
-        return {
-            "code":     row["code"],
-            "name":     row["name"],
-            "cash":     row["cash"],
-            "holdings": json.loads(row["holdings"]),
-            "loans":    json.loads(row["loans"]),
-            "frozen":   bool(row["frozen"]),
-            "avg_cost": json.loads(row["avg_cost"]),
-            "bets":     json.loads(row["bets"]),
-            "bm_log":   json.loads(row["bm_log"]),
-        }
-
-async def save_player(p: dict):
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("""
-            INSERT OR REPLACE INTO players
-            (code,name,cash,holdings,loans,frozen,avg_cost,bets,bm_log)
-            VALUES (?,?,?,?,?,?,?,?,?)
-        """, (
-            p["code"], p.get("name"), p["cash"],
-            json.dumps(p["holdings"]),
-            json.dumps(p.get("loans", {})),
-            int(p.get("frozen", False)),
-            json.dumps(p.get("avg_cost", {})),
-            json.dumps(p.get("bets", {})),
-            json.dumps(p.get("bm_log", [])),
-        ))
-        await db.commit()
-
-def player_loans_total(p: dict) -> float:
-    return sum(p.get("loans", {}).values())
-
-def player_view(p: dict, state: dict) -> dict:
-    companies = state["companies"]
-    portfolio = {}
-    for cid, qty in p["holdings"].items():
-        if qty > 0 and cid in companies:
-            c    = companies[cid]
-            avg  = p.get("avg_cost", {}).get(cid, c["price"])
-            price = c["price"]
-            val  = qty * price
-            portfolio[cid] = {
-                "qty":   qty,
-                "avg":   avg,
-                "price": price,
-                "value": val,
-                "pnl":   val - qty * avg,
-            }
-    port_value  = sum(h["value"] for h in portfolio.values())
-    total_loans = player_loans_total(p)
-    net_worth   = p["cash"] + port_value - total_loans
-    return {
-        "cash":      p["cash"],
-        "loans":     p.get("loans", {}),
-        "total_loan": total_loans,
-        "frozen":    p["frozen"],
-        "net_worth": net_worth,
-        "portfolio": portfolio,
-        "bets":      p.get("bets", {}),
-    }
-
-def leaderboard(players: list[dict], state: dict) -> list[dict]:
-    rows = []
-    for p in players:
-        if not p["name"]:
-            continue
-        pv = player_view(p, state)
-        rows.append({"name": p["name"], "net_worth": pv["net_worth"]})
-    rows.sort(key=lambda x: x["net_worth"], reverse=True)
-    for i, r in enumerate(rows):
-        r["rank"] = i + 1
-    return rows
-
-async def broadcast_prices(state: dict):
-    players = await all_players()
-    board   = leaderboard(players, state)
-    prices  = {k: c["price"] for k, c in state["companies"].items()}
-    await manager.broadcast_all({"type": "prices_bulk", "prices": prices, "board": board})
-    await manager.broadcast_hosts({"type": "prices_bulk", "prices": prices, "board": board})
-
-# ── Price fluctuation with sector ripples ──────────────────────────────────────
-def fluctuate_prices(state: dict, news: list[dict]):
-    companies = state["companies"]
-    freeze    = state.get("regulatory_freeze")  # sector name
-    acq_pair  = state.get("acquisition_pair")   # [cid1, cid2]
-    moved     = {}  # cid -> pct change for ripple reference
-
-    for cid, c in companies.items():
-        c["prev_price"] = c["price"]
-        # Freeze check
-        if freeze and c.get("sector") == freeze:
-            continue
-        lo, hi, bias = COMPANY_VOL.get(cid, (0.02, 0.06, 0.45))
-        mag       = random.uniform(lo, hi)
-        direction = 1 if random.random() > bias else -1
-        change    = direction * mag
-
-        # News impact
-        for n in news:
-            aff = n["affects"]
-            if aff == cid:
-                if n.get("real", True):
-                    impact = n.get("strength", random.uniform(0.07, 0.14))
-                else:
-                    # Unverified: random chance of being real
-                    if random.random() < 0.4:
-                        impact = n.get("strength", random.uniform(0.07, 0.14)) * 0.6
-                    else:
-                        impact = random.uniform(0.01, 0.03)
-                change += n["direction"] * impact
-            elif aff.startswith("sector:"):
-                sector = aff.split(":", 1)[1]
-                if c.get("sector") == sector and n.get("real", True):
-                    change += n["direction"] * n.get("strength", 0.08) * 0.7
-
-        # Acquisition rumour: correlated movement
-        if acq_pair and cid in acq_pair:
-            other_cid = acq_pair[1] if cid == acq_pair[0] else acq_pair[0]
-            other_prev = companies.get(other_cid, {}).get("prev_price", 0)
-            if other_prev and cid != acq_pair[0]:  # follower moves with initiator
-                if other_cid in moved:
-                    change = moved[other_cid] * 0.8 + change * 0.2
-
-        c["price"] = max(10, round(c["price"] * (1 + change)))
-        moved[cid] = change
-
-    # Sector ripple: if a company in a sector moved strongly, apply ±3-5% to peers
-    for sector, members in SECTORS.items():
-        for cid in members:
-            if cid not in companies or cid not in moved:
-                continue
-            pct = moved[cid]
-            if abs(pct) > 0.06:
-                for peer in members:
-                    if peer == cid or peer not in companies:
-                        continue
-                    if freeze and companies[peer].get("sector") == freeze:
-                        continue
-                    ripple_mag = random.uniform(0.03, 0.05)
-                    ripple_dir = -1 if pct > 0 else 1  # opposite direction
-                    companies[peer]["price"] = max(10, round(
-                        companies[peer]["price"] * (1 + ripple_dir * ripple_mag)
-                    ))
-
-# ── Passive price drift ────────────────────────────────────────────────────────
-async def price_drift_loop():
-    await asyncio.sleep(30)
-    while True:
-        await asyncio.sleep(DRIFT_INTERVAL)
-        state = await read_state()
-        if state.get("phase") != "trading":
-            continue
-        freeze   = state.get("regulatory_freeze")
-        companies = state["companies"]
-        changed  = False
-        for cid, c in companies.items():
-            if freeze and c.get("sector") == freeze:
-                continue
-            lo, hi, bias = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
-            mag  = random.uniform(0.002, min(0.03, hi * 0.4))
-            direc = 1 if random.random() > bias else -1
-            c["price"] = max(10, round(c["price"] * (1 + direc * mag)))
-            changed = True
-        if changed:
-            await write_state(state)
-            players = await all_players()
-            board   = leaderboard(players, state)
-            prices  = {k: v["price"] for k, v in companies.items()}
-            await manager.broadcast_all({"type": "prices_bulk", "prices": prices, "board": board})
-
-# ── Pick news from pool ────────────────────────────────────────────────────────
-def pick_news(state: dict, count: int = 3) -> list[dict]:
-    listed = set(state.get("ipo_listed", []))
-    used   = set(state.get("news_used", []))
-    pool   = []
-    for n in NEWS_POOL:
-        if n["text"] in used:
-            continue
-        aff = n["affects"]
-        # Skip IPO company news if not yet listed
-        if aff in IPO_COMPANIES and aff not in listed:
-            continue
-        if aff.startswith("sector:"):
-            pass  # always eligible
-        pool.append(n)
-    chosen = random.sample(pool, min(count, len(pool)))
-    state["news_used"] = state.get("news_used", []) + [n["text"] for n in chosen]
-    return chosen
-
-# ── Prediction market helpers ──────────────────────────────────────────────────
-def compute_sentiment(players: list[dict], companies: dict) -> dict:
-    """Per stock: tally UP vs DOWN bets. Returns {cid: {up_pct, down_pct, total_bets}}"""
-    tally = {cid: {"up": 0, "down": 0} for cid in companies}
-    for p in players:
-        for cid, bet in (p.get("bets") or {}).items():
-            if cid not in tally:
-                tally[cid] = {"up": 0, "down": 0}
-            if bet.get("direction") == "up":
-                tally[cid]["up"] += bet.get("amount", 0)
-            else:
-                tally[cid]["down"] += bet.get("amount", 0)
-    result = {}
-    for cid, t in tally.items():
-        total = t["up"] + t["down"]
-        if total > 0:
-            result[cid] = {
-                "up_pct":    round(t["up"] / total * 100),
-                "down_pct":  round(t["down"] / total * 100),
-                "total_bets": total,
-            }
-    return result
-
-async def resolve_predictions(state: dict, players: list[dict]):
-    """Called at round end. Evaluate each player's open bets against final prices."""
-    companies = state["companies"]
-    for p in players:
-        if not p.get("bets"):
-            continue
-        changed = False
-        for cid, bet in list(p["bets"].items()):
-            if cid not in companies:
-                continue
-            curr_price = companies[cid]["price"]
-            prev_price = companies[cid].get("prev_price", curr_price)
-            direction  = bet.get("direction")
-            target     = bet.get("target", 0)
-            amount     = bet.get("amount", 0)
-            correct_dir = (direction == "up" and curr_price > prev_price) or \
-                          (direction == "down" and curr_price < prev_price)
-            target_hit  = (direction == "up" and curr_price >= target) or \
-                          (direction == "down" and curr_price <= target)
-            if correct_dir and target_hit:
-                payout = amount * 3
-                p["cash"] += payout
-                await manager.send_player(p["code"], {
-                    "type": "info",
-                    "msg":  f"🎯 Prediction HIT! {companies[cid]['name']} — direction + target both correct. 3× payout: +₹{int(payout):,}",
-                })
-            elif correct_dir:
-                payout = int(amount * 1.5)
-                p["cash"] += payout
-                await manager.send_player(p["code"], {
-                    "type": "info",
-                    "msg":  f"✅ Prediction PARTIAL — direction correct, target not reached. 1.5× payout: +₹{payout:,}",
-                })
-            else:
-                await manager.send_player(p["code"], {
-                    "type": "info",
-                    "msg":  f"❌ Prediction WRONG on {companies[cid]['name']}. Bet of ₹{int(amount):,} lost.",
-                })
-            changed = True
-        if changed:
-            p["bets"] = {}
-            await save_player(p)
-
-# ── Lifespan ───────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════
+#  LIFESPAN
+# ═══════════════════════════════════════════════════════════════
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     asyncio.create_task(price_drift_loop())
     yield
 
-app = FastAPI(lifespan=lifespan)
 
+app = FastAPI(lifespan=lifespan)
 BASE_DIR = Path(__file__).parent
 
-# ── HTML routes ────────────────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════
+#  HTML ROUTES
+# ═══════════════════════════════════════════════════════════════
 @app.get("/", response_class=HTMLResponse)
 async def serve_team():
     p = BASE_DIR / "team.html"
-    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>team.html not found</h1>", status_code=200 if p.exists() else 404)
+    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>team.html not found</h1>")
+
 
 @app.get("/host", response_class=HTMLResponse)
 async def serve_host():
     p = BASE_DIR / "host.html"
-    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>host.html not found</h1>", status_code=200 if p.exists() else 404)
+    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>host.html not found</h1>")
+
 
 @app.get("/bm", response_class=HTMLResponse)
 async def serve_bm():
     p = BASE_DIR / "bm.html"
-    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>bm.html not found</h1>", status_code=200 if p.exists() else 404)
+    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>bm.html not found</h1>")
 
-# ── REST: code management ──────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════
+#  REST: CODE MANAGEMENT
+# ═══════════════════════════════════════════════════════════════
 @app.post("/api/codes/generate")
 async def generate_codes(count: int = 10):
-    codes = [uuid.uuid4().hex[:6].upper() for _ in range(count)]
+    # Generate slightly more than needed to account for rare collisions
+    candidates = [uuid.uuid4().hex[:6].upper() for _ in range(max(count, 20))]
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.executemany("INSERT OR IGNORE INTO codes (code) VALUES (?)", [(c,) for c in codes])
+        # Get existing codes to avoid duplicates in this batch
+        existing = {r[0] for r in await (await db.execute("SELECT code FROM codes")).fetchall()}
+        new_codes = [c for c in candidates if c not in existing][:count]
+        if len(new_codes) < count:
+            # Fill any remaining slots
+            while len(new_codes) < count:
+                c = uuid.uuid4().hex[:6].upper()
+                if c not in existing and c not in new_codes:
+                    new_codes.append(c)
+        await db.executemany("INSERT OR IGNORE INTO codes (code) VALUES (?)", [(c,) for c in new_codes])
         await db.commit()
-    return {"codes": codes}
+    return {"codes": new_codes, "count": len(new_codes)}
+
 
 @app.get("/api/codes")
 async def list_codes():
@@ -1060,6 +1157,7 @@ async def list_codes():
     players = await all_players()
     used    = {p["code"] for p in players if p["name"]}
     return {"codes": sorted(codes), "used": sorted(used)}
+
 
 @app.delete("/api/codes/{code}")
 async def delete_code(code: str):
@@ -1070,24 +1168,35 @@ async def delete_code(code: str):
     manager.disconnect_player(code)
     return {"ok": True}
 
+
+# ═══════════════════════════════════════════════════════════════
+#  REST: STATE / LEADERBOARD
+# ═══════════════════════════════════════════════════════════════
 @app.get("/api/state")
 async def api_state():
     state   = await read_state()
     players = await all_players()
     board   = leaderboard(players, state)
-    return {"state": state, "board": board, "player_count": len([p for p in players if p["name"]])}
+    return {
+        "state":        state,
+        "board":        board,
+        "player_count": len([p for p in players if p["name"]]),
+    }
+
 
 @app.get("/api/banks")
 async def api_banks():
     return {"banks": BANKS}
 
+
 @app.get("/api/players")
 async def api_players():
-    state   = await read_state()
-    players = await all_players()
-    board   = leaderboard(players, state)
+    state        = await read_state()
+    players      = await all_players()
+    board        = leaderboard(players, state)
     name_to_code = {p["name"]: p["code"] for p in players if p["name"]}
     return {"players": name_to_code, "board": board}
+
 
 @app.get("/api/players/detail")
 async def api_players_detail():
@@ -1099,35 +1208,41 @@ async def api_players_detail():
             continue
         pv = player_view(p, state)
         result.append({
-            "code":      p["code"],
-            "name":      p["name"],
-            "cash":      p["cash"],
-            "loans":     p.get("loans", {}),
-            "total_loan": player_loans_total(p),
-            "frozen":    p["frozen"],
-            "net_worth": pv["net_worth"],
+            "code":       p["code"],
+            "name":       p["name"],
+            "cash":       round(p["cash"]),
+            "loans":      p.get("loans", {}),
+            "total_loan": round(player_loans_total(p)),
+            "frozen":     p["frozen"],
+            "net_worth":  pv["net_worth"],
+            "portfolio_value": sum(h["value"] for h in pv["portfolio"].values()),
         })
     result.sort(key=lambda x: x["net_worth"], reverse=True)
     return {"players": result}
 
+
 @app.get("/api/predictions/overview")
 async def api_predictions_overview():
-    state   = await read_state()
-    players = await all_players()
+    state     = await read_state()
+    players   = await all_players()
     sentiment = compute_sentiment(players, state["companies"])
     all_bets  = []
     for p in players:
         for cid, bet in (p.get("bets") or {}).items():
             all_bets.append({
-                "player": p["name"],
-                "stock":  cid,
+                "player":     p["name"],
+                "stock":      cid,
                 "stock_name": state["companies"].get(cid, {}).get("name", cid),
-                "direction": bet.get("direction"),
-                "target":    bet.get("target"),
-                "amount":    bet.get("amount"),
+                "direction":  bet.get("direction"),
+                "target":     bet.get("target"),
+                "amount":     bet.get("amount"),
             })
     return {"sentiment": sentiment, "bets": all_bets}
 
+
+# ═══════════════════════════════════════════════════════════════
+#  REST: PLAYER MANAGEMENT (host)
+# ═══════════════════════════════════════════════════════════════
 @app.delete("/api/players/{code}")
 async def kick_player(code: str, pw: str):
     if pw != HOST_PASSWORD:
@@ -1136,12 +1251,12 @@ async def kick_player(code: str, pw: str):
         row  = await (await db.execute("SELECT name FROM players WHERE code=?", (code,))).fetchone()
         name = row[0] if row else code
         await db.execute("DELETE FROM players WHERE code=?", (code,))
-        await db.execute("DELETE FROM codes WHERE code=?", (code,))
+        await db.execute("DELETE FROM codes   WHERE code=?", (code,))
         await db.commit()
     ws = manager.players.get(code)
     if ws:
         try:
-            await ws.send_text(json.dumps({"type": "kicked", "msg": "You have been removed from the game by the host."}))
+            await ws.send_text(json.dumps({"type": "kicked", "msg": "You have been removed from the game."}))
             await ws.close()
         except Exception:
             pass
@@ -1153,8 +1268,12 @@ async def kick_player(code: str, pw: str):
     await manager.broadcast_hosts({"type": "player_kicked", "name": name, "code": code, "board": board})
     return {"ok": True, "name": name}
 
+
 @app.post("/api/reset")
-async def api_reset():
+async def api_reset(pw: str):
+    """Full game reset — password required."""
+    if pw != HOST_PASSWORD:
+        raise HTTPException(403, "Wrong password")
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("DELETE FROM players")
         await db.execute("DELETE FROM codes")
@@ -1164,7 +1283,10 @@ async def api_reset():
     await manager.broadcast_hosts({"type": "reset"})
     return {"ok": True}
 
-# ── REST: host game controls ───────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════
+#  REST: HOST GAME CONTROLS
+# ═══════════════════════════════════════════════════════════════
 @app.post("/api/host/start_round")
 async def start_round(pw: str):
     if pw != HOST_PASSWORD:
@@ -1173,23 +1295,30 @@ async def start_round(pw: str):
     if state["phase"] not in ("lobby", "break"):
         raise HTTPException(400, "Can't start round now")
     state["round"] += 1
-    state["phase"]  = "trading"
+    state["phase"]          = "trading"
     state["round_end_time"] = time.time() + ROUND_DURATION
     state["break_end_time"] = None
-    # Clear per-round chaos that auto-resets
+    # Reset per-round chaos effects
     state["regulatory_freeze"] = None
     state["acquisition_pair"]  = None
-    # Reset credit crunch (lasts 1 round only — rates reverted)
-    state["credit_crunch"] = False
+    state["credit_crunch"]     = False
+    # Clean up expired merge bids from previous rounds
+    state["merge_bids"] = {}
     # Unfreeze all players
     players = await all_players()
     for p in players:
         if p["frozen"]:
             p["frozen"] = False
             await save_player(p)
-    news = pick_news(state, 2 if state["round"] == 1 else 3)
+    # Pick and apply news
+    news_count = 2 if state["round"] == 1 else 3
+    news = pick_news(state, news_count)
     state["news"].extend(news)
     fluctuate_prices(state, news)
+    # Record price history snapshot
+    ph = state.setdefault("price_history", {})
+    for cid, c in state["companies"].items():
+        ph.setdefault(cid, []).append(c["price"])
     await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
@@ -1202,31 +1331,36 @@ async def start_round(pw: str):
     })
     for n in news:
         await manager.broadcast_all({"type": "news", **n})
-    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
+    await manager.broadcast_hosts({
+        "type":  "state_update",
+        "state": state,
+        "board": board,
+        "player_count": len([p for p in players if p["name"]]),
+    })
     return {"ok": True, "round": state["round"]}
+
 
 @app.post("/api/host/end_round")
 async def end_round(pw: str):
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
+        raise HTTPException(403, "Wrong password")
     state = await read_state()
     if state["phase"] != "trading":
         raise HTTPException(400, "Not in trading phase")
     state["phase"]          = "break"
     state["round_end_time"] = None
-    state["break_end_time"] = time.time() + 300
-    # Clear chaos
+    state["break_end_time"] = time.time() + BREAK_DURATION
     state["regulatory_freeze"] = None
     state["acquisition_pair"]  = None
-    # Apply interest on each bank's balance independently
+    state["merge_bids"]        = {}
+    # Apply per-bank compounding interest
     players = await all_players()
     for p in players:
         loans   = p.get("loans", {})
         changed = False
         for bank_id, bal in list(loans.items()):
-            if bal > 0:
-                rate         = BANKS[bank_id]["rate"]
-                # Credit crunch adds +5%
+            if bal > 0 and bank_id in BANKS:
+                rate = BANKS[bank_id]["rate"]
                 if state.get("credit_crunch"):
                     rate += 0.05
                 loans[bank_id] = round(bal * (1 + rate))
@@ -1238,37 +1372,53 @@ async def end_round(pw: str):
             await manager.send_player(p["code"], {
                 "type":   "player_update",
                 "player": pv,
-                "msg":    "Interest charged on your loans.",
+                "msg":    "Interest applied to your loans at round end.",
             })
-    # Reset credit crunch for next round
     state["credit_crunch"] = False
-    # Resolve prediction market
+    # Resolve prediction bets
     players = await all_players()
     await resolve_predictions(state, players)
     await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
-    await manager.broadcast_all({"type": "phase_change", "phase": "break", "round": state["round"], "board": board})
-    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
+    await manager.broadcast_all({
+        "type":  "phase_change",
+        "phase": "break",
+        "round": state["round"],
+        "board": board,
+    })
+    await manager.broadcast_hosts({
+        "type":  "state_update",
+        "state": state,
+        "board": board,
+        "player_count": len([p for p in players if p["name"]]),
+    })
     return {"ok": True}
+
 
 @app.post("/api/host/end_game")
 async def end_game(pw: str):
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
-    state   = await read_state()
+        raise HTTPException(403, "Wrong password")
+    state          = await read_state()
     state["phase"] = "ended"
     await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_all({"type": "game_ended", "board": board})
-    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
+    await manager.broadcast_hosts({
+        "type":  "state_update",
+        "state": state,
+        "board": board,
+        "player_count": len([p for p in players if p["name"]]),
+    })
     return {"ok": True}
+
 
 @app.post("/api/host/adjust_cash")
 async def adjust_cash(data: dict, pw: str):
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
+        raise HTTPException(403, "Wrong password")
     code      = data["code"]
     amount    = int(data["amount"])
     direction = 1 if data.get("direction", 1) > 0 else -1
@@ -1278,50 +1428,64 @@ async def adjust_cash(data: dict, pw: str):
     p["cash"] = max(0, p["cash"] + direction * amount)
     await save_player(p)
     state = await read_state()
-    view  = player_view(p, state)
-    await manager.send_player(code, {"type": "player_update", "player": view})
-    sign = "+" if direction > 0 else "-"
+    pv    = player_view(p, state)
+    sign  = "+" if direction > 0 else "-"
+    await manager.send_player(code, {"type": "player_update", "player": pv})
     await manager.send_player(code, {"type": "info", "msg": f"Host adjustment: {sign}₹{amount:,}"})
     players = await all_players()
     board   = leaderboard(players, state)
-    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board, "player_count": len([x for x in players if x["name"]])})
+    await manager.broadcast_hosts({
+        "type":  "state_update",
+        "state": state,
+        "board": board,
+        "player_count": len([p for p in players if p["name"]]),
+    })
     return {"ok": True}
+
 
 @app.post("/api/host/inject_news")
 async def inject_news(data: dict, pw: str):
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
-    state  = await read_state()
+        raise HTTPException(403, "Wrong password")
+    state       = await read_state()
     is_verified = data.get("verified", True)
+    is_real     = is_verified  # verified always moves; unverified may or may not
+    strength    = float(data.get("strength", 0.10))
     n = {
         "type":      "verified" if is_verified else "unverified",
         "label":     "Market Event" if is_verified else "Unverified Rumour",
         "text":      data["text"],
         "affects":   data["affects"],
         "direction": data.get("direction", 1),
-        "strength":  data.get("strength", 0.10),
-        "real":      is_verified,  # verified always real; unverified always treated as maybe
+        "strength":  strength,
+        "real":      is_real,
     }
     state["news"].append(n)
     c = state["companies"].get(data["affects"])
     if c and state["phase"] == "trading":
         c["prev_price"] = c["price"]
         if is_verified:
-            strength = n.get("strength", random.uniform(0.07, 0.14))
+            move = strength
         else:
-            strength = n.get("strength", random.uniform(0.01, 0.05)) if random.random() < 0.4 else random.uniform(0.01, 0.03)
-        c["price"] = max(10, round(c["price"] * (1 + n["direction"] * strength)))
+            move = strength if random.random() < 0.4 else random.uniform(0.005, 0.02)
+        floor         = PRICE_FLOORS.get(data["affects"], 10)
+        c["price"]    = max(floor, round(c["price"] * (1 + n["direction"] * move)))
     await write_state(state)
     await manager.broadcast_all({"type": "news", **n})
     players = await all_players()
     board   = leaderboard(players, state)
-    await manager.broadcast_all({"type": "prices_bulk", "prices": {k: v["price"] for k, v in state["companies"].items()}, "board": board})
+    await manager.broadcast_all({
+        "type":   "prices_bulk",
+        "prices": {k: v["price"] for k, v in state["companies"].items()},
+        "board":  board,
+    })
     return {"ok": True}
+
 
 @app.post("/api/host/manual_price")
 async def manual_price(data: dict, pw: str):
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
+        raise HTTPException(403, "Wrong password")
     state = await read_state()
     cid   = data["stock"]
     price = int(data["price"])
@@ -1332,68 +1496,120 @@ async def manual_price(data: dict, pw: str):
     await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
-    await manager.broadcast_all({"type": "prices_bulk", "prices": {k: v["price"] for k, v in state["companies"].items()}, "board": board})
+    await manager.broadcast_all({
+        "type":   "prices_bulk",
+        "prices": {k: v["price"] for k, v in state["companies"].items()},
+        "board":  board,
+    })
     return {"ok": True}
 
-# ── REST: chaos events ─────────────────────────────────────────────────────────
+
+@app.post("/api/host/secret_intel")
+async def secret_intel(data: dict, pw: str):
+    """Send a private news tip to one player only."""
+    if pw != HOST_PASSWORD:
+        raise HTTPException(403, "Wrong password")
+    code = data["code"]
+    n = {
+        "type":    "unverified",
+        "label":   "Secret Intel",
+        "text":    data["text"],
+        "private": True,
+    }
+    await manager.send_player(code, {"type": "news", **n})
+    return {"ok": True}
+
+
+@app.post("/api/host/wipe_loan")
+async def wipe_loan(data: dict, pw: str):
+    """Host manually clears a player's loan at a specific bank."""
+    if pw != HOST_PASSWORD:
+        raise HTTPException(403, "Wrong password")
+    code    = data["code"]
+    bank_id = data["bank_id"]
+    p = await get_player(code)
+    if not p:
+        raise HTTPException(404, "Player not found")
+    p["loans"].pop(bank_id, None)
+    await save_player(p)
+    state = await read_state()
+    await manager.send_player(code, {
+        "type":   "player_update",
+        "player": player_view(p, state),
+        "msg":    f"Host cleared your {BANKS.get(bank_id, {}).get('name', bank_id)} loan.",
+    })
+    return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════════════
+#  REST: CHAOS EVENTS
+# ═══════════════════════════════════════════════════════════════
 @app.post("/api/chaos/regulatory_freeze")
 async def chaos_regulatory_freeze(data: dict, pw: str):
-    """Freeze all trading for a sector for the rest of this round."""
+    """Halt all trading in a sector for the rest of this round."""
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
-    sector = data["sector"]
-    # Validate sector exists
-    sector_companies = [cid for cid, c in (await read_state())["companies"].items() if c.get("sector") == sector]
-    if not sector_companies:
+        raise HTTPException(403, "Wrong password")
+    sector   = data["sector"]
+    state    = await read_state()
+    affected = [cid for cid, c in state["companies"].items() if c.get("sector") == sector]
+    if not affected:
         raise HTTPException(400, f"No companies in sector '{sector}'")
-    state = await read_state()
     state["regulatory_freeze"] = sector
     await write_state(state)
-    msg = f"🚫 REGULATORY FREEZE — All trading halted for the {sector} sector for this round! Cards greyed out."
+    msg = f"🚫 REGULATORY FREEZE — All trading in the {sector} sector is halted for this round!"
     await manager.broadcast_all({
-        "type": "chaos", "event": "regulatory_freeze",
-        "sector": sector, "frozen_stocks": sector_companies, "msg": msg,
+        "type":           "chaos",
+        "event":          "regulatory_freeze",
+        "sector":         sector,
+        "frozen_stocks":  affected,
+        "msg":            msg,
     })
-    return {"ok": True, "sector": sector, "frozen_stocks": sector_companies}
+    return {"ok": True, "sector": sector, "frozen_stocks": affected}
+
 
 @app.post("/api/chaos/dividend")
 async def chaos_dividend(data: dict, pw: str):
-    """Pay dividend per share to all holders of a company."""
+    """Pay a dividend per share to all holders of a company."""
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
-    state  = await read_state()
-    cid    = data["stock"]
+        raise HTTPException(403, "Wrong password")
+    state     = await read_state()
+    cid       = data["stock"]
     per_share = int(data["per_share"])
     if cid not in state["companies"]:
         raise HTTPException(400, "Unknown stock")
-    cname  = state["companies"][cid]["name"]
-    players = await all_players()
-    total_paid = 0
+    cname     = state["companies"][cid]["name"]
+    players   = await all_players()
+    total_out = 0
     for p in players:
         qty = p["holdings"].get(cid, 0)
         if qty > 0:
-            dividend = qty * per_share
-            p["cash"] += dividend
-            total_paid += dividend
+            div        = qty * per_share
+            p["cash"] += div
+            total_out += div
             await save_player(p)
-            pv = player_view(p, state)
             await manager.send_player(p["code"], {
                 "type":   "player_update",
-                "player": pv,
-                "msg":    f"💰 Dividend! {qty} × {cname} @ ₹{per_share}/share = +₹{dividend:,}",
+                "player": player_view(p, state),
+                "msg":    f"💰 Dividend! {qty}× {cname} @ ₹{per_share}/share = +₹{div:,}",
             })
     players = await all_players()
     board   = leaderboard(players, state)
-    msg = f"💰 DIVIDEND DECLARED — {cname} pays ₹{per_share:,} per share to all holders! Total paid out: ₹{total_paid:,}"
-    await manager.broadcast_all({"type": "chaos", "event": "dividend", "stock": cid, "msg": msg, "board": board})
+    await manager.broadcast_all({
+        "type":  "chaos",
+        "event": "dividend",
+        "stock": cid,
+        "msg":   f"💰 DIVIDEND DECLARED — {cname} pays ₹{per_share:,}/share! Total out: ₹{total_out:,}",
+        "board": board,
+    })
     await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
-    return {"ok": True, "total_paid": total_paid}
+    return {"ok": True, "total_paid": total_out}
+
 
 @app.post("/api/chaos/acquisition_rumour")
 async def chaos_acquisition(data: dict, pw: str):
-    """Make two companies' prices correlated for the rest of this round."""
+    """Correlate two companies' price movements for this round."""
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
+        raise HTTPException(403, "Wrong password")
     state = await read_state()
     cid1  = data["stock1"]
     cid2  = data["stock2"]
@@ -1401,43 +1617,49 @@ async def chaos_acquisition(data: dict, pw: str):
         raise HTTPException(400, "Unknown stocks")
     state["acquisition_pair"] = [cid1, cid2]
     await write_state(state)
-    n1 = state["companies"][cid1]["name"]
-    n2 = state["companies"][cid2]["name"]
-    msg = f"🤝 ACQUISITION RUMOUR — {n1} and {n2} rumoured to merge! Their prices are now correlated. (Unverified)"
+    n1  = state["companies"][cid1]["name"]
+    n2  = state["companies"][cid2]["name"]
+    msg = f"🤝 ACQUISITION RUMOUR — {n1} and {n2} reportedly in merger talks! Their prices will move in tandem. (Unverified)"
+    await manager.broadcast_all({"type": "chaos", "event": "acquisition_rumour", "msg": msg})
     await manager.broadcast_all({
-        "type": "chaos", "event": "acquisition_rumour",
-        "stock1": cid1, "stock2": cid2, "msg": msg,
+        "type": "news", "label": "Unverified Rumour", "type_tag": "unverified",
+        "affects": cid1, "direction": 1, "real": False,
+        "text": msg,
     })
-    # Also broadcast as an unverified news item
-    n = {"type": "unverified", "label": "Unverified Rumour", "affects": cid1,
-         "direction": 1, "real": False, "text": msg}
-    await manager.broadcast_all({"type": "news", **n})
     return {"ok": True}
+
 
 @app.post("/api/chaos/credit_crunch")
 async def chaos_credit_crunch(pw: str):
-    """Raise all bank rates +5% for 1 round."""
+    """Raise all bank rates by +5% for this round's interest calculation."""
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
+        raise HTTPException(403, "Wrong password")
     state = await read_state()
     state["credit_crunch"] = True
     await write_state(state)
-    msg = "💸 CREDIT CRUNCH — All bank interest rates +5% this round! Bharat→10%, VentureCapX→14%, ShadowCredit→21%. Heavy borrowers beware."
+    msg = (
+        "💸 CREDIT CRUNCH — All bank interest rates +5% this round! "
+        "Bharat→10%, VentureCapX→14%, ShadowCredit→21%. Heavy borrowers beware."
+    )
     await manager.broadcast_all({"type": "chaos", "event": "credit_crunch", "msg": msg})
     return {"ok": True}
 
+
 @app.post("/api/chaos/ipo_drop/{ipo_id}")
 async def chaos_ipo_drop(ipo_id: str, pw: str):
+    """List an IPO company mid-game."""
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
+        raise HTTPException(403, "Wrong password")
     if ipo_id not in IPO_COMPANIES:
         raise HTTPException(400, f"Unknown IPO: {ipo_id}")
     state = await read_state()
     if ipo_id in state.get("ipo_listed", []):
-        raise HTTPException(400, f"{ipo_id} already listed")
+        raise HTTPException(400, f"{ipo_id} is already listed")
     ipo = IPO_COMPANIES[ipo_id]
-    state["companies"][ipo_id] = {**ipo, "prev_price": ipo["price"]}
-    state["ipo_listed"] = state.get("ipo_listed", []) + [ipo_id]
+    state["companies"][ipo_id]   = {**ipo, "prev_price": ipo["price"]}
+    state["ipo_listed"]          = state.get("ipo_listed", []) + [ipo_id]
+    PRICE_FLOORS[ipo_id]         = round(ipo["price"] * 0.20)  # set floor dynamically
+    state.setdefault("price_history", {})[ipo_id] = [ipo["price"]]
     await write_state(state)
     msg = f"🚀 IPO DROP — {ipo['name']} lists on the exchange! {ipo['trait']} IPO price: ₹{ipo['price']:,}"
     await manager.broadcast_all({
@@ -1448,249 +1670,143 @@ async def chaos_ipo_drop(ipo_id: str, pw: str):
     })
     return {"ok": True, "company": {"id": ipo_id, **ipo}}
 
-# ── REST: loans (host view + manual override) ──────────────────────────────────
-@app.post("/api/host/secret_intel")
-async def secret_intel(data: dict, pw: str):
-    """Send a private news tip to one player. Only they see it."""
-    if pw != HOST_PASSWORD:
-        raise HTTPException(403)
-    code = data["code"]
-    n = {"type": "unverified", "label": "Secret Intel", "text": data["text"], "private": True}
-    await manager.send_player(code, {"type": "news", **n})
-    return {"ok": True}
 
-@app.post("/api/host/wipe_loan")
-async def wipe_loan(data: dict, pw: str):
-    """Host manually clears a player's loan at a specific bank."""
+@app.post("/api/chaos/portfolio_freeze")
+async def chaos_portfolio_freeze(data: dict, pw: str):
+    """Freeze a specific player's portfolio (they can't trade this round)."""
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
-    code    = data["code"]
-    bank_id = data["bank_id"]
-    p = await get_player(code)
+        raise HTTPException(403, "Wrong password")
+    code = data["code"]
+    p    = await get_player(code)
     if not p:
-        raise HTTPException(404)
-    p["loans"].pop(bank_id, None)
+        raise HTTPException(404, "Player not found")
+    p["frozen"] = True
     await save_player(p)
     state = await read_state()
-    await manager.send_player(code, {"type": "player_update", "player": player_view(p, state)})
+    await manager.send_player(code, {
+        "type":   "player_update",
+        "player": player_view(p, state),
+        "msg":    "🔒 Your portfolio has been frozen by the host. No trading this round.",
+    })
+    await manager.broadcast_all({
+        "type":  "chaos",
+        "event": "portfolio_freeze",
+        "msg":   f"🔒 {p['name']}'s portfolio has been frozen!",
+    })
     return {"ok": True}
 
-# ── Black Market ──────────────────────────────────────────────────────────────
-BM_ITEMS = {
-    "insider_hint": {
-        "id":    "insider_hint",
-        "name":  "Insider Hint",
-        "icon":  "🔍",
-        "cost":  15_000,
-        "desc":  "A private, unverified tip on one stock — only you see it. Could be gold. Could be noise.",
-    },
-    "spread_rumour": {
-        "id":    "spread_rumour",
-        "name":  "Spread Rumour",
-        "icon":  "📢",
-        "cost":  10_000,
-        "desc":  "Plant an anonymous Unverified news item. You write the headline, pick the stock. Server applies a random price effect. No one knows it was you.",
-    },
-    "leak_card": {
-        "id":    "leak_card",
-        "name":  "Leak Card",
-        "icon":  "🃏",
-        "cost":  25_000,
-        "desc":  "One-time use. Broadcast a Verified-looking (but still Unverified badge) headline with a stronger price effect than a rumour. Maximum 1 per player per game.",
-    },
-}
 
-# Insider hints pool — drawn randomly when player buys one
-INSIDER_HINTS = [
-    ("zora",      1,  0.12, "A bulk order for Zora's industrial components just landed from a defence subcontractor. Unconfirmed but credible."),
-    ("zora",     -1,  0.10, "Zora's largest manufacturing plant reportedly running at 60% capacity due to a parts shortage. Not public yet."),
-    ("streamvx",  1,  0.13, "Word is StreamVerse's next original just wrapped production and early test screenings are exceptional."),
-    ("streamvx", -1,  0.11, "StreamVerse's latest subscriber data allegedly shows churn accelerating. Results due soon."),
-    ("freshco",   1,  0.10, "FreshCo's rural distribution numbers for this quarter are reportedly far ahead of estimates."),
-    ("freshco",  -1,  0.09, "A FreshCo manufacturing unit in Odisha is dealing with a quiet quality control issue. Not disclosed publicly."),
-    ("voltex",    1,  0.12, "Government officials have reportedly signed off internally on Voltex's subsidy renewal — announcement imminent."),
-    ("voltex",   -1,  0.11, "Voltex's Rajasthan solar project reportedly 4 months behind schedule due to grid connection delays."),
-    ("mediq",     1,  0.14, "MediQ's Zytravax trial data is reportedly clean and strong. Submission to DCGI is imminent."),
-    ("mediq",    -1,  0.13, "Rumoured adverse event in MediQ's Phase 3 trial being quietly reviewed internally. Nothing filed yet."),
-    ("skylink",   1,  0.13, "SkyLink's Q3 deal pipeline is reportedly the strongest in company history. Earnings surprise likely."),
-    ("skylink",  -1,  0.12, "SkyLink is quietly losing two enterprise clients to IndraNet. No public statement expected."),
-    ("swifthaul", 1,  0.11, "SwiftHaul's cold-chain pharma division just onboarded its first 3 hospital chains. Revenue starts next quarter."),
-    ("swifthaul",-1,  0.10, "SwiftHaul's primary e-commerce partner is reportedly in talks with a rival logistics firm."),
-    ("crownmart", 1,  0.11, "CrownMart's Q3 private-label sales are reportedly tracking 30% ahead of target."),
-    ("crownmart",-1,  0.10, "CrownMart is about to announce 40 more store closures beyond the previously disclosed 120."),
-    ("shieldgen", 1,  0.12, "ShieldGen's classified drone maintenance contract — widely rumoured — has reportedly been signed and sealed."),
-    ("indranet",  1,  0.11, "IndraNet just closed 3 large enterprise renewals at 20% higher ARR. Not announced yet."),
-    ("indranet", -1,  0.09, "A key IndraNet engineering team is reportedly being poached by SkyLink en masse."),
-    ("novapay",   1,  0.13, "NovaPay's RBI KYC issue has reportedly been resolved behind closed doors. Formal clearance expected soon."),
-    ("bytecorp",  1,  0.14, "ByteCorp's government contract — the big one — is in final legal sign-off. Announcement within days."),
-    ("bytecorp", -1,  0.13, "ByteCorp's lead model engineer has quietly resigned. Harder to replace than the market realises."),
-    ("greenleaf", 1,  0.11, "GreenLeaf's Gulf export deal is reportedly finalised. ₹2,000 crore annually — transformative if confirmed."),
-    ("armorinc",  1,  0.11, "ArmorInc's surveillance tech acquisition is almost done. Completion expected before next round."),
-]
-
+# ═══════════════════════════════════════════════════════════════
+#  REST: BLACK MARKET
+# ═══════════════════════════════════════════════════════════════
 @app.get("/api/bm/items")
 async def bm_items(code: str):
-    """Return BM items + player's purchase history for this game."""
     p = await get_player(code.upper())
     if not p:
         raise HTTPException(404, "Player not found")
     used_leak = any(e["item"] == "leak_card" for e in p.get("bm_log", []))
-    items = []
-    for item in BM_ITEMS.values():
-        items.append({**item, "locked": item["id"] == "leak_card" and used_leak})
+    items = [
+        {**item, "locked": item["id"] == "leak_card" and used_leak}
+        for item in BM_ITEMS.values()
+    ]
     return {"items": items, "cash": p["cash"], "name": p["name"]}
+
 
 @app.post("/api/bm/buy")
 async def bm_buy(data: dict):
     """
     Purchase a black market item.
-    data: { code, item_id, stock (for spread_rumour/leak_card), direction, text (for spread_rumour/leak_card) }
+    Body: { code, item_id, stock?, direction?, text? }
     """
     code    = data.get("code", "").upper()
     item_id = data.get("item_id")
-    p = await get_player(code)
-    if not p or not p["name"]:
-        raise HTTPException(400, "Invalid player")
-    if item_id not in BM_ITEMS:
-        raise HTTPException(400, "Unknown item")
-    item  = BM_ITEMS[item_id]
-    cost  = item["cost"]
-    state = await read_state()
 
-    if p["cash"] < cost:
-        raise HTTPException(400, f"Not enough cash. Need ₹{cost:,}, have ₹{int(p['cash']):,}.")
+    async with _player_locks[code]:
+        p = await get_player(code)
+        if not p or not p["name"]:
+            raise HTTPException(400, "Invalid player")
+        if item_id not in BM_ITEMS:
+            raise HTTPException(400, "Unknown item")
+        item  = BM_ITEMS[item_id]
+        cost  = item["cost"]
+        state = await read_state()
+        if p["cash"] < cost:
+            raise HTTPException(400, f"Not enough cash. Need ₹{cost:,}, have ₹{int(p['cash']):,}.")
+        if item_id == "leak_card":
+            if any(e["item"] == "leak_card" for e in p.get("bm_log", [])):
+                raise HTTPException(400, "You've already used your Leak Card this game.")
 
-    # Leak card: one per game
-    if item_id == "leak_card":
-        if any(e["item"] == "leak_card" for e in p.get("bm_log", [])):
-            raise HTTPException(400, "You've already used your Leak Card this game.")
+        p["cash"] -= cost
+        log_entry: dict = {"item": item_id, "cost": cost, "ts": time.time(), "player": p["name"]}
 
-    p["cash"] -= cost
-    log_entry = {
-        "item": item_id, "cost": cost,
-        "ts": time.time(), "player": p["name"],
-    }
+        # ── Insider Hint ─────────────────────────────────────────────
+        if item_id == "insider_hint":
+            pool = [h for h in INSIDER_HINTS if h[0] in state["companies"]]
+            if not pool:
+                raise HTTPException(500, "No hints available right now.")
+            cid, direction, strength, text = random.choice(pool)
+            log_entry.update({"stock": cid, "direction": direction, "text": text})
+            await manager.send_player(code, {
+                "type":     "news",
+                "label":    "🔍 Insider Hint",
+                "text":     text,
+                "private":  True,
+                "type_tag": "unverified",
+            })
 
-    # ── Insider Hint ──────────────────────────────────────────────────────────
-    if item_id == "insider_hint":
-        # Pick a random hint for a listed stock
-        listed = set(state.get("ipo_listed", []))
-        pool   = [h for h in INSIDER_HINTS if h[0] in state["companies"]]
-        if not pool:
-            raise HTTPException(500, "No hints available right now.")
-        hint = random.choice(pool)
-        cid, direction, strength, text = hint
-        log_entry["stock"]     = cid
-        log_entry["direction"] = direction
-        log_entry["text"]      = text
-        # Deliver private news to the buyer
-        await manager.send_player(code, {
-            "type":    "news",
-            "label":   "🔍 Insider Hint",
-            "text":    text,
-            "private": True,
-            "type_tag": "unverified",
-        })
+        # ── Spread Rumour ────────────────────────────────────────────
+        elif item_id in ("spread_rumour", "leak_card"):
+            stock     = data.get("stock")
+            direction = int(data.get("direction", 1))
+            text      = data.get("text", "").strip()[:200]
+            if not stock or stock not in state["companies"]:
+                raise HTTPException(400, "Pick a valid stock.")
+            if not text:
+                raise HTTPException(400, "Rumour text is required.")
+            log_entry.update({"stock": stock, "direction": direction, "text": text})
+            is_leak  = item_id == "leak_card"
+            strength = random.uniform(0.10, 0.18) if is_leak else random.uniform(0.06, 0.12)
+            is_real  = True if is_leak else (random.random() < 0.5)
+            n = {
+                "type":      "unverified",
+                "label":     "Unverified Rumour",
+                "affects":   stock,
+                "direction": direction,
+                "strength":  strength,
+                "real":      is_real,
+                "text":      text,
+            }
+            state["news"].append(n)
+            c = state["companies"].get(stock)
+            if c and is_real and state["phase"] == "trading":
+                c["prev_price"] = c["price"]
+                floor           = PRICE_FLOORS.get(stock, 10)
+                c["price"]      = max(floor, round(c["price"] * (1 + direction * strength)))
+            await write_state(state)
+            await manager.broadcast_all({"type": "news", **n})
+            players_all = await all_players()
+            board_now   = leaderboard(players_all, state)
+            await manager.broadcast_all({
+                "type":   "prices_bulk",
+                "prices": {k: v["price"] for k, v in state["companies"].items()},
+                "board":  board_now,
+            })
+            icon = "🃏" if is_leak else "📢"
+            await manager.send_player(code, {
+                "type": "info",
+                "msg":  f"{icon} {'Leak Card deployed' if is_leak else 'Rumour spread'} on {state['companies'][stock]['name']}. Anonymous.",
+            })
 
-    # ── Spread Rumour ─────────────────────────────────────────────────────────
-    elif item_id == "spread_rumour":
-        stock     = data.get("stock")
-        direction = int(data.get("direction", 1))
-        text      = data.get("text", "").strip()[:200]
-        if not stock or stock not in state["companies"]:
-            raise HTTPException(400, "Pick a valid stock.")
-        if not text:
-            raise HTTPException(400, "Rumour text is required.")
-        log_entry["stock"]     = stock
-        log_entry["direction"] = direction
-        log_entry["text"]      = text
-        # Broadcast as anonymous Unverified news — no player attribution visible
-        n = {
-            "type":      "unverified",
-            "label":     "Unverified Rumour",
-            "affects":   stock,
-            "direction": direction,
-            "strength":  random.uniform(0.06, 0.12),
-            "real":      random.random() < 0.5,   # 50% chance it actually moves price
-            "text":      text,
-        }
-        state["news"].append(n)
-        # Apply price effect if real and trading
-        c = state["companies"].get(stock)
-        if c and n["real"] and state["phase"] == "trading":
-            c["prev_price"] = c["price"]
-            c["price"] = max(10, round(c["price"] * (1 + direction * n["strength"])))
-        await write_state(state)
-        await manager.broadcast_all({"type": "news", **n})
-        players_all = await all_players()
-        board_now   = leaderboard(players_all, state)
-        await manager.broadcast_all({
-            "type":   "prices_bulk",
-            "prices": {k: v["price"] for k, v in state["companies"].items()},
-            "board":  board_now,
-        })
-        # Confirm privately to buyer
-        await manager.send_player(code, {
-            "type": "info",
-            "msg":  f"📢 Your rumour about {state['companies'][stock]['name']} is out. Anonymous. Untraceable.",
-        })
+        p["bm_log"] = p.get("bm_log", []) + [log_entry]
+        await save_player(p)
+        await manager.broadcast_hosts({"type": "bm_log_update", "entry": log_entry})
+        return {"ok": True, "cash": p["cash"], "item": item_id}
 
-    # ── Leak Card ─────────────────────────────────────────────────────────────
-    elif item_id == "leak_card":
-        stock     = data.get("stock")
-        direction = int(data.get("direction", 1))
-        text      = data.get("text", "").strip()[:200]
-        if not stock or stock not in state["companies"]:
-            raise HTTPException(400, "Pick a valid stock.")
-        if not text:
-            raise HTTPException(400, "Leak text is required.")
-        log_entry["stock"]     = stock
-        log_entry["direction"] = direction
-        log_entry["text"]      = text
-        # Stronger effect than a rumour, still Unverified badge
-        strength = random.uniform(0.10, 0.18)
-        n = {
-            "type":      "unverified",
-            "label":     "Unverified Rumour",
-            "affects":   stock,
-            "direction": direction,
-            "strength":  strength,
-            "real":      True,   # Leak card always moves price
-            "text":      text,
-        }
-        state["news"].append(n)
-        c = state["companies"].get(stock)
-        if c and state["phase"] == "trading":
-            c["prev_price"] = c["price"]
-            c["price"] = max(10, round(c["price"] * (1 + direction * strength)))
-        await write_state(state)
-        await manager.broadcast_all({"type": "news", **n})
-        players_all = await all_players()
-        board_now   = leaderboard(players_all, state)
-        await manager.broadcast_all({
-            "type":   "prices_bulk",
-            "prices": {k: v["price"] for k, v in state["companies"].items()},
-            "board":  board_now,
-        })
-        await manager.send_player(code, {
-            "type": "info",
-            "msg":  f"🃏 Leak Card deployed on {state['companies'][stock]['name']}. One-time use — gone.",
-        })
-
-    # Save log + deduct cash
-    p["bm_log"] = p.get("bm_log", []) + [log_entry]
-    await save_player(p)
-
-    # Broadcast host BM log update
-    await manager.broadcast_hosts({"type": "bm_log_update", "entry": log_entry})
-
-    return {"ok": True, "cash": p["cash"], "item": item_id}
 
 @app.get("/api/bm/log")
 async def bm_log(pw: str):
-    """Host-only: full BM transaction log across all players."""
     if pw != HOST_PASSWORD:
-        raise HTTPException(403)
+        raise HTTPException(403, "Wrong password")
     players = await all_players()
     log = []
     for p in players:
@@ -1699,10 +1815,13 @@ async def bm_log(pw: str):
     log.sort(key=lambda x: x.get("ts", 0), reverse=True)
     return {"log": log}
 
-# ── WebSocket: player ──────────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════
+#  WEBSOCKET: PLAYER
+# ═══════════════════════════════════════════════════════════════
 @app.websocket("/ws/player/{code}")
 async def ws_player(websocket: WebSocket, code: str):
-    code = code.upper()
+    code        = code.upper()
     valid_codes = await all_codes()
     if code not in valid_codes:
         await websocket.accept()
@@ -1715,30 +1834,29 @@ async def ws_player(websocket: WebSocket, code: str):
     player = await get_player(code)
     already_joined = player is not None and bool(player["name"])
 
-    init_msg = {
-        "type":         "init",
-        "phase":        state["phase"],
-        "round":        state["round"],
-        "market":       state["companies"],
-        "board":        leaderboard(await all_players(), state),
-        "banks":        BANKS,
-        "joined":       bool(already_joined),
-        "reg_freeze":   state.get("regulatory_freeze"),
+    await websocket.send_text(json.dumps({
+        "type":          "init",
+        "phase":         state["phase"],
+        "round":         state["round"],
+        "market":        state["companies"],
+        "board":         leaderboard(await all_players(), state),
+        "banks":         BANKS,
+        "joined":        already_joined,
+        "reg_freeze":    state.get("regulatory_freeze"),
         "credit_crunch": state.get("credit_crunch", False),
-    }
-    if already_joined:
-        init_msg["name"]   = player["name"]
-        init_msg["player"] = player_view(player, state)
-    await websocket.send_text(json.dumps(init_msg))
+        "price_history": state.get("price_history", {}),
+        **({"name": player["name"], "player": player_view(player, state)} if already_joined else {}),
+    }))
 
     try:
         async for raw in websocket.iter_text():
             msg    = json.loads(raw)
             action = msg.get("action")
+            # Always re-read state and player for freshness
             state  = await read_state()
             player = await get_player(code)
 
-            # ── Set name ───────────────────────────────────────────────────────
+            # ── Set name ──────────────────────────────────────────────
             if action == "set_name":
                 name = msg.get("name", "").strip()[:30]
                 if not name:
@@ -1768,32 +1886,35 @@ async def ws_player(websocket: WebSocket, code: str):
                 board   = leaderboard(players, state)
                 await manager.broadcast_all({"type": "leaderboard", "board": board})
 
-            # ── Buy ────────────────────────────────────────────────────────────
+            # ── Buy ───────────────────────────────────────────────────
             elif action == "buy":
                 if state["phase"] != "trading":
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
                 if not player:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
                 if player["frozen"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Portfolio frozen this round."})); continue
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Your portfolio is frozen this round."})); continue
                 stock = msg.get("stock")
                 qty   = int(msg.get("qty", 0))
                 if stock not in state["companies"] or qty < 1:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid stock or quantity."})); continue
-                # Regulatory freeze check
                 freeze = state.get("regulatory_freeze")
                 if freeze and state["companies"][stock].get("sector") == freeze:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"⛔ {state['companies'][stock]['sector']} sector is under Regulatory Freeze — no trading allowed."})); continue
-                price = state["companies"][stock]["price"]
-                cost  = price * qty
-                if player["cash"] < cost:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{cost:,}. You have ₹{int(player['cash']):,}."})); continue
-                player["cash"] -= cost
-                old_qty = player["holdings"].get(stock, 0)
-                old_avg = player["avg_cost"].get(stock, price)
-                player["avg_cost"][stock] = ((old_avg * old_qty + price * qty) / (old_qty + qty)) if old_qty else price
-                player["holdings"][stock] = old_qty + qty
-                await save_player(player)
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"⛔ {state['companies'][stock]['sector']} sector is under Regulatory Freeze."})); continue
+                # Use per-player lock to prevent race conditions
+                async with _player_locks[code]:
+                    player = await get_player(code)   # re-read inside lock
+                    state  = await read_state()
+                    price  = state["companies"][stock]["price"]
+                    cost   = price * qty
+                    if player["cash"] < cost:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{cost:,}. You have ₹{int(player['cash']):,}."})); continue
+                    old_qty = player["holdings"].get(stock, 0)
+                    old_avg = player["avg_cost"].get(stock, price)
+                    player["avg_cost"][stock] = ((old_avg * old_qty + price * qty) / (old_qty + qty)) if old_qty else price
+                    player["holdings"][stock]  = old_qty + qty
+                    player["cash"]            -= cost
+                    await save_player(player)
                 pv = player_view(player, state)
                 await websocket.send_text(json.dumps({
                     "type":   "trade_ok",
@@ -1803,26 +1924,29 @@ async def ws_player(websocket: WebSocket, code: str):
                 board = leaderboard(await all_players(), state)
                 await manager.broadcast_all({"type": "leaderboard", "board": board})
 
-            # ── Sell ───────────────────────────────────────────────────────────
+            # ── Sell ──────────────────────────────────────────────────
             elif action == "sell":
                 if state["phase"] != "trading":
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
                 if not player:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
                 if player["frozen"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Portfolio frozen this round."})); continue
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Your portfolio is frozen this round."})); continue
                 stock = msg.get("stock")
                 qty   = int(msg.get("qty", 0))
-                owned = player["holdings"].get(stock, 0)
-                if qty < 1 or qty > owned:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"You only own {owned} shares."})); continue
                 freeze = state.get("regulatory_freeze")
                 if freeze and state["companies"].get(stock, {}).get("sector") == freeze:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "⛔ Regulatory Freeze active — trading halted for this sector."})); continue
-                price = state["companies"][stock]["price"]
-                player["cash"] += price * qty
-                player["holdings"][stock] = owned - qty
-                await save_player(player)
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "⛔ Regulatory Freeze — no trading in this sector."})); continue
+                async with _player_locks[code]:
+                    player = await get_player(code)
+                    state  = await read_state()
+                    owned  = player["holdings"].get(stock, 0)
+                    if qty < 1 or qty > owned:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"You only own {owned} shares."})); continue
+                    price = state["companies"][stock]["price"]
+                    player["cash"]             += price * qty
+                    player["holdings"][stock]   = owned - qty
+                    await save_player(player)
                 pv = player_view(player, state)
                 await websocket.send_text(json.dumps({
                     "type":   "trade_ok",
@@ -1832,7 +1956,7 @@ async def ws_player(websocket: WebSocket, code: str):
                 board = leaderboard(await all_players(), state)
                 await manager.broadcast_all({"type": "leaderboard", "board": board})
 
-            # ── Take loan ──────────────────────────────────────────────────────
+            # ── Take loan ─────────────────────────────────────────────
             elif action == "take_loan":
                 if not player:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
@@ -1840,50 +1964,52 @@ async def ws_player(websocket: WebSocket, code: str):
                 amount  = int(msg.get("amount", 0))
                 if bank_id not in BANKS:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid bank."})); continue
-                bank = BANKS[bank_id]
+                bank        = BANKS[bank_id]
                 current_bal = player.get("loans", {}).get(bank_id, 0)
                 if current_bal + amount > bank["limit"]:
-                    remain = bank["limit"] - current_bal
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Exceeds {bank['name']} limit. Max additional drawdown: ₹{remain:,}."})); continue
-                if amount not in bank["options"] and amount > bank["limit"]:
-                    pass  # allow any amount up to limit
-                player["cash"] += amount
-                player["loans"][bank_id] = current_bal + amount
-                await save_player(player)
-                pv = player_view(player, state)
-                rate = bank["rate"]
-                if state.get("credit_crunch"):
-                    rate += 0.05
+                    remain = max(0, bank["limit"] - current_bal)
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Exceeds {bank['name']} limit. Max additional: ₹{remain:,}."})); continue
+                if amount <= 0:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Amount must be positive."})); continue
+                async with _player_locks[code]:
+                    player = await get_player(code)
+                    player["cash"]               += amount
+                    player.setdefault("loans", {})[bank_id] = player["loans"].get(bank_id, 0) + amount
+                    await save_player(player)
+                pv   = player_view(player, state)
+                rate = bank["rate"] + (0.05 if state.get("credit_crunch") else 0)
                 await websocket.send_text(json.dumps({
                     "type":   "trade_ok",
-                    "msg":    f"₹{amount:,} from {bank['name']}. Running balance: ₹{int(player['loans'][bank_id]):,}. Interest rate: {rate*100:.0f}%/round.",
+                    "msg":    f"₹{amount:,} from {bank['name']}. Balance: ₹{int(player['loans'][bank_id]):,}. Rate: {rate*100:.0f}%/round.",
                     "player": pv,
                 }))
 
-            # ── Repay loan ─────────────────────────────────────────────────────
+            # ── Repay loan ────────────────────────────────────────────
             elif action == "repay_loan":
                 if not player:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
                 if state["phase"] != "break":
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Loans can only be repaid during break periods."})); continue
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Loans can only be repaid during the break."})); continue
                 bank_id   = msg.get("bank_id")
                 repay_amt = int(msg.get("amount", 0))
                 if bank_id not in BANKS:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid bank."})); continue
-                bal = player.get("loans", {}).get(bank_id, 0)
-                if bal <= 0:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"No balance at {BANKS[bank_id]['name']}."})); continue
-                repay_amt = min(repay_amt, int(bal))
-                if player["cash"] < repay_amt:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Not enough cash. You have ₹{int(player['cash']):,}."})); continue
-                player["cash"] -= repay_amt
-                remaining = max(0, bal - repay_amt)
-                if remaining == 0:
-                    player["loans"].pop(bank_id, None)
-                else:
-                    player["loans"][bank_id] = remaining
-                await save_player(player)
-                pv = player_view(player, state)
+                async with _player_locks[code]:
+                    player    = await get_player(code)
+                    bal       = player.get("loans", {}).get(bank_id, 0)
+                    if bal <= 0:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"No balance at {BANKS[bank_id]['name']}."})); continue
+                    repay_amt = min(repay_amt, int(bal))
+                    if player["cash"] < repay_amt:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Not enough cash. You have ₹{int(player['cash']):,}."})); continue
+                    player["cash"] -= repay_amt
+                    remaining       = max(0, bal - repay_amt)
+                    if remaining == 0:
+                        player["loans"].pop(bank_id, None)
+                    else:
+                        player["loans"][bank_id] = remaining
+                    await save_player(player)
+                pv        = player_view(player, state)
                 bank_name = BANKS[bank_id]["name"]
                 await websocket.send_text(json.dumps({
                     "type":   "trade_ok",
@@ -1891,39 +2017,42 @@ async def ws_player(websocket: WebSocket, code: str):
                     "player": pv,
                 }))
 
-            # ── Voluntary bankruptcy ───────────────────────────────────────────
+            # ── Voluntary bankruptcy ──────────────────────────────────
             elif action == "declare_bankruptcy":
                 if not player:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                player["cash"]     = BANKRUPTCY_RESTART
-                player["holdings"] = {}
-                player["loans"]    = {}
-                player["bets"]     = {}
-                player["avg_cost"] = {}
-                player["frozen"]   = False
-                await save_player(player)
+                async with _player_locks[code]:
+                    player = await get_player(code)
+                    player["cash"]     = BANKRUPTCY_RESTART
+                    player["holdings"] = {}
+                    player["loans"]    = {}
+                    player["bets"]     = {}   # bets cleared; stakes already deducted — treat as lost
+                    player["avg_cost"] = {}
+                    player["frozen"]   = False
+                    await save_player(player)
                 pv = player_view(player, state)
                 await websocket.send_text(json.dumps({
                     "type":   "bankrupt",
-                    "msg":    f"💀 You declared bankruptcy. Wiped clean. Restarting with ₹{BANKRUPTCY_RESTART:,}.",
+                    "msg":    f"💀 Bankruptcy declared. Wiped clean. Restarting with ₹{BANKRUPTCY_RESTART:,}.",
                     "player": pv,
                 }))
                 players = await all_players()
                 board   = leaderboard(players, state)
                 await manager.broadcast_all({
-                    "type": "chaos", "event": "bankrupt",
-                    "msg":  f"💀 {player['name']} declared voluntary bankruptcy and restarted with ₹{BANKRUPTCY_RESTART:,}!",
+                    "type":  "chaos",
+                    "event": "bankrupt",
+                    "msg":   f"💀 {player['name']} declared voluntary bankruptcy and restarted with ₹{BANKRUPTCY_RESTART:,}!",
                     "board": board,
                 })
 
-            # ── Place prediction bet ───────────────────────────────────────────
+            # ── Place prediction bet ──────────────────────────────────
             elif action == "place_bet":
                 if state["phase"] != "trading":
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Bets lock at round start and are only placed during trading."})); continue
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Bets can only be placed during trading rounds."})); continue
                 if not player:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
                 stock     = msg.get("stock")
-                direction = msg.get("direction")   # "up" | "down"
+                direction = msg.get("direction")
                 target    = float(msg.get("target", 0))
                 amount    = int(msg.get("amount", 0))
                 if stock not in state["companies"]:
@@ -1931,30 +2060,29 @@ async def ws_player(websocket: WebSocket, code: str):
                 if direction not in ("up", "down"):
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Direction must be 'up' or 'down'."})); continue
                 curr_price = state["companies"][stock]["price"]
-                if direction == "up" and target <= curr_price:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be above current price ₹{curr_price}."})); continue
+                if direction == "up"   and target <= curr_price:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be above current price ₹{curr_price:,}."})); continue
                 if direction == "down" and target >= curr_price:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be below current price ₹{curr_price}."})); continue
-                if amount < 1000 or amount > player["cash"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Bet min ₹1,000 and max ₹{int(player['cash']):,}."})); continue
-                # One open bet per stock
-                if stock in (player.get("bets") or {}):
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Already have an open bet on this stock."})); continue
-                player["cash"] -= amount
-                if not isinstance(player.get("bets"), dict):
-                    player["bets"] = {}
-                player["bets"][stock] = {
-                    "direction": direction,
-                    "target":    target,
-                    "amount":    amount,
-                    "locked_at": curr_price,
-                }
-                await save_player(player)
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be below current price ₹{curr_price:,}."})); continue
+                if amount < 1000:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Minimum bet is ₹1,000."})); continue
+                async with _player_locks[code]:
+                    player = await get_player(code)
+                    if amount > player["cash"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Max bet ₹{int(player['cash']):,}."})); continue
+                    if stock in (player.get("bets") or {}):
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Already have an open bet on this stock."})); continue
+                    player["cash"] -= amount
+                    player.setdefault("bets", {})[stock] = {
+                        "direction": direction,
+                        "target":    target,
+                        "amount":    amount,
+                        "locked_at": curr_price,
+                    }
+                    await save_player(player)
                 pv = player_view(player, state)
                 cname = state["companies"][stock]["name"]
-                # Broadcast updated sentiment to all players
-                players_all = await all_players()
-                sentiment   = compute_sentiment(players_all, state["companies"])
+                sentiment = compute_sentiment(await all_players(), state["companies"])
                 await manager.broadcast_all({"type": "sentiment_update", "sentiment": sentiment})
                 await websocket.send_text(json.dumps({
                     "type":   "trade_ok",
@@ -1962,149 +2090,126 @@ async def ws_player(websocket: WebSocket, code: str):
                     "player": pv,
                 }))
 
-            # ── Merger initiate ────────────────────────────────────────────────
+            # ── Merger: initiate ──────────────────────────────────────
             elif action == "merge_initiate":
                 if state["phase"] != "trading" or not player:
-                    continue
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Can only merge during trading."})); continue
                 partner_code = msg.get("partner_code", "").upper()
-                stock  = msg.get("stock")
-                qty    = int(msg.get("qty", 0))
+                stock        = msg.get("stock")
+                qty          = int(msg.get("qty", 0))
                 if stock not in state["companies"] or qty < 1:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid merger request."})); continue
+                if partner_code == code:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Can't merge with yourself."})); continue
                 partner = await get_player(partner_code)
                 if not partner or not partner["name"]:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Partner not found."})); continue
                 price  = state["companies"][stock]["price"]
-                each   = round(price * qty / 2)
+                each   = round(price * qty / 2)   # each pays half
+                # Validate both sides can afford it
+                if player["cash"] < each:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"You need ₹{each:,} for this merger."})); continue
                 bid_id = uuid.uuid4().hex[:8]
                 state["merge_bids"][bid_id] = {
                     "from_code":    code,
                     "from_name":    player["name"],
                     "partner_code": partner_code,
-                    "stock": stock, "qty": qty, "each": each,
+                    "stock":        stock,
+                    "qty":          qty,
+                    "each":         each,
+                    "ts":           time.time(),
                 }
                 await write_state(state)
                 await manager.send_player(partner_code, {
-                    "type": "merge_request",
-                    "bid_id": bid_id, "from": player["name"],
-                    "stock": stock, "qty": qty, "each": each,
+                    "type":    "merge_request",
+                    "bid_id":  bid_id,
+                    "from":    player["name"],
+                    "stock":   stock,
+                    "stock_name": state["companies"][stock]["name"],
+                    "qty":     qty,
+                    "each":    each,
                 })
                 await websocket.send_text(json.dumps({"type": "info", "msg": f"Merger request sent to {partner['name']}."}))
 
-            # ── Merger respond ─────────────────────────────────────────────────
+            # ── Merger: respond ───────────────────────────────────────
             elif action == "merge_respond":
                 bid_id = msg.get("bid_id")
                 accept = msg.get("accept", False)
                 state  = await read_state()
                 bid    = state.get("merge_bids", {}).get(bid_id)
                 if not bid:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Merger bid expired."})); continue
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Merger bid expired or not found."})); continue
                 if not accept:
                     del state["merge_bids"][bid_id]
                     await write_state(state)
-                    await manager.send_player(bid["from_code"], {"type": "info", "msg": f"{player['name']} declined the merger."})
+                    await manager.send_player(bid["from_code"], {
+                        "type": "info",
+                        "msg":  f"{player['name']} declined the merger.",
+                    })
+                    await websocket.send_text(json.dumps({"type": "info", "msg": "Merger declined."}))
                     continue
+                # Accept: both pay `each`, both receive qty//2 shares
+                # (initiator gets ceil, responder gets floor on odd quantities)
                 p_init = await get_player(bid["from_code"])
                 p_resp = await get_player(bid["partner_code"])
                 stock  = bid["stock"]
                 qty    = bid["qty"]
                 each   = bid["each"]
                 price  = state["companies"][stock]["price"]
-                if p_init["cash"] < each or p_resp["cash"] < each:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Insufficient funds for merger."})); continue
-                p_init["cash"] -= each
-                p_resp["cash"] -= each
-                old_qty = p_init["holdings"].get(stock, 0)
-                old_avg = p_init["avg_cost"].get(stock, price)
-                p_init["avg_cost"][stock] = ((old_avg * old_qty + price * qty) / (old_qty + qty)) if old_qty else price
-                p_init["holdings"][stock] = old_qty + qty
-                await save_player(p_init)
-                await save_player(p_resp)
+                qty_init = (qty + 1) // 2   # ceiling
+                qty_resp = qty // 2         # floor
+
+                if p_init is None or p_resp is None:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "A player in the merger has left."})); continue
+                if p_init["cash"] < each:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": f"{p_init['name']} can no longer afford the merger."})); continue
+                if p_resp["cash"] < each:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "You can no longer afford the merger."})); continue
+
+                async with _player_locks[bid["from_code"]], _player_locks[bid["partner_code"]]:
+                    p_init = await get_player(bid["from_code"])
+                    p_resp = await get_player(bid["partner_code"])
+                    # Deduct cost from both
+                    p_init["cash"] -= each
+                    p_resp["cash"] -= each
+                    # Distribute shares
+                    for p_side, q in [(p_init, qty_init), (p_resp, qty_resp)]:
+                        old_q   = p_side["holdings"].get(stock, 0)
+                        old_avg = p_side["avg_cost"].get(stock, price)
+                        p_side["avg_cost"][stock] = ((old_avg * old_q + price * q) / (old_q + q)) if old_q else price
+                        p_side["holdings"][stock]  = old_q + q
+                    await save_player(p_init)
+                    await save_player(p_resp)
+
                 del state["merge_bids"][bid_id]
                 await write_state(state)
                 cname = state["companies"][stock]["name"]
-                await manager.send_player(bid["from_code"],    {"type": "player_update", "player": player_view(p_init, state)})
-                await manager.send_player(bid["partner_code"], {"type": "player_update", "player": player_view(p_resp, state)})
-                await manager.send_player(bid["from_code"],    {"type": "info", "msg": f"Merger complete! Bought {qty}× {cname} jointly."})
-                await websocket.send_text(json.dumps({"type": "info", "msg": f"Merger complete! {bid['from_name']} got {qty}× {cname}."}))
-
-            # ── BM purchase (via WS for real-time cash update) ─────────────────
-            elif action == "bm_purchase":
-                if not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                item_id   = msg.get("item_id")
-                bm_stock  = msg.get("stock")
-                bm_dir    = int(msg.get("direction", 1))
-                bm_text   = msg.get("text", "").strip()[:200]
-                if item_id not in BM_ITEMS:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Unknown item."})); continue
-                item = BM_ITEMS[item_id]
-                if player["cash"] < item["cost"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{item['cost']:,}. You have ₹{int(player['cash']):,}."})); continue
-                if item_id == "leak_card" and any(e["item"] == "leak_card" for e in player.get("bm_log", [])):
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "You've already used your Leak Card this game."})); continue
-
-                player["cash"] -= item["cost"]
-                log_entry = {"item": item_id, "cost": item["cost"], "ts": time.time(), "player": player["name"]}
-
-                if item_id == "insider_hint":
-                    pool = [h for h in INSIDER_HINTS if h[0] in state["companies"]]
-                    if pool:
-                        cid, direction, strength, hint_text = random.choice(pool)
-                        log_entry.update({"stock": cid, "direction": direction, "text": hint_text})
-                        await websocket.send_text(json.dumps({
-                            "type": "news", "label": "🔍 Insider Hint",
-                            "text": hint_text, "private": True, "type_tag": "unverified",
-                        }))
-
-                elif item_id in ("spread_rumour", "leak_card"):
-                    if not bm_stock or bm_stock not in state["companies"]:
-                        await websocket.send_text(json.dumps({"type": "error", "msg": "Pick a valid stock."})); continue
-                    if not bm_text:
-                        await websocket.send_text(json.dumps({"type": "error", "msg": "Text is required."})); continue
-                    strength = random.uniform(0.10, 0.18) if item_id == "leak_card" else random.uniform(0.06, 0.12)
-                    is_real  = True if item_id == "leak_card" else random.random() < 0.5
-                    n = {
-                        "type": "unverified", "label": "Unverified Rumour",
-                        "affects": bm_stock, "direction": bm_dir,
-                        "strength": strength, "real": is_real, "text": bm_text,
-                    }
-                    log_entry.update({"stock": bm_stock, "direction": bm_dir, "text": bm_text})
-                    state["news"].append(n)
-                    c = state["companies"].get(bm_stock)
-                    if c and is_real and state["phase"] == "trading":
-                        c["prev_price"] = c["price"]
-                        c["price"] = max(10, round(c["price"] * (1 + bm_dir * strength)))
-                    await write_state(state)
-                    await manager.broadcast_all({"type": "news", **n})
-                    players_all = await all_players()
-                    board_now   = leaderboard(players_all, state)
-                    await manager.broadcast_all({
-                        "type": "prices_bulk",
-                        "prices": {k: v["price"] for k, v in state["companies"].items()},
-                        "board": board_now,
-                    })
-                    icon = "🃏" if item_id == "leak_card" else "📢"
-                    await websocket.send_text(json.dumps({
-                        "type": "info",
-                        "msg": f"{icon} {'Leak Card deployed' if item_id=='leak_card' else 'Rumour spread'} on {state['companies'][bm_stock]['name']}. Anonymous.",
-                    }))
-
-                player["bm_log"] = player.get("bm_log", []) + [log_entry]
-                await save_player(player)
-                pv = player_view(player, state)
+                await manager.send_player(bid["from_code"], {
+                    "type":   "player_update",
+                    "player": player_view(p_init, state),
+                })
+                await manager.send_player(bid["partner_code"], {
+                    "type":   "player_update",
+                    "player": player_view(p_resp, state),
+                })
+                await manager.send_player(bid["from_code"], {
+                    "type": "info",
+                    "msg":  f"Merger complete! You received {qty_init}× {cname}.",
+                })
                 await websocket.send_text(json.dumps({
-                    "type": "bm_ok", "player": pv,
-                    "msg": f"✅ {item['name']} purchased for ₹{item['cost']:,}.",
+                    "type": "info",
+                    "msg":  f"Merger complete! You received {qty_resp}× {cname}.",
                 }))
-                await manager.broadcast_hosts({"type": "bm_log_update", "entry": log_entry})
 
     except WebSocketDisconnect:
         pass
     finally:
         manager.disconnect_player(code)
 
-# ── WebSocket: host ────────────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════
+#  WEBSOCKET: HOST
+# ═══════════════════════════════════════════════════════════════
 @app.websocket("/ws/host")
 async def ws_host(websocket: WebSocket):
     await manager.connect_host(websocket)
@@ -2112,13 +2217,12 @@ async def ws_host(websocket: WebSocket):
         state   = await read_state()
         players = await all_players()
         board   = leaderboard(players, state)
-        sentiment = compute_sentiment(players, state["companies"])
         await websocket.send_text(json.dumps({
             "type":         "state_update",
             "state":        state,
             "board":        board,
             "player_count": len([p for p in players if p["name"]]),
-            "sentiment":    sentiment,
+            "sentiment":    compute_sentiment(players, state["companies"]),
         }))
         async for raw in websocket.iter_text():
             msg = json.loads(raw)
@@ -2126,13 +2230,12 @@ async def ws_host(websocket: WebSocket):
                 state   = await read_state()
                 players = await all_players()
                 board   = leaderboard(players, state)
-                sentiment = compute_sentiment(players, state["companies"])
                 await websocket.send_text(json.dumps({
                     "type":         "state_update",
                     "state":        state,
                     "board":        board,
                     "player_count": len([p for p in players if p["name"]]),
-                    "sentiment":    sentiment,
+                    "sentiment":    compute_sentiment(players, state["companies"]),
                 }))
     except WebSocketDisconnect:
         pass
