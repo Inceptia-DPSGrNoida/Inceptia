@@ -1829,6 +1829,21 @@ async def ws_player(websocket: WebSocket, code: str):
         await websocket.close()
         return
 
+    # ── Single-use code guard ─────────────────────────────────────────────────
+    # If someone is already connected on this code AND they have a name (i.e.
+    # they've fully joined), reject the new connection to prevent code-sharing.
+    existing_ws = manager.players.get(code)
+    if existing_ws is not None:
+        player_check = await get_player(code)
+        if player_check and bool(player_check.get("name")):
+            await websocket.accept()
+            await websocket.send_text(json.dumps({
+                "type": "error",
+                "msg":  "This code is already in use by another device. Each code is single-use. Contact your host if you need a new one."
+            }))
+            await websocket.close()
+            return
+
     await manager.connect_player(code, websocket)
     state  = await read_state()
     player = await get_player(code)
