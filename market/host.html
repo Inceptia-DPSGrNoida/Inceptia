@@ -431,6 +431,12 @@ label:first-child{margin-top:0;}
 
 <script>
 let pw='', state=null, board=[], ws=null, nameToCode={};
+
+// Auto-load saved password on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('mm_host_pw');
+  if (saved) { document.getElementById('pw-input').value = saved; authSubmit(); }
+});
 const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -440,23 +446,21 @@ async function authSubmit() {
   const btn = document.querySelector('#auth-screen .btn');
   btn.disabled = true; btn.textContent = 'Verifying…';
   try {
-    // Verify password by hitting a pw-gated endpoint
-    // 403 = wrong password, 400 = correct pw but wrong game state
-    const r = await fetch(`/api/host/end_game?pw=${encodeURIComponent(val)}`, {method:'POST'});
+    // Use a read-only endpoint to verify password — never mutates game state
+    const r = await fetch(`/api/bm/log?pw=${encodeURIComponent(val)}`);
     if (r.status === 403) {
       document.getElementById('auth-err').textContent = 'Wrong password.';
       btn.disabled = false; btn.textContent = 'Unlock →';
       return;
     }
     pw = val;
+    localStorage.setItem('mm_host_pw', pw); // save so you never type it again
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     init();
   } catch(e) {
-    pw = val;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    init();
+    document.getElementById('auth-err').textContent = 'Could not reach server. Is it running?';
+    btn.disabled = false; btn.textContent = 'Unlock →';
   }
 }
 document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') authSubmit(); });
