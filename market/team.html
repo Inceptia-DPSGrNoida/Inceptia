@@ -71,41 +71,41 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .app-header{background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
 
 /* row 1: name + round + settings */
-.hdr-row1{display:flex;align-items:flex-end;justify-content:space-between;padding:12px 16px 6px;}
+.hdr-row1{display:flex;align-items:flex-end;justify-content:space-between;padding:14px 16px 14px;}
 .hdr-name-block{display:flex;align-items:baseline;gap:9px;min-width:0;}
-.hdr-name{font-family:var(--mono);font-size:18px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.hdr-round{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1px;white-space:nowrap;margin-bottom:1px;}
-.hdr-settings{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:background 0.15s;}
+.hdr-name{font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-round{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;white-space:nowrap;margin-bottom:2px;}
+.hdr-settings{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:background 0.15s;}
 .hdr-settings:hover{background:rgba(255,255,255,0.1);}
 
 /* row 2: timer */
-.hdr-row2{padding:4px 16px 10px;display:none;}
+.hdr-row2{padding:0 16px 16px;display:none;}
 .hdr-row2.visible{display:block;}
-.hdr-timer-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
-.hdr-timer-val{font-family:var(--mono);font-size:clamp(26px,7vw,40px);font-weight:700;letter-spacing:3px;line-height:1;color:#fff;transition:color 0.5s;}
+.hdr-timer-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.hdr-timer-val{font-family:var(--mono);font-size:clamp(32px,9vw,52px);font-weight:700;letter-spacing:4px;line-height:1;color:#fff;transition:color 0.5s;}
 .hdr-timer-val.c-green{color:var(--green);}
 .hdr-timer-val.c-lime{color:var(--lime);}
 .hdr-timer-val.c-yellow{color:#ffe566;}
 .hdr-timer-val.c-orange{color:var(--orange);}
 .hdr-timer-val.c-red{color:var(--red);animation:timer-pulse 1s infinite;}
 @keyframes timer-pulse{0%,100%{opacity:1;}50%{opacity:0.55;}}
-.hdr-timer-bar-wrap{margin-top:8px;height:5px;background:var(--border);border-radius:99px;overflow:hidden;}
+.hdr-timer-bar-wrap{margin-top:10px;height:8px;background:var(--border);border-radius:99px;overflow:hidden;}
 .hdr-timer-bar{height:100%;width:100%;transition:width 1s linear,background 1s;border-radius:99px;background:var(--green);}
 .hdr-timer-bar.c-lime{background:var(--lime);}
 .hdr-timer-bar.c-yellow{background:#ffe566;}
 .hdr-timer-bar.c-orange{background:var(--orange);}
 .hdr-timer-bar.c-red{background:var(--red);}
 
-/* row 3: stat pills */
-.hdr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 16px 12px;}
-.stat-pill{border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;position:relative;overflow:hidden;}
+/* row 3: stat pills — taller, bigger text */
+.hdr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:0 16px 18px;}
+.stat-pill{border-radius:12px;padding:12px 10px 11px;display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden;}
 .stat-pill::before{content:'';position:absolute;inset:0;opacity:0.06;pointer-events:none;}
-.sp-cash  {background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.22);}  .sp-cash::before{background:var(--gold);}
-.sp-port  {background:rgba(79,195,247,0.08);border:1px solid rgba(79,195,247,0.22);}  .sp-port::before{background:var(--blue);}
-.sp-loan  {background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.22);}  .sp-loan::before{background:var(--red);}
-.sp-nw    {background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.22);}    .sp-nw::before{background:var(--green);}
-.sp-label{font-size:7px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;}
-.sp-val  {font-family:var(--mono);font-size:13px;font-weight:600;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sp-cash  {background:rgba(245,166,35,0.10);border:1px solid rgba(245,166,35,0.28);}  .sp-cash::before{background:var(--gold);}
+.sp-port  {background:rgba(79,195,247,0.10);border:1px solid rgba(79,195,247,0.28);}  .sp-port::before{background:var(--blue);}
+.sp-loan  {background:rgba(255,77,109,0.10);border:1px solid rgba(255,77,109,0.28);}  .sp-loan::before{background:var(--red);}
+.sp-nw    {background:rgba(0,230,118,0.10);border:1px solid rgba(0,230,118,0.28);}    .sp-nw::before{background:var(--green);}
+.sp-label{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;}
+.sp-val  {font-family:var(--mono);font-size:17px;font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
 .sp-val.gold{color:var(--gold);} .sp-val.blue{color:var(--blue);} .sp-val.red{color:var(--red);} .sp-val.green{color:var(--green);} .sp-val.muted{color:var(--muted);}
 /* keep old aliases so JS still works */
 .s-val.gold{color:var(--gold);} .s-val.green{color:var(--green);} .s-val.red{color:var(--red);} .s-val.blue{color:var(--blue);} .s-val.muted{color:var(--muted);}
@@ -184,24 +184,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 /* ── TRADE CONTROLS ── */
 .trade-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .trade-side{background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:12px;padding:14px 12px;}
-.buy-side{border-color:rgba(0,230,118,0.15);}
-.sell-side{border-color:rgba(255,77,109,0.15);}
-.trade-side-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px;}
+.buy-side{border-color:rgba(0,230,118,0.2);}
+.sell-side{border-color:rgba(255,77,109,0.2);}
+.trade-side-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px;}
 .buy-side  .trade-side-label{color:var(--green);}
 .sell-side .trade-side-label{color:var(--red);}
-/* Inline row: [-] [input] [+] [MAX] [EXEC] */
-.trade-inline{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
-.qty-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.trade-inline{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+.qty-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .qty-btn:hover{border-color:var(--muted);}
-.qty-field{width:52px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;text-align:center;flex-shrink:0;}
+.qty-field{width:48px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;text-align:center;flex-shrink:0;}
 .qty-field:focus{border-color:var(--gold);}
-.max-lnk{font-size:9px;font-weight:700;font-family:var(--mono);color:var(--muted);cursor:pointer;text-decoration:underline;white-space:nowrap;flex-shrink:0;}
-.max-lnk:hover{color:var(--text);}
-.exec-btn{flex:1;padding:8px 4px;border:none;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;min-width:0;}
+.exec-btn{flex:1;padding:9px 4px;border:none;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;min-width:0;}
 .exec-btn:hover{opacity:0.87;} .exec-btn:disabled{opacity:0.3;cursor:not-allowed;}
 .exec-buy {background:var(--green);color:#000;}
 .exec-sell{background:var(--red);color:#fff;}
-.qty-cost{font-family:var(--mono);font-size:10px;color:var(--muted);}
+/* cost + max row — now very visible */
+.trade-meta{display:flex;justify-content:space-between;align-items:center;margin-top:2px;}
+.qty-cost{font-family:var(--mono);font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);}
+.max-lnk{font-size:12px;font-weight:700;font-family:var(--mono);color:var(--gold);cursor:pointer;padding:3px 8px;border-radius:5px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.25);white-space:nowrap;flex-shrink:0;transition:background 0.15s;}
+.max-lnk:hover{background:rgba(245,166,35,0.2);}
 
 /* ── PORTFOLIO ── */
 .port-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;}
@@ -480,7 +481,46 @@ let tradePressure={};
 const flashQueue={};
 const fmt=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 
-// ── Ticker ────────────────────────────────────────────────────────────────────
+// ── Per-second micro-tick (client-side visual only, tiny moves) ───────────────
+// Simulates live market feel. Magnitude is tiny: 0.01–0.08% per second.
+// Does NOT send anything to server — purely visual between server pushes.
+const MICRO_VOL={
+  zora:0.0003,streamvx:0.0008,freshco:0.0003,voltex:0.0007,mediq:0.0007,
+  skylink:0.0010,swifthaul:0.0005,crownmart:0.0007,shieldgen:0.0003,indranet:0.0005,
+  novapay:0.0012,greenleaf:0.0006,armorinc:0.0004,bytecorp:0.0016,
+};
+let microTickInterval=null;
+function startMicroTick(){
+  if(microTickInterval) return;
+  microTickInterval=setInterval(()=>{
+    if(phase!=='trading') return;
+    let changed=false;
+    for(const [cid,c] of Object.entries(market)){
+      const vol=MICRO_VOL[cid]||0.0005;
+      const mag=Math.random()*vol;
+      const dir=Math.random()>0.5?1:-1;
+      const newPrice=Math.max(1,Math.round(c.price*(1+dir*mag)));
+      if(newPrice!==c.price){c.price=newPrice;changed=true;}
+    }
+    if(changed) renderMarketPricesOnly();
+  },1000);
+}
+function stopMicroTick(){clearInterval(microTickInterval);microTickInterval=null;}
+// Lightweight price-only re-render (no full DOM rebuild, just update numbers + sparklines)
+function renderMarketPricesOnly(){
+  for(const [cid,c] of Object.entries(market)){
+    const priceEl=document.getElementById('cc-price-'+cid);
+    const chgEl  =document.getElementById('cc-chg-'+cid);
+    if(!priceEl) continue;
+    const prev=prevPrices[cid], chg=(prev!=null)?c.price-prev:0;
+    const pct=prev?((chg/prev)*100).toFixed(1):'0.0';
+    const dir=chg>0?'up':chg<0?'dn':'nc', arrow=chg>0?'▲':chg<0?'▼':'—';
+    priceEl.textContent='₹'+c.price.toLocaleString('en-IN');
+    if(chgEl){chgEl.className='cc-chg '+dir;chgEl.textContent=`${arrow} ${pct}%`;}
+    recordHistory(cid,c.price);
+  }
+  updateTicker();
+}
 const TICKER_BASE=[
   {sym:'ZORA',price:420},{sym:'STRE',price:310},{sym:'FRES',price:185},
   {sym:'VOLT',price:560},{sym:'MEDI',price:275},{sym:'SKYL',price:890},
@@ -615,7 +655,8 @@ function handleMsg(msg){
         regFreeze=null; tradePressure={};
         if(msg.round_end_time) startTimer(msg.round_end_time,1200);
         else stopTimer();
-      } else stopTimer();
+        startMicroTick();
+      } else { stopTimer(); stopMicroTick(); }
       updatePhase(); renderMarket(); renderPredictPanel();
       toast({trading:`🟢 Round ${currentRound} — TRADE!`,break:'⏸ Break time.',ended:'🏁 Game over!'}[phase]||phase,'info');
       break;
@@ -687,6 +728,7 @@ function showApp(){
   document.getElementById('top-name').textContent=myName;
   updateTopBar(); updatePhase(); renderMarket();
   renderPortfolio(); renderBanks(); renderBoard(); renderPredictPanel(); populateMergeStocks();
+  if(phase==='trading') startMicroTick();
 }
 function updateTopBar(){
   const p=playerData;
@@ -790,8 +832,8 @@ function renderMarket(){
           </div>
           <div class="cc-right">
             <div class="cc-price-row">
-              <div class="cc-chg ${dir}">${arrow} ${pct}%</div>
-              <div class="cc-price">₹${p.toLocaleString('en-IN')}</div>
+              <div class="cc-chg ${dir}" id="cc-chg-${cid}">${arrow} ${pct}%</div>
+              <div class="cc-price" id="cc-price-${cid}">₹${p.toLocaleString('en-IN')}</div>
             </div>
             <div class="cc-sparkline">${sparkline(cid,200,64)}</div>
           </div>
@@ -817,7 +859,7 @@ function renderMarket(){
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div class="qty-cost" id="bc-${cid}">Cost: ${fmt(p)}</div>
-              <span class="max-lnk" onclick="doMax('b','${cid}')">MAX (${maxBuy})</span>
+              <span class="max-lnk" onclick="doMax('b','${cid}')">MAX ${maxBuy}</span>
             </div>
           </div>
           <div class="trade-side sell-side">
@@ -830,7 +872,7 @@ function renderMarket(){
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div class="qty-cost" id="sc-${cid}">Value: ${fmt(p)}</div>
-              <span class="max-lnk" onclick="doMax('s','${cid}')">SELL ALL (${owned})</span>
+              <span class="max-lnk" onclick="doMax('s','${cid}')">ALL ${owned}</span>
             </div>
           </div>
         </div>
