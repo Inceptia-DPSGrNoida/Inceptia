@@ -73,8 +73,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 /* row 1: name + round + settings */
 .hdr-row1{display:flex;align-items:flex-end;justify-content:space-between;padding:14px 16px 14px;}
 .hdr-name-block{display:flex;align-items:baseline;gap:9px;min-width:0;}
-.hdr-name{font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.hdr-round{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;white-space:nowrap;margin-bottom:2px;}
+.hdr-name{font-family:var(--mono);font-size:26px;font-weight:700;color:#ffffff;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 20px rgba(255,255,255,0.15);}
+.hdr-round{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,0.65);letter-spacing:1px;white-space:nowrap;margin-bottom:2px;font-weight:500;}
 .hdr-settings{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:background 0.15s;}
 .hdr-settings:hover{background:rgba(255,255,255,0.1);}
 
@@ -105,7 +105,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .sp-loan  {background:rgba(255,77,109,0.10);border:1px solid rgba(255,77,109,0.28);}  .sp-loan::before{background:var(--red);}
 .sp-nw    {background:rgba(0,230,118,0.10);border:1px solid rgba(0,230,118,0.28);}    .sp-nw::before{background:var(--green);}
 .sp-label{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;}
-.sp-val  {font-family:var(--mono);font-size:17px;font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.sp-val  {font-family:var(--mono);font-size:22px;font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
 .sp-val.gold{color:var(--gold);} .sp-val.blue{color:var(--blue);} .sp-val.red{color:var(--red);} .sp-val.green{color:var(--green);} .sp-val.muted{color:var(--muted);}
 /* keep old aliases so JS still works */
 .s-val.gold{color:var(--gold);} .s-val.green{color:var(--green);} .s-val.red{color:var(--red);} .s-val.blue{color:var(--blue);} .s-val.muted{color:var(--muted);}
@@ -205,12 +205,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .max-lnk:hover{background:rgba(245,166,35,0.2);}
 
 /* ── PORTFOLIO ── */
-.port-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;}
+.port-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 20px 18px;margin-bottom:14px;}
 .port-top{display:flex;justify-content:space-between;align-items:flex-start;}
-.port-name{font-weight:600;font-size:16px;} .port-qty{font-size:11px;color:var(--muted);margin-top:4px;font-family:var(--mono);}
-.port-stats{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;}
-.ps-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:2px;}
-.ps-val{font-family:var(--mono);font-size:15px;font-weight:500;}
+.port-name{font-weight:700;font-size:19px;} .port-qty{font-size:13px;color:var(--muted);margin-top:5px;font-family:var(--mono);}
+.port-stats{display:flex;gap:0;margin-top:16px;border-top:1px solid var(--border);padding-top:14px;}
+.ps-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono);margin-bottom:5px;}
+.ps-val{font-family:var(--mono);font-size:20px;font-weight:700;}
 
 /* ── BANKS ── */
 .bank-card{border-radius:16px;padding:20px;margin-bottom:18px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;}
@@ -257,22 +257,54 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .bankruptcy-btn{width:100%;padding:15px;background:rgba(255,77,109,0.1);border:2px solid rgba(255,77,109,0.4);color:var(--red);border-radius:12px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:background 0.15s,border-color 0.15s;}
 .bankruptcy-btn:hover{background:rgba(255,77,109,0.18);border-color:rgba(255,77,109,0.65);}
 
-/* ── PREDICT ── */
-.pred-stock-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:16px;}
-.pred-stock-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 10px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);transition:border-color 0.15s;line-height:1.3;}
-.pred-stock-btn.selected{border-color:var(--gold);background:rgba(245,166,35,0.07);color:var(--gold);}
-.pred-form{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;}
-.pred-form-row{display:flex;gap:10px;margin-bottom:12px;}
-.dir-btn{flex:1;padding:14px;border-radius:10px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;border:1px solid;transition:opacity 0.15s;}
-.dir-up  {background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.3);color:var(--green);}
-.dir-down{background:rgba(255,77,109,0.1);border-color:rgba(255,77,109,0.3);color:var(--red);}
-.dir-btn.active-dir{opacity:1;} .dir-btn:not(.active-dir){opacity:0.35;}
-.pred-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 15px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;margin-bottom:10px;}
-.pred-input:focus{border-color:var(--gold);}
-.pred-submit{width:100%;padding:14px;background:var(--gold);color:#000;border:none;border-radius:10px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
-.pred-submit:disabled{opacity:0.4;cursor:not-allowed;}
-.open-bet-card{background:rgba(245,166,35,0.05);border:1px solid rgba(245,166,35,0.18);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
-.pred-locked-notice{font-size:13px;color:var(--muted);text-align:center;padding:28px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px solid var(--border);font-family:var(--mono);}
+/* ── SETTINGS PANEL ── */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.settings-overlay.open{opacity:1;pointer-events:all;}
+.settings-drawer{position:fixed;top:0;right:0;bottom:0;width:min(320px,88vw);background:rgba(13,17,25,0.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-left:1px solid var(--border);z-index:401;transform:translateX(100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;}
+.settings-drawer.open{transform:translateX(0);}
+.settings-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.settings-title{font-family:var(--mono);font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;}
+.settings-close{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
+.settings-close:hover{background:rgba(255,77,109,0.15);color:var(--red);border-color:rgba(255,77,109,0.3);}
+.settings-body{flex:1;overflow-y:auto;padding:24px 20px;}
+.settings-placeholder{font-size:12px;color:var(--muted);font-family:var(--mono);text-align:center;margin-top:40px;line-height:1.8;}
+
+/* ── PREDICT REDESIGN ── */
+.pred-stock-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
+.pred-stock-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 10px;text-align:left;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
+.pred-stock-btn .psb-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;}
+.pred-stock-btn .psb-price{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.pred-stock-btn .psb-risk{position:absolute;top:8px;right:8px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;font-family:var(--mono);}
+.pred-stock-btn.selected{border-color:var(--gold);background:rgba(245,166,35,0.09);}
+.pred-stock-btn.selected .psb-name{color:var(--gold);}
+.pred-stock-btn.has-bet{opacity:0.4;pointer-events:none;}
+.pred-bet-form{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:4px;}
+.pred-selected-stock{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:10px;margin-bottom:16px;}
+.pred-sel-name{font-weight:700;font-size:15px;color:var(--gold);}
+.pred-sel-price{font-family:var(--mono);font-size:14px;color:var(--text);}
+.pred-dir-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.dir-btn{padding:16px 10px;border-radius:12px;font-family:var(--mono);font-size:15px;font-weight:700;cursor:pointer;border:2px solid;transition:all 0.15s;text-align:center;letter-spacing:1px;}
+.dir-up  {background:rgba(0,230,118,0.07);border-color:rgba(0,230,118,0.25);color:rgba(0,230,118,0.5);}
+.dir-down{background:rgba(255,77,109,0.07);border-color:rgba(255,77,109,0.25);color:rgba(255,77,109,0.5);}
+.dir-btn.active-dir.dir-up  {background:rgba(0,230,118,0.15);border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(0,230,118,0.1);}
+.dir-btn.active-dir.dir-down{background:rgba(255,77,109,0.15);border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,77,109,0.1);}
+.pred-inputs-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.pred-input-wrap{display:flex;flex-direction:column;gap:5px;}
+.pred-input-lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);}
+.pred-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;}
+.pred-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,0.07);}
+.pred-payout-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.pred-payout-box{border-radius:10px;padding:10px 8px;text-align:center;}
+.ppb-win  {background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);}
+.ppb-half {background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);}
+.ppb-lose {background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);}
+.ppb-label{font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.ppb-val  {font-family:var(--mono);font-size:13px;font-weight:700;}
+.ppb-win .ppb-val{color:var(--green);} .ppb-half .ppb-val{color:var(--gold);} .ppb-lose .ppb-val{color:var(--red);}
+.pred-submit{width:100%;padding:15px;background:var(--gold);color:#000;border:none;border-radius:12px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;}
+.pred-submit:disabled{opacity:0.35;cursor:not-allowed;}
+.pred-locked-notice{font-size:13px;color:var(--muted);text-align:center;padding:40px 20px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px solid var(--border);font-family:var(--mono);}
+.open-bet-card{background:rgba(245,166,35,0.05);border:1px solid rgba(245,166,35,0.18);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
 
 /* ── NEWS ── */
 .news-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
@@ -376,7 +408,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
     <!-- Row 2: timer (shown only during trading) -->
     <div class="hdr-row2" id="timer-section">
-      <div class="hdr-timer-label">⏱ Round closes in</div>
+      <div class="hdr-timer-label"><span id="hdr-timer-label-text">⏱ Round closes in</span></div>
       <div class="hdr-timer-val" id="timer-countdown">—</div>
       <div class="hdr-timer-bar-wrap"><div class="hdr-timer-bar" id="timer-bar"></div></div>
     </div>
@@ -403,7 +435,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
   <div class="content">
     <div class="panel active" id="panel-market">
-      <div class="phase-banner banner-lobby" id="phase-banner">⏳ Waiting for round to start...</div>
+      <div id="phase-banner" style="display:none"></div>
       <div class="frozen-banner"     id="frozen-banner">⚠️ Your portfolio is frozen this round.</div>
       <div class="reg-freeze-banner" id="reg-freeze-banner">🚫 Regulatory Freeze on <span id="freeze-sector-name"></span>.</div>
       <div id="market-list"></div>
@@ -420,8 +452,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
     <div class="panel" id="panel-loans">
       <div class="section-hdr">Your Loans</div>
+      <div id="repay-top-note" style="display:none;margin-bottom:14px;padding:12px 16px;background:rgba(255,183,77,0.07);border:1px solid rgba(255,183,77,0.2);border-radius:10px;font-size:12px;color:var(--orange);font-family:var(--mono)">⏸ Repayment is only available during break periods between rounds.</div>
       <div id="bank-list"></div>
-      <div class="break-only-note" id="repay-note" style="display:none">⏸ Repayment only available during break periods.</div>
       <div class="bankruptcy-section">
         <div class="bankruptcy-title">⚠️ Voluntary Bankruptcy</div>
         <div class="bankruptcy-desc">
@@ -568,6 +600,8 @@ function startTimer(endTime,total){
   const section=document.getElementById('timer-section');
   const bar=document.getElementById('timer-bar');
   const cd=document.getElementById('timer-countdown');
+  const lbl2=document.getElementById('hdr-timer-label-text');
+  if(lbl2) lbl2.textContent='⏱ Round closes in';
   section.classList.add('visible');
   function tick(){
     const rem=timerEndTime-Date.now()/1000;
@@ -584,6 +618,36 @@ function startTimer(endTime,total){
 function stopTimer(){
   clearInterval(timerInterval);
   document.getElementById('timer-section').classList.remove('visible');
+}
+const BREAK_TIMER_STAGES=[
+  {pct:80, cls:'c-red'},
+  {pct:60, cls:'c-orange'},
+  {pct:40, cls:'c-yellow'},
+  {pct:20, cls:'c-lime'},
+  {pct:0,  cls:'c-green'},
+];
+function startBreakTimer(endTime,total){
+  clearInterval(timerInterval);
+  timerEndTime=endTime; timerTotal=total;
+  const section=document.getElementById('timer-section');
+  const bar=document.getElementById('timer-bar');
+  const cd=document.getElementById('timer-countdown');
+  const lbl=document.getElementById('hdr-timer-label-text');
+  if(lbl) lbl.textContent='⏸ Break ends in';
+  const lbl2=document.getElementById('hdr-timer-label-text');
+  if(lbl2) lbl2.textContent='⏱ Round closes in';
+  section.classList.add('visible');
+  function tick(){
+    const rem=timerEndTime-Date.now()/1000;
+    const pct=Math.max(0,Math.min(100,rem/timerTotal*100));
+    const stage=BREAK_TIMER_STAGES.find(s=>pct>=s.pct)||BREAK_TIMER_STAGES[BREAK_TIMER_STAGES.length-1];
+    bar.style.width=pct+'%';
+    bar.className='hdr-timer-bar '+stage.cls;
+    cd.className='hdr-timer-val '+stage.cls;
+    cd.textContent=fmtTime(rem);
+    if(rem<=0){clearInterval(timerInterval);cd.textContent='00:00';bar.style.width='0%';}
+  }
+  tick(); timerInterval=setInterval(tick,1000);
 }
 
 // ── Join ──────────────────────────────────────────────────────────────────────
@@ -638,15 +702,25 @@ function handleMsg(msg){
       regFreeze=msg.reg_freeze||null; creditCrunch=msg.credit_crunch||false;
       if(msg.price_history) priceHistory=msg.price_history;
       if(msg.player) playerData=msg.player;
+      // Restore news history
+      if(msg.news&&msg.news.length){
+        msg.news.forEach(n=>addNews(n,true));
+      }
       updatePrevPrices();
       if(!msg.joined) ws.send(JSON.stringify({action:'set_name',name:myName}));
-      else {myName=msg.name; showApp();}
+      else {
+        myName=msg.name; showApp();
+        // If already in trading and round_end_time provided, start timer
+        if(phase==='trading'&&msg.round_end_time) startTimer(msg.round_end_time,1200);
+      }
       break;
     case 'joined':
       myName=msg.name;
       if(msg.player) playerData=msg.player;
       if(msg.banks)  banksConfig=msg.banks;
-      showApp(); break;
+      showApp();
+      if(phase==='trading'&&msg.round_end_time) startTimer(msg.round_end_time,1200);
+      break;
     case 'phase_change':
       phase=msg.phase; if(msg.round) currentRound=msg.round;
       if(msg.prices) applyPrices(msg.prices);
@@ -655,8 +729,13 @@ function handleMsg(msg){
         regFreeze=null; tradePressure={};
         if(msg.round_end_time) startTimer(msg.round_end_time,1200);
         else stopTimer();
-        startMicroTick();
-      } else { stopTimer(); stopMicroTick(); }
+        startMicroTick(); flashScreen('rgba(0,230,118,0.18)');
+      } else {
+        stopMicroTick();
+        if(phase==='break'||phase==='ended') flashScreen('rgba(255,77,109,0.18)');
+        if(phase==='break'&&msg.break_end_time) startBreakTimer(msg.break_end_time,600);
+        else stopTimer();
+      }
       updatePhase(); renderMarket(); renderPredictPanel();
       toast({trading:`🟢 Round ${currentRound} — TRADE!`,break:'⏸ Break time.',ended:'🏁 Game over!'}[phase]||phase,'info');
       break;
@@ -677,7 +756,6 @@ function handleMsg(msg){
       sentiment=msg.sentiment||{}; renderMarket(); break;
     case 'news':
       addNews(msg);
-      if(activeTab!=='news'){newsCount++;const b=document.getElementById('news-badge');b.textContent=newsCount;b.style.display='inline-block';}
       break;
     case 'chaos': handleChaos(msg); break;
     case 'game_ended':
@@ -751,20 +829,31 @@ function updatePhase(){
     break:  ['banner-break',  '⏸ Break — next round starting soon'],
     ended:  ['banner-ended',  '🏁 Game Over']
   };
-  el.className='phase-banner '+(map[phase]?.[0]||'banner-lobby');
-  el.textContent=map[phase]?.[1]||phase;
+  // phase banner hidden — no text shown
   phEl.textContent={lobby:'Lobby · Market Mayhem',trading:`Round ${currentRound} / 4`,break:'Break · Market Mayhem',ended:'Game Ended'}[phase]||phase;
   document.getElementById('merge-section').style.display=phase==='trading'?'block':'none';
   const inTrading=phase==='trading';
   document.getElementById('tab-board').style.display=inTrading?'none':'';
   document.getElementById('main-nav').style.gridTemplateColumns=inTrading?'repeat(5,1fr)':'repeat(6,1fr)';
   if(inTrading&&activeTab==='board') switchTab('market');
-  document.getElementById('repay-note').style.display=phase!=='break'?'block':'none';
+  const rn=document.getElementById('repay-top-note'); if(rn) rn.style.display=phase!=='break'?'block':'none';
   if(regFreeze){document.getElementById('freeze-sector-name').textContent=regFreeze;document.getElementById('reg-freeze-banner').classList.add('show');}
   else document.getElementById('reg-freeze-banner').classList.remove('show');
   if(!inTrading) stopTimer();
 }
-function openSettings(){toast('Settings coming soon.','info');}
+function flashScreen(color){
+  const el=document.getElementById('round-flash');
+  el.style.background=color; el.style.opacity='1';
+  setTimeout(()=>{el.style.opacity='0';},600);
+}
+function openSettings(){
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-drawer').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-drawer').classList.remove('open');
+}
 
 // ── Sparkline SVG — animated, stock-market style ──────────────────────────────
 function sparkline(cid,w,h){
@@ -845,7 +934,7 @@ function renderMarket(){
       </div>
       ${sent?`<div class="sentiment-wrap"><div class="sentiment-bar"><div class="sentiment-up" style="width:${sent.up_pct}%"></div><div class="sentiment-down" style="width:${sent.down_pct}%"></div></div><div class="sentiment-label"><span style="color:var(--green)">▲ ${sent.up_pct}%</span><span>SENTIMENT</span><span style="color:var(--red)">▼ ${sent.down_pct}%</span></div></div>`:''}
       ${(()=>{const tp=tradePressure[cid];if(!tp||(!tp.buys&&!tp.sells))return'';const tot=tp.buys+tp.sells;const bpct=Math.round(tp.buys/tot*100),spct=100-bpct;return`<div class="sentiment-wrap"><div class="sentiment-bar"><div class="sentiment-up" style="width:${bpct}%"></div><div class="sentiment-down" style="width:${spct}%"></div></div><div class="sentiment-label"><span style="color:var(--green)">🟢 ${tp.buys} bought</span><span>PRESSURE</span><span style="color:var(--red)">${tp.sells} sold 🔴</span></div></div>`;})()}
-      <div class="cc-expanded${isExp?' open':''}" id="exp-${cid}">
+      <div class="cc-expanded${isExp&&phase==='trading'?' open':''}" id="exp-${cid}" style="${phase!=='trading'?'display:none':''}">
         <div class="cc-bio">${c.bio||'No description available.'}</div>
         <div class="cc-held">You hold: <strong style="color:${owned>0?'var(--gold)':'var(--muted)'}">${owned} share${owned===1?'':'s'}</strong></div>
         <div class="trade-controls">
@@ -889,6 +978,7 @@ function renderMarket(){
 }
 
 function toggleCard(cid){
+  if(phase!=='trading') return;
   expandedCard=(expandedCard===cid)?null:cid;
   renderMarket();
   if(expandedCard) setTimeout(()=>document.getElementById('exp-'+cid)?.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
@@ -937,12 +1027,37 @@ function execTrade(action,cid){
 // ── Portfolio ─────────────────────────────────────────────────────────────────
 function renderPortfolio(){
   const list=document.getElementById('portfolio-list');
-  const holdings=Object.entries(playerData.portfolio||{}).filter(([,h])=>h.qty>0);
+  const holdings=Object.entries(playerData.portfolio||{}).filter(([,holding])=>holding.qty>0);
   if(!holdings.length){list.innerHTML='<div class="empty"><div class="empty-icon">💼</div><div class="empty-text">No holdings yet.</div></div>';return;}
   let html='<div class="section-hdr">Holdings</div>';
-  for(const [cid,h] of holdings){
-    const name=market[cid]?.name||cid, cls=h.pnl>=0?'up':'dn', sign=h.pnl>=0?'+':'';
-    html+=`<div class="port-card"><div class="port-top"><div><div class="port-name">${name}</div><div class="port-qty">${h.qty} shares</div></div><div style="text-align:right"><div class="port-name ${cls}">${sign}${fmt(h.pnl)}</div><div class="port-qty">P&amp;L</div></div></div><div class="port-stats"><div><div class="ps-label">Avg Cost</div><div class="ps-val">${fmt(h.avg)}</div></div><div><div class="ps-label">Current</div><div class="ps-val">${fmt(h.price)}</div></div><div><div class="ps-label">Value</div><div class="ps-val">${fmt(h.value)}</div></div></div></div>`;
+  for(const [cid,holding] of holdings){
+    const name=market[cid]?.name||cid, cls=holding.pnl>=0?'up':'dn', sign=holding.pnl>=0?'+':'';
+    html+=`<div class="port-card">
+      <div class="port-top">
+        <div>
+          <div class="port-name">${name}</div>
+          <div class="port-qty">${holding.qty} shares · Avg ₹${Math.round(holding.avg).toLocaleString('en-IN')}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="port-name ${cls}" style="font-size:22px">${sign}${fmt(holding.pnl)}</div>
+          <div class="port-qty">P&amp;L</div>
+        </div>
+      </div>
+      <div class="port-stats">
+        <div style="flex:1;padding-right:16px;border-right:1px solid var(--border)">
+          <div class="ps-label">Current Price</div>
+          <div class="ps-val">${fmt(holding.price)}</div>
+        </div>
+        <div style="flex:1;padding:0 16px;border-right:1px solid var(--border)">
+          <div class="ps-label">Total Value</div>
+          <div class="ps-val" style="color:var(--blue)">${fmt(holding.value)}</div>
+        </div>
+        <div style="flex:1;padding-left:16px">
+          <div class="ps-label">Return</div>
+          <div class="ps-val ${cls}">${sign}${holding.avg>0?(((holding.price-holding.avg)/holding.avg)*100).toFixed(1):0}%</div>
+        </div>
+      </div>
+    </div>`;
   }
   list.innerHTML=html;
 }
@@ -983,7 +1098,7 @@ function renderBanks(){
     }
     if(balance>0){
       if(inBreak) html+=`<div class="repay-row"><input class="repay-input" id="repay-${bankId}" type="number" placeholder="Amount to repay" min="1000"><button class="repay-btn" onclick="repayLoan('${bankId}')">Repay</button></div><button class="repay-full-btn" onclick="repayLoanFull('${bankId}')">Repay Full — ${fmt(balance)}</button>`;
-      else html+=`<div class="break-only-note">⏸ Repayment opens during break periods.</div>`;
+      // repay note shown at top of page, not per-card
     }
     html+=`</div>`;
   }
@@ -1012,25 +1127,114 @@ function declareBankruptcy(){
 function renderPredictPanel(){
   const el=document.getElementById('predict-content'); if(!el) return;
   const openBets=playerData.bets||{}; let html='';
+
+  // Open bets section
   if(Object.keys(openBets).length){
-    html+='<div class="section-hdr" style="margin-bottom:12px">Your Open Bets</div>';
+    html+='<div class="section-hdr" style="margin-bottom:12px">Your Active Bets</div>';
     for(const [cid,bet] of Object.entries(openBets)){
-      const cname=market[cid]?.name||cid, dcls=bet.direction==='up'?'up':'dn', ar=bet.direction==='up'?'▲':'▼', sent=sentiment[cid];
-      html+=`<div class="open-bet-card"><div style="display:flex;justify-content:space-between"><div><div style="font-weight:600;font-size:15px">${cname}</div><div style="font-size:12px;color:var(--muted);font-family:var(--mono)">Bet: ${fmt(bet.amount)}</div></div><div style="text-align:right"><div class="${dcls}" style="font-weight:700;font-size:16px">${ar} ${bet.direction.toUpperCase()}</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Target: ₹${Math.round(bet.target).toLocaleString('en-IN')}</div></div></div>${sent?`<div style="display:flex;height:4px;border-radius:99px;overflow:hidden;margin-top:9px"><div style="flex:${sent.up_pct};background:var(--green)"></div><div style="flex:${sent.down_pct};background:var(--red)"></div></div>`:''}<div style="font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--mono)">3× direction+target · 1.5× direction only · 0 if wrong</div></div>`;
+      const cname=market[cid]?.name||cid;
+      const curPrice=market[cid]?.price||0;
+      const dir=bet.direction==='up';
+      const dcls=dir?'up':'dn', ar=dir?'▲':'▼';
+      const isWinning=dir?(curPrice>=bet.target):(curPrice<=bet.target);
+      const pnlPreview=isWinning?bet.amount*3:bet.amount*1.5;
+      html+=`<div class="open-bet-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-weight:700;font-size:16px;color:#fff">${cname}</div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">Staked ${fmt(bet.amount)}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="${dcls}" style="font-weight:700;font-size:18px">${ar} ${bet.direction.toUpperCase()}</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Target ₹${Math.round(bet.target).toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Now</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700">₹${curPrice.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="flex:1;background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Target</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">₹${Math.round(bet.target).toLocaleString('en-IN')}</div>
+          </div>
+          <div style="flex:1;background:${isWinning?'rgba(0,230,118,0.08)':'rgba(255,77,109,0.08)'};border-radius:8px;padding:8px;text-align:center;border:1px solid ${isWinning?'rgba(0,230,118,0.2)':'rgba(255,77,109,0.15)'}">
+            <div style="font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">If Win</div>
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${isWinning?'var(--green)':'var(--red)'}">${fmt(bet.amount*3)}</div>
+          </div>
+        </div>
+      </div>`;
     }
   }
+
   if(phase!=='trading'){
-    html+=`<div class="pred-locked-notice">${phase==='break'?'⏸ Predictions open during trading rounds.':'⏳ Predictions open when a round starts.'}</div>`;
+    const icon=phase==='break'?'⏸':'⏳';
+    const msg=phase==='break'?'Predictions open\nduring trading rounds.':'Waiting for the\nround to start.';
+    html+=`<div class="pred-locked-notice" style="white-space:pre-line">${icon}<br><br>${msg}</div>`;
     el.innerHTML=html; return;
   }
-  html+='<div class="section-hdr" style="margin-top:16px;margin-bottom:12px">Place a Bet</div><div class="pred-stock-grid">';
+
+  // Stock picker
+  html+=`<div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;margin-top:${Object.keys(openBets).length?'18px':'0'}">PICK A STOCK TO BET ON</div>
+  <div class="pred-stock-grid">`;
   for(const [cid,c] of Object.entries(market)){
     if(!c.name) continue;
     const alreadyBet=!!openBets[cid], isSel=predStock===cid;
-    html+=`<button class="pred-stock-btn ${isSel?'selected':''}" onclick="selectPredStock('${cid}')" ${alreadyBet?'disabled style="opacity:0.3"':''}>${c.name}${alreadyBet?'<br><span style="font-size:9px;color:var(--gold)">✓ BET</span>':''}</button>`;
+    const prev=prevPrices[cid], chg=prev?(((c.price-prev)/prev)*100):0;
+    const chgCls=chg>0?'up':chg<0?'dn':'nc', ar=chg>0?'▲':chg<0?'▼':'—';
+    const riskCols={'Low':'rgba(0,230,118,0.15)','Medium':'rgba(245,166,35,0.15)','High':'rgba(255,77,109,0.15)','Medium-High':'rgba(206,147,216,0.15)','Very High':'rgba(255,77,109,0.2)'};
+    const riskTxt={'Low':'var(--green)','Medium':'var(--gold)','High':'var(--red)','Medium-High':'var(--purple)','Very High':'var(--red)'};
+    const rk=c.risk||'Low';
+    html+=`<button class="pred-stock-btn ${isSel?'selected':''} ${alreadyBet?'has-bet':''}" onclick="selectPredStock('${cid}')">
+      ${alreadyBet?`<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(245,166,35,0.08);border-radius:12px"><span style="font-size:11px;font-weight:700;color:var(--gold);font-family:var(--mono)">✓ BET PLACED</span></div>`:''}
+      <span class="psb-risk" style="background:${riskCols[rk]||'rgba(255,255,255,0.1)'};color:${riskTxt[rk]||'#fff'}">${rk}</span>
+      <div class="psb-name">${c.name}</div>
+      <div class="psb-price">₹${c.price.toLocaleString('en-IN')} <span class="${chgCls}">${ar}${Math.abs(chg).toFixed(1)}%</span></div>
+    </button>`;
   }
-  html+=`</div><div class="pred-form" style="${predStock?'':'opacity:0.5;pointer-events:none'}"><div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:var(--mono)">${predStock?`Betting on: <strong style="color:var(--gold)">${market[predStock]?.name||predStock}</strong> @ ₹${(market[predStock]?.price||0).toLocaleString('en-IN')}`:'Select a stock above'}</div><div class="pred-form-row"><button class="dir-btn dir-up ${predDirection==='up'?'active-dir':''}" onclick="setDir('up')">▲ UP</button><button class="dir-btn dir-down ${predDirection==='down'?'active-dir':''}" onclick="setDir('down')">▼ DOWN</button></div><input class="pred-input" id="pred-target" type="number" placeholder="Target price (₹)" min="1"><input class="pred-input" id="pred-amount" type="number" placeholder="Bet amount (min ₹1,000)" min="1000"><button class="pred-submit" onclick="submitBet()">Lock Bet →</button><div style="font-size:10px;color:var(--muted);margin-top:8px;font-family:var(--mono)">3× direction+target · 1.5× direction only · 0 if wrong. One bet per stock.</div></div>`;
+  html+=`</div>`;
+
+  // Bet form — only shown when stock selected
+  if(predStock&&market[predStock]){
+    const c=market[predStock];
+    const win3='—', win15='—';
+    html+=`<div class="pred-bet-form">
+      <div class="pred-selected-stock">
+        <div><div class="pred-sel-name">${c.name}</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px">${c.sector||''} · ${c.risk||''}</div></div>
+        <div class="pred-sel-price">₹${c.price.toLocaleString('en-IN')}</div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Direction</div>
+      <div class="pred-dir-row">
+        <button class="dir-btn dir-up ${predDirection==='up'?'active-dir':''}" onclick="setDir('up')">▲ &nbsp;GOING UP</button>
+        <button class="dir-btn dir-down ${predDirection==='down'?'active-dir':''}" onclick="setDir('down')">▼ &nbsp;GOING DOWN</button>
+      </div>
+      <div class="pred-inputs-row">
+        <div class="pred-input-wrap">
+          <span class="pred-input-lbl">Target Price (₹)</span>
+          <input class="pred-input" id="pred-target" type="number" placeholder="${c.price}" min="1">
+        </div>
+        <div class="pred-input-wrap">
+          <span class="pred-input-lbl">Bet Amount</span>
+          <input class="pred-input" id="pred-amount" type="number" placeholder="min ₹1,000" min="1000" oninput="refreshPayouts(this.value)">
+        </div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Payout Preview</div>
+      <div class="pred-payout-preview">
+        <div class="pred-payout-box ppb-win"><div class="ppb-label">Dir + Target ✓</div><div class="ppb-val" id="ppb-win">${win3}</div></div>
+        <div class="pred-payout-box ppb-half"><div class="ppb-label">Dir only ✓</div><div class="ppb-val" id="ppb-half">${win15}</div></div>
+        <div class="pred-payout-box ppb-lose"><div class="ppb-label">Wrong ✗</div><div class="ppb-val" id="ppb-lose">₹0</div></div>
+      </div>
+      <button class="pred-submit" onclick="submitBet()">🔒 Lock In Bet</button>
+    </div>`;
+  }
+
   el.innerHTML=html;
+}
+function refreshPayouts(val){
+  const amt=parseInt(val)||0;
+  const w=document.getElementById('ppb-win'), h=document.getElementById('ppb-half');
+  if(w) w.textContent=amt?fmt(amt*3):'—';
+  if(h) h.textContent=amt?fmt(amt*1.5):'—';
 }
 function selectPredStock(cid){predStock=cid;renderPredictPanel();}
 function setDir(dir){predDirection=dir;renderPredictPanel();}
@@ -1046,7 +1250,7 @@ function submitBet(){
 }
 
 // ── News ──────────────────────────────────────────────────────────────────────
-function addNews(msg){
+function addNews(msg,silent=false){
   const list=document.getElementById('news-list'), empty=list.querySelector('.empty');
   if(empty) list.innerHTML='';
   const cat=msg.type_tag||msg.type;
@@ -1055,6 +1259,7 @@ function addNews(msg){
   const div=document.createElement('div'); div.className='news-card';
   div.innerHTML=`<span class="news-label-tag ${tagCls}">${label}</span><div class="news-text">${msg.text}</div><div class="news-ts">${new Date().toLocaleTimeString()}</div>`;
   list.prepend(div);
+  if(!silent&&activeTab!=='news'){newsCount++;const b=document.getElementById('news-badge');b.textContent=newsCount;b.style.display='inline-block';}
 }
 
 // ── Chaos ─────────────────────────────────────────────────────────────────────
@@ -1128,5 +1333,16 @@ function toast(msg,type='info'){
   wrap.appendChild(el); setTimeout(()=>el.remove(),3200);
 }
 </script>
+<div id="round-flash" style="position:fixed;inset:0;pointer-events:none;z-index:500;opacity:0;transition:opacity 0.4s;"></div>
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
+<div class="settings-drawer" id="settings-drawer">
+  <div class="settings-hdr">
+    <span class="settings-title">Settings</span>
+    <button class="settings-close" onclick="closeSettings()">✕</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-placeholder">⚙️<br><br>Settings and features<br>will appear here soon.</div>
+  </div>
+</div>
 </body>
 </html>

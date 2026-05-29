@@ -1323,11 +1323,12 @@ async def start_round(pw: str):
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_all({
-        "type":   "phase_change",
-        "phase":  "trading",
-        "round":  state["round"],
-        "prices": {k: c["price"] for k, c in state["companies"].items()},
-        "board":  board,
+        "type":          "phase_change",
+        "phase":         "trading",
+        "round":         state["round"],
+        "round_end_time": state["round_end_time"],
+        "prices":        {k: c["price"] for k, c in state["companies"].items()},
+        "board":         board,
     })
     for n in news:
         await manager.broadcast_all({"type": "news", **n})
@@ -1853,6 +1854,7 @@ async def ws_player(websocket: WebSocket, code: str):
         "type":          "init",
         "phase":         state["phase"],
         "round":         state["round"],
+        "round_end_time": state.get("round_end_time"),
         "market":        state["companies"],
         "board":         leaderboard(await all_players(), state),
         "banks":         BANKS,
@@ -1860,6 +1862,7 @@ async def ws_player(websocket: WebSocket, code: str):
         "reg_freeze":    state.get("regulatory_freeze"),
         "credit_crunch": state.get("credit_crunch", False),
         "price_history": state.get("price_history", {}),
+        "news":          state.get("news", []),
         **({"name": player["name"], "player": player_view(player, state)} if already_joined else {}),
     }))
 
@@ -1900,6 +1903,7 @@ async def ws_player(websocket: WebSocket, code: str):
                 players = await all_players()
                 board   = leaderboard(players, state)
                 await manager.broadcast_all({"type": "leaderboard", "board": board})
+                await manager.broadcast_hosts({"type": "player_online", "code": code, "name": name})
 
             # ── Buy ───────────────────────────────────────────────────
             elif action == "buy":
@@ -2220,6 +2224,8 @@ async def ws_player(websocket: WebSocket, code: str):
         pass
     finally:
         manager.disconnect_player(code)
+        # Notify host that this player went offline
+        await manager.broadcast_hosts({"type": "player_offline", "code": code})
 
 
 # ═══════════════════════════════════════════════════════════════
