@@ -40,7 +40,7 @@ STARTING_CASH      = 50_000
 ROUND_DURATION     = 1200        # 20 min — host can end early
 BREAK_DURATION     = 600         # 10 min between rounds
 BANKRUPTCY_RESTART = 25_000
-DRIFT_INTERVAL     = 90          # seconds between passive micro-drifts (reduced magnitude)
+DRIFT_INTERVAL     = 15          # seconds between passive micro-drifts
 MAX_ROUNDS         = 4
 
 # Per-player asyncio lock to prevent concurrent buy/sell race conditions

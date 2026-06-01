@@ -127,8 +127,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 @keyframes badge-pop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
 
 /* ── CONTENT ── */
-.content{flex:1;overflow-y:auto;padding:20px 18px;}
-.panel{display:none;} .panel.active{display:block;}
+.content{flex:1;overflow-y:auto;padding:20px 18px;position:relative;}
+.panel{
+  display:block;
+  opacity:0;
+  transform:translateY(10px);
+  pointer-events:none;
+  position:absolute;
+  inset:0;
+  padding:20px 18px;
+  overflow-y:auto;
+  transition:opacity 0.22s ease, transform 0.22s ease;
+  will-change:opacity,transform;
+}
+.panel.active{
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:all;
+  position:relative;
+  inset:auto;
+  overflow-y:visible;
+}
 .phase-banner{padding:13px 18px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:20px;border:1px solid;font-family:var(--mono);display:flex;align-items:center;gap:8px;}
 .banner-lobby  {background:rgba(79,195,247,0.06);border-color:rgba(79,195,247,0.2);color:var(--blue);}
 .banner-trading{background:rgba(0,230,118,0.06);border-color:rgba(0,230,118,0.2);color:var(--green);}
@@ -316,6 +335,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .snd-vol-readout{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:32px;text-align:right;}
 .snd-hint{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:8px;line-height:1.6;}
 .snd-hint code{color:var(--green);}
+/* Music section accent */
+.snd-section.music-section .snd-track{background:rgba(255,255,255,0.12);}
+.snd-section.music-section .snd-row:hover{background:rgba(206,147,216,0.07);}
+.snd-section.music-section #mus-track.on{background:var(--purple)!important;}
+.snd-section.music-section .snd-hint code{color:var(--purple);}
 
 /* ── PREDICT REDESIGN ── */
 .pred-stock-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
@@ -1409,12 +1433,26 @@ function respondMerge(accept){
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function switchTab(tab){
-  playSwoosh();
-  activeTab=tab;
+  if(activeTab === tab) return;
+  const prev = document.getElementById('panel-'+activeTab);
+  activeTab = tab;
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab)?.classList.add('active');
-  document.getElementById('panel-'+tab)?.classList.add('active');
+  // Fade out old panel
+  if(prev){ prev.style.opacity='0'; prev.style.transform='translateY(-8px)'; }
+  setTimeout(()=>{
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    const next = document.getElementById('panel-'+tab);
+    if(next){
+      next.style.opacity='0';
+      next.style.transform='translateY(12px)';
+      next.classList.add('active');
+      requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+        next.style.opacity=''; next.style.transform='';
+      });});
+    }
+    if(prev){ prev.style.opacity=''; prev.style.transform=''; }
+  }, 140);
   if(tab==='news'){newsCount=0;document.getElementById('news-badge').style.display='none';}
   if(tab==='predict')   renderPredictPanel();
   if(tab==='portfolio') renderPortfolio();
@@ -1422,132 +1460,220 @@ function switchTab(tab){
 }
 
 // ── Sound System ──────────────────────────────────────────────────────────────
-// Drop files into /static/sounds/ and uncomment the matching line.
-const SOUND_FILES = {
-  // 'trade_buy':    'trade_buy.mp3',
-  // 'trade_sell':   'trade_sell.mp3',
-  // 'round_start':  'round_start.mp3',
-  // 'round_end':    'round_end.mp3',
-  // 'break_start':  'break_start.mp3',
-  // 'news_alert':   'news_alert.mp3',
-  // 'chaos_event':  'chaos_event.mp3',
-  // 'bankrupt':     'bankrupt.mp3',
-  // 'timer_warn':   'timer_warning.mp3',
-  // 'game_over':    'game_over.mp3',
-  // 'bg_trading':   'bg_trading.mp3',
-  // 'bg_break':     'bg_break.mp3',
-};
+// Sound effects removed. Music only.
+function playSound(){}   // stub so any old calls don't crash
 
-let soundEnabled = true;
-let masterVolume  = 0.6;
-let lastVolume    = 0.6;
-let bgMusic       = null;
-const audioCache  = {};
+// ── Music state ───────────────────────────────────────────────────────────────
+let musicEnabled  = true;
+let musicVolume   = 0.45;
+let lastMusicVol  = 0.45;
+let bgMusic       = null;   // HTMLAudioElement for file-based music
+let _lobbyMusicCtx= null;   // AudioContext for procedural lobby music
+let _lobbyMusicRunning = false;
 
-function playSound(name){
-  if(!soundEnabled || masterVolume === 0) return;
-  const file = SOUND_FILES[name];
-  if(!file) return;
+// ─────────────────────────────────────────────────────────────────────────────
+//  PROCEDURAL LOBBY MUSIC
+//  Calm, dreamy elevator ambience — soft pad drones + wandering bell melody.
+//  Inspired by the slow, warm tone of the Doors (Roblox) elevator music.
+// ─────────────────────────────────────────────────────────────────────────────
+function startLobbyMusic(){
+  if(_lobbyMusicRunning) return;
+  if(!musicEnabled || musicVolume === 0) return;
   try {
-    if(!audioCache[name]) audioCache[name] = new Audio('/static/sounds/'+file);
-    const a = audioCache[name].cloneNode();
-    a.volume = Math.min(1, masterVolume);
-    a.play().catch(()=>{});
-  } catch(e){}
+    _lobbyMusicCtx = new (window.AudioContext || window.webkitAudioContext)();
+    _lobbyMusicRunning = true;
+    const ctx = _lobbyMusicCtx;
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0, ctx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(musicVolume * 0.55, ctx.currentTime + 3.5);
+    masterGain.connect(ctx.destination);
+
+    // ── Reverb (convolver with synthesised impulse) ──
+    function makeReverb(ctx, duration=3.2, decay=2.0){
+      const len  = ctx.sampleRate * duration;
+      const buf  = ctx.createBuffer(2, len, ctx.sampleRate);
+      for(let c=0;c<2;c++){
+        const d=buf.getChannelData(c);
+        for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len, decay);
+      }
+      const conv=ctx.createConvolver(); conv.buffer=buf; return conv;
+    }
+    const reverb = makeReverb(ctx);
+    const reverbGain = ctx.createGain(); reverbGain.gain.value = 0.55;
+    reverb.connect(reverbGain); reverbGain.connect(masterGain);
+
+    // Dry path
+    const dryGain = ctx.createGain(); dryGain.gain.value = 0.45;
+    dryGain.connect(masterGain);
+
+    function connectNode(node){ node.connect(dryGain); node.connect(reverb); }
+
+    // ── Pad drone — two detuned sines forming a soft chord ──
+    // Root: D2 = 73.42 Hz  |  Fifth: A2 = 110 Hz  |  Octave: D3 = 146.83 Hz
+    const padNotes = [73.42, 110.0, 146.83, 195.99]; // D2 A2 D3 G3
+    padNotes.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.value = freq;
+      osc.detune.value    = (i % 3 - 1) * 4; // slight detune for warmth
+      gain.gain.value     = [0.18, 0.12, 0.14, 0.09][i];
+      osc.connect(gain); connectNode(gain);
+      osc.start(ctx.currentTime + i * 0.4);
+    });
+
+    // ── Slow LFO tremolo on pad ──
+    const lfo     = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.frequency.value = 0.09; // ~9 sec cycle
+    lfoGain.gain.value  = 0.06;
+    lfo.connect(lfoGain);
+    lfo.start(ctx.currentTime);
+
+    // ── Bell melody — pentatonic scale, slow notes, each with attack/release ──
+    // Pentatonic in D: D4(293.66) F#4(369.99) A4(440) B4(493.88) D5(587.33) E5(659.25)
+    const bellScale = [293.66, 369.99, 440.00, 493.88, 587.33, 659.25, 587.33, 493.88];
+    const bellPattern = [0, 2, 4, 3, 5, 1, 4, 2, 0, 3, 5, 4, 2, 0, 1, 3];
+    const bellTiming  = [0, 2.8, 5.2, 7.6, 10.4, 13.0, 15.6, 18.0,
+                         20.8, 23.2, 25.6, 28.4, 31.0, 33.6, 36.0, 38.8];
+
+    function scheduleNote(freq, startTime, duration){
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      // Add subtle upper harmonic for bell-like quality
+      const osc2 = ctx.createOscillator();
+      const g2   = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq * 2.76; // bell partial
+      g2.gain.value = 0.06;
+      osc2.connect(g2); connectNode(g2);
+      osc2.start(startTime); osc2.stop(startTime + duration);
+
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.13, startTime + 0.06);
+      gain.gain.setValueAtTime(0.13, startTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + Math.min(duration, 2.6));
+      osc.connect(gain); connectNode(gain);
+      osc.start(startTime); osc.stop(startTime + duration);
+    }
+
+    bellPattern.forEach((idx, i) => {
+      const t    = ctx.currentTime + bellTiming[i] + 1.5;
+      const dur  = (bellTiming[i+1] || bellTiming[i]+2.6) - bellTiming[i] + 0.8;
+      scheduleNote(bellScale[idx % bellScale.length], t, dur);
+    });
+
+    // Loop: schedule next cycle just before the last note ends
+    const loopAfter = bellTiming[bellTiming.length-1] + 4.2;
+    let _loopTimeout;
+    function scheduleLoop(){
+      if(!_lobbyMusicRunning) return;
+      _loopTimeout = setTimeout(()=>{
+        if(!_lobbyMusicRunning) return;
+        const now = ctx.currentTime;
+        bellPattern.forEach((idx, i) => {
+          const t   = now + bellTiming[i] + 0.5;
+          const dur = (bellTiming[i+1] || bellTiming[i]+2.6) - bellTiming[i] + 0.8;
+          scheduleNote(bellScale[idx % bellScale.length], t, dur);
+        });
+        scheduleLoop();
+      }, loopAfter * 1000);
+    }
+    scheduleLoop();
+
+    // Store cleanup ref
+    _lobbyMusicCtx._loopTimeout = null;
+    _lobbyMusicCtx._scheduleLoop = scheduleLoop;
+
+  } catch(e){ _lobbyMusicRunning = false; }
 }
+
+function stopLobbyMusic(){
+  _lobbyMusicRunning = false;
+  if(_lobbyMusicCtx){
+    try { _lobbyMusicCtx.close(); } catch(e){}
+    _lobbyMusicCtx = null;
+  }
+}
+
+// ── File-based bg music (trading/break phases) ───────────────────────────────
 function playBgMusic(name){
   stopBgMusic();
-  if(!soundEnabled || masterVolume === 0) return;
-  const file = SOUND_FILES[name];
+  if(!musicEnabled || musicVolume === 0) return;
+  const MUSIC_FILES = {
+    // 'bg_trading': 'bg_trading.mp3',
+    // 'bg_break':   'bg_break.mp3',
+  };
+  const file = MUSIC_FILES[name];
   if(!file) return;
   try {
     bgMusic = new Audio('/static/sounds/'+file);
     bgMusic.loop   = true;
-    bgMusic.volume = Math.min(1, masterVolume * 0.4);
+    bgMusic.volume = Math.min(1, musicVolume);
     bgMusic.play().catch(()=>{});
   } catch(e){}
 }
 function stopBgMusic(){
+  stopLobbyMusic();
   if(bgMusic){ bgMusic.pause(); bgMusic.currentTime=0; bgMusic=null; }
 }
 
-// Synthesised swoosh — works without any audio file, uses Web Audio API
-function playSwoosh(){
-  if(!soundEnabled || masterVolume === 0) return;
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc    = ctx.createOscillator();
-    const gain   = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(3200, ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.13);
-    filter.Q.value = 0.7;
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(2400, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(550, ctx.currentTime + 0.14);
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(masterVolume * 0.16, ctx.currentTime + 0.018);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.16);
-    osc.onended = () => ctx.close();
-  } catch(e){}
-}
-
-function setMasterVolume(v){
+// ── Music controls ────────────────────────────────────────────────────────────
+function setMusicVolume(v){
   v = Math.max(0, Math.min(1, v));
-  if(v === 0 && soundEnabled){
-    soundEnabled = false;
-    stopBgMusic();
-  } else if(v > 0 && !soundEnabled){
-    soundEnabled = true;
+  if(v === 0 && musicEnabled){ musicEnabled = false; stopBgMusic(); }
+  else if(v > 0 && !musicEnabled){ musicEnabled = true; }
+  if(v > 0) lastMusicVol = v;
+  musicVolume = v;
+  // Update live lobby music gain
+  if(_lobbyMusicCtx){
+    try {
+      // Find masterGain — easiest: restart at new volume
+      stopLobbyMusic();
+      if(musicEnabled && musicVolume > 0) startLobbyMusic();
+    } catch(e){}
   }
-  if(v > 0) lastVolume = v;
-  masterVolume = v;
-  if(bgMusic) bgMusic.volume = Math.min(1, v * 0.4);
-  _syncSoundUI();
+  if(bgMusic) bgMusic.volume = Math.min(1, v);
+  _syncMusicUI();
 }
 
-function toggleSound(){
-  if(soundEnabled){
-    lastVolume   = masterVolume > 0 ? masterVolume : lastVolume;
-    soundEnabled = false;
-    masterVolume = 0;
+function toggleMusic(){
+  if(musicEnabled){
+    lastMusicVol  = musicVolume > 0 ? musicVolume : lastMusicVol;
+    musicEnabled  = false;
+    musicVolume   = 0;
     stopBgMusic();
   } else {
-    soundEnabled = true;
-    masterVolume = lastVolume > 0.05 ? lastVolume : 0.6;
+    musicEnabled = true;
+    musicVolume  = lastMusicVol > 0.05 ? lastMusicVol : 0.45;
+    startLobbyMusic();
   }
-  _syncSoundUI();
+  _syncMusicUI();
 }
 
-function _syncSoundUI(){
-  const knob    = document.getElementById('snd-knob');
-  const track   = document.getElementById('snd-track');
-  const wrap    = document.getElementById('sound-slider-wrap');
-  const slider  = document.getElementById('sound-vol-slider');
-  const readout = document.getElementById('sound-vol-readout');
-  const label   = document.getElementById('snd-label');
+function _syncMusicUI(){
+  const knob    = document.getElementById('mus-knob');
+  const track   = document.getElementById('mus-track');
+  const wrap    = document.getElementById('music-slider-wrap');
+  const slider  = document.getElementById('music-vol-slider');
+  const readout = document.getElementById('music-vol-readout');
+  const label   = document.getElementById('mus-label');
   if(!knob) return;
-  if(soundEnabled){
-    knob.style.transform  = 'translateX(22px)';
-    track.style.background = 'var(--green)';
-    if(wrap)  wrap.style.maxHeight = '56px';
-    if(wrap)  wrap.style.opacity   = '1';
-    if(label) label.textContent    = 'Sound On';
+  if(musicEnabled){
+    knob.style.transform   = 'translateX(22px)';
+    track.style.background = 'var(--purple)';
+    if(wrap)  { wrap.style.maxHeight='56px'; wrap.style.opacity='1'; }
+    if(label) label.textContent = 'Music On';
   } else {
     knob.style.transform   = 'translateX(0)';
     track.style.background = 'rgba(255,255,255,0.12)';
-    if(wrap)  wrap.style.maxHeight = '0';
-    if(wrap)  wrap.style.opacity   = '0';
-    if(label) label.textContent    = 'Sound Off';
+    if(wrap)  { wrap.style.maxHeight='0'; wrap.style.opacity='0'; }
+    if(label) label.textContent = 'Music Off';
   }
-  if(slider)  slider.value       = Math.round((soundEnabled ? masterVolume : 0) * 100);
-  if(readout) readout.textContent = soundEnabled ? Math.round(masterVolume*100)+'%' : '0%';
+  if(slider)  slider.value        = Math.round((musicEnabled ? musicVolume : 0) * 100);
+  if(readout) readout.textContent = musicEnabled ? Math.round(musicVolume*100)+'%' : '0%';
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -1556,6 +1682,20 @@ function toast(msg,type='info'){
   el.className=`toast ${type}`; el.textContent=msg;
   wrap.appendChild(el); setTimeout(()=>el.remove(),3200);
 }
+
+// ── Start lobby music on first interaction (browser autoplay policy) ───────
+(function(){
+  let _started = false;
+  function _tryStart(){
+    if(_started) return;
+    _started = true;
+    document.removeEventListener('pointerdown', _tryStart);
+    document.removeEventListener('keydown', _tryStart);
+    if(musicEnabled && musicVolume > 0) startLobbyMusic();
+  }
+  document.addEventListener('pointerdown', _tryStart);
+  document.addEventListener('keydown', _tryStart);
+}());
 </script>
 <div id="round-flash" style="position:fixed;inset:0;pointer-events:none;z-index:500;opacity:0;transition:opacity 0.4s;"></div>
 <div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
@@ -1566,37 +1706,33 @@ function toast(msg,type='info'){
   </div>
   <div class="settings-body">
 
-    <!-- Sound section -->
-    <div class="snd-section">
-      <div class="snd-section-label">Sound</div>
+    <!-- Music section -->
+    <div class="snd-section music-section">
+      <div class="snd-section-label">Music</div>
 
-      <!-- Toggle row -->
-      <div class="snd-row" onclick="toggleSound()">
+      <div class="snd-row" onclick="toggleMusic()">
         <div class="snd-row-left">
-          <span class="snd-icon">🔊</span>
-          <span class="snd-label" id="snd-label">Sound On</span>
+          <span class="snd-icon">🎵</span>
+          <span class="snd-label" id="mus-label">Music On</span>
         </div>
-        <div class="snd-pill" id="sound-toggle-btn">
-          <div class="snd-track" id="snd-track"></div>
-          <div class="snd-knob" id="snd-knob"></div>
+        <div class="snd-pill">
+          <div class="snd-track" id="mus-track" style="background:var(--purple)"></div>
+          <div class="snd-knob" id="mus-knob" style="transform:translateX(22px)"></div>
         </div>
       </div>
 
-      <!-- Volume slider — hidden when off, slides open when on -->
-      <div class="snd-slider-wrap" id="sound-slider-wrap">
+      <div class="snd-slider-wrap" id="music-slider-wrap" style="max-height:56px;opacity:1;">
         <div class="snd-slider-row">
           <span class="snd-vol-icon">🔈</span>
-          <input
-            class="snd-slider" id="sound-vol-slider"
-            type="range" min="0" max="100" value="60"
-            oninput="setMasterVolume(this.value/100)"
-          >
-          <span class="snd-vol-icon">🔊</span>
-          <span class="snd-vol-readout" id="sound-vol-readout">60%</span>
+          <input class="snd-slider" id="music-vol-slider"
+            type="range" min="0" max="100" value="45"
+            oninput="setMusicVolume(this.value/100)">
+          <span class="snd-vol-icon">🎵</span>
+          <span class="snd-vol-readout" id="music-vol-readout">45%</span>
         </div>
       </div>
 
-      <div class="snd-hint">Sound effects load from <code>/static/sounds/</code></div>
+      <div class="snd-hint">Calm lobby ambience · plays while waiting to start</div>
     </div>
 
     <div class="settings-placeholder">⚙️<br><br>More settings<br>coming soon.</div>
