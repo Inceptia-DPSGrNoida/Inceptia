@@ -98,14 +98,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
 /* row 3: stat pills — taller, bigger text */
 .hdr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:0 16px 18px;}
-.stat-pill{border-radius:12px;padding:12px 10px 11px;display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden;}
+.stat-pill{border-radius:12px;padding:14px 10px 13px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;}
 .stat-pill::before{content:'';position:absolute;inset:0;opacity:0.06;pointer-events:none;}
 .sp-cash  {background:rgba(245,166,35,0.10);border:1px solid rgba(245,166,35,0.28);}  .sp-cash::before{background:var(--gold);}
 .sp-port  {background:rgba(79,195,247,0.10);border:1px solid rgba(79,195,247,0.28);}  .sp-port::before{background:var(--blue);}
 .sp-loan  {background:rgba(255,77,109,0.10);border:1px solid rgba(255,77,109,0.28);}  .sp-loan::before{background:var(--red);}
 .sp-nw    {background:rgba(0,230,118,0.10);border:1px solid rgba(0,230,118,0.28);}    .sp-nw::before{background:var(--green);}
-.sp-label{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;}
-.sp-val  {font-family:var(--mono);font-size:22px;font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.sp-label{font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;font-weight:600;}
+.sp-val  {font-family:var(--mono);font-size:clamp(16px,4vw,26px);font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
 .sp-val.gold{color:var(--gold);} .sp-val.blue{color:var(--blue);} .sp-val.red{color:var(--red);} .sp-val.green{color:var(--green);} .sp-val.muted{color:var(--muted);}
 /* keep old aliases so JS still works */
 .s-val.gold{color:var(--gold);} .s-val.green{color:var(--green);} .s-val.red{color:var(--red);} .s-val.blue{color:var(--blue);} .s-val.muted{color:var(--muted);}
@@ -123,8 +123,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .nav-tab.t-predict.active  {border-bottom-color:var(--gold);background:rgba(245,166,35,0.04);}    .nav-tab.t-predict .tab-label{color:var(--gold);}
 .nav-tab.t-news.active     {border-bottom-color:var(--pink);background:rgba(244,143,177,0.04);}   .nav-tab.t-news .tab-label{color:var(--pink);}
 .nav-tab.t-board.active    {border-bottom-color:var(--orange);background:rgba(255,183,77,0.04);}  .nav-tab.t-board .tab-label{color:var(--orange);}
-.nav-badge{position:absolute;top:7px;right:calc(50% - 18px);background:var(--red);color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:99px;min-width:16px;text-align:center;line-height:1.2;box-shadow:0 0 8px rgba(255,77,109,0.6);animation:badge-pop 0.3s ease;}
-@keyframes badge-pop{from{transform:scale(0);}to{transform:scale(1);}}
+.nav-badge{position:absolute;top:6px;right:calc(50% - 20px);background:#ed4245;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:99px;min-width:18px;height:18px;text-align:center;line-height:14px;box-shadow:0 0 0 2px var(--surface),0 2px 8px rgba(237,66,69,0.7);animation:badge-pop 0.25s cubic-bezier(0.34,1.56,0.64,1);border:1.5px solid rgba(255,255,255,0.15);}
+@keyframes badge-pop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
 
 /* ── CONTENT ── */
 .content{flex:1;overflow-y:auto;padding:20px 18px;}
@@ -213,42 +213,65 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .ps-val{font-family:var(--mono);font-size:20px;font-weight:700;}
 
 /* ── BANKS ── */
-.bank-card{border-radius:16px;padding:20px;margin-bottom:18px;transition:transform 0.15s,box-shadow 0.15s;position:relative;overflow:hidden;}
-.bank-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.35);}
-.bank-bharat{background:linear-gradient(135deg,rgba(0,230,118,0.07) 0%,rgba(0,230,118,0.02) 100%);border:1px solid rgba(0,230,118,0.22);}
-.bank-vcx   {background:linear-gradient(135deg,rgba(79,195,247,0.07) 0%,rgba(79,195,247,0.02) 100%);border:1px solid rgba(79,195,247,0.22);}
-.bank-shadow{background:linear-gradient(135deg,rgba(255,77,109,0.07) 0%,rgba(255,77,109,0.02) 100%);border:1px solid rgba(255,77,109,0.22);}
-.bank-glow{position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;filter:blur(40px);opacity:0.15;pointer-events:none;}
+.bank-card{border-radius:20px;padding:0;margin-bottom:22px;transition:transform 0.18s,box-shadow 0.18s;position:relative;overflow:hidden;}
+.bank-card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.4);}
+.bank-bharat{background:linear-gradient(140deg,rgba(0,230,118,0.09) 0%,rgba(0,0,0,0) 60%);border:1px solid rgba(0,230,118,0.25);}
+.bank-vcx   {background:linear-gradient(140deg,rgba(79,195,247,0.09) 0%,rgba(0,0,0,0) 60%);border:1px solid rgba(79,195,247,0.25);}
+.bank-shadow{background:linear-gradient(140deg,rgba(255,77,109,0.09) 0%,rgba(0,0,0,0) 60%);border:1px solid rgba(255,77,109,0.25);}
+.bank-glow{position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;filter:blur(60px);opacity:0.12;pointer-events:none;}
 .bank-bharat .bank-glow{background:var(--green);}
 .bank-vcx    .bank-glow{background:var(--blue);}
 .bank-shadow .bank-glow{background:var(--red);}
-.bank-top-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;position:relative;}
-.bank-id{display:flex;align-items:center;gap:10px;}
-.bank-icon{font-size:28px;line-height:1;}
-.bank-name{font-weight:700;font-size:18px;color:#fff;}
-.bank-rate-tag{display:inline-block;font-size:10px;font-weight:700;font-family:var(--mono);letter-spacing:0.5px;padding:4px 10px;border-radius:6px;margin-top:5px;}
-.bank-bharat .bank-rate-tag{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.25);}
-.bank-vcx    .bank-rate-tag{background:rgba(79,195,247,0.12);color:var(--blue);border:1px solid rgba(79,195,247,0.25);}
-.bank-shadow .bank-rate-tag{background:rgba(255,77,109,0.12);color:var(--red);border:1px solid rgba(255,77,109,0.25);}
-.bank-balance-box{text-align:right;background:rgba(0,0,0,0.25);border-radius:10px;padding:10px 14px;min-width:110px;}
-.bank-bal-label{font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
-.bank-balance{font-family:var(--mono);font-size:22px;font-weight:500;}
-.bank-bharat .bank-balance{color:var(--green);}
-.bank-vcx    .bank-balance{color:var(--blue);}
-.bank-shadow .bank-balance{color:var(--red);}
-.bank-balance.zero{color:var(--muted);font-size:16px;}
-.bank-desc{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:16px;line-height:1.65;padding:12px 14px;background:rgba(0,0,0,0.2);border-radius:10px;}
-.bank-borrow-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;margin-bottom:12px;}
-.borrow-btn{padding:10px 8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.12);color:var(--text);border-radius:8px;font-family:var(--mono);font-size:13px;cursor:pointer;font-weight:600;transition:all 0.15s;text-align:center;}
-.bank-bharat .borrow-btn:hover{background:rgba(0,230,118,0.15);border-color:rgba(0,230,118,0.4);color:var(--green);}
-.bank-vcx    .borrow-btn:hover{background:rgba(79,195,247,0.15);border-color:rgba(79,195,247,0.4);color:var(--blue);}
-.bank-shadow .borrow-btn:hover{background:rgba(255,77,109,0.15);border-color:rgba(255,77,109,0.4);color:var(--red);}
-.repay-row{display:flex;gap:8px;margin-top:10px;}
-.repay-input{flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;}
+/* bank header stripe */
+.bank-header-stripe{padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;position:relative;}
+.bank-id-block{display:flex;align-items:center;gap:12px;}
+.bank-icon-wrap{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.bank-bharat .bank-icon-wrap{background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.22);}
+.bank-vcx    .bank-icon-wrap{background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.22);}
+.bank-shadow .bank-icon-wrap{background:rgba(255,77,109,0.12);border:1px solid rgba(255,77,109,0.22);}
+.bank-name{font-weight:700;font-size:18px;color:#fff;letter-spacing:0.3px;}
+.bank-rate-tag{display:inline-block;font-size:10px;font-weight:700;font-family:var(--mono);letter-spacing:0.5px;padding:3px 9px;border-radius:5px;margin-top:4px;}
+.bank-bharat .bank-rate-tag{background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2);}
+.bank-vcx    .bank-rate-tag{background:rgba(79,195,247,0.1);color:var(--blue);border:1px solid rgba(79,195,247,0.2);}
+.bank-shadow .bank-rate-tag{background:rgba(255,77,109,0.1);color:var(--red);border:1px solid rgba(255,77,109,0.2);}
+/* owed pill */
+.bank-owed-pill{text-align:right;}
+.bank-owed-label{font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
+.bank-owed-val{font-family:var(--mono);font-size:20px;font-weight:700;}
+.bank-bharat .bank-owed-val{color:var(--green);}
+.bank-vcx    .bank-owed-val{color:var(--blue);}
+.bank-shadow .bank-owed-val{color:var(--red);}
+.bank-owed-val.zero{color:var(--muted);font-size:15px;}
+/* divider + body */
+.bank-body{padding:0 20px 18px;}
+.bank-desc{font-size:12px;color:rgba(255,255,255,0.48);margin-bottom:16px;line-height:1.7;padding:12px 14px;background:rgba(0,0,0,0.25);border-radius:10px;}
+/* borrow amount cards grid */
+.bank-borrow-label{font-size:8px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px;font-weight:600;}
+.bank-borrow-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.borrow-card{padding:14px 12px;border-radius:12px;cursor:pointer;transition:all 0.15s;text-align:center;border:1px solid;}
+.bank-bharat .borrow-card{background:rgba(0,230,118,0.04);border-color:rgba(0,230,118,0.18);}
+.bank-bharat .borrow-card:hover{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.45);transform:scale(1.02);}
+.bank-vcx    .borrow-card{background:rgba(79,195,247,0.04);border-color:rgba(79,195,247,0.18);}
+.bank-vcx    .borrow-card:hover{background:rgba(79,195,247,0.12);border-color:rgba(79,195,247,0.45);transform:scale(1.02);}
+.bank-shadow .borrow-card{background:rgba(255,77,109,0.04);border-color:rgba(255,77,109,0.18);}
+.bank-shadow .borrow-card:hover{background:rgba(255,77,109,0.12);border-color:rgba(255,77,109,0.45);transform:scale(1.02);}
+.borrow-card-amt{font-family:var(--mono);font-size:18px;font-weight:700;margin-bottom:3px;}
+.bank-bharat .borrow-card-amt{color:var(--green);}
+.bank-vcx    .borrow-card-amt{color:var(--blue);}
+.bank-shadow .borrow-card-amt{color:var(--red);}
+.borrow-card-label{font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:0.5px;}
+/* repay section */
+.bank-repay-section{background:rgba(0,0,0,0.2);border-radius:12px;padding:14px;margin-top:4px;}
+.bank-repay-title{font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;font-weight:600;}
+.repay-row{display:flex;gap:8px;}
+.repay-input{flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;}
 .repay-input:focus{border-color:var(--green);}
-.repay-btn{padding:11px 16px;background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.28);color:var(--green);border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;}
-.repay-full-btn{width:100%;margin-top:8px;padding:10px;background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.18);color:var(--green);border-radius:10px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;}
-.break-only-note{font-size:11px;color:var(--orange);margin-top:8px;padding:8px 12px;background:rgba(255,183,77,0.07);border-radius:8px;border:1px solid rgba(255,183,77,0.2);font-family:var(--mono);}
+.repay-btn{padding:11px 16px;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.28);color:var(--green);border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;}
+.repay-full-btn{width:100%;margin-top:8px;padding:12px;background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.18);color:var(--green);border-radius:10px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;}
+.break-only-note{font-size:11px;color:var(--orange);margin-top:10px;padding:8px 12px;background:rgba(255,183,77,0.07);border-radius:8px;border:1px solid rgba(255,183,77,0.2);font-family:var(--mono);}
+/* shadow bank special demand button */
+.shadow-demand-btn{width:100%;margin-top:10px;padding:12px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);color:var(--red);border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background 0.15s;}
+.shadow-demand-btn:hover{background:rgba(255,77,109,0.18);}
 
 /* ── BANKRUPTCY ── */
 .bankruptcy-section{margin-top:24px;padding:22px;background:rgba(255,77,109,0.04);border:1px solid rgba(255,77,109,0.18);border-radius:16px;}
@@ -313,7 +336,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .tag-unverified{background:rgba(255,183,77,0.1);color:var(--orange);border:1px solid rgba(255,183,77,0.22);}
 .tag-chaos     {background:rgba(255,77,109,0.1);color:var(--red);border:1px solid rgba(255,77,109,0.22);}
 .tag-private   {background:rgba(206,147,216,0.1);color:var(--purple);border:1px solid rgba(206,147,216,0.22);}
-.news-text{font-size:13px;line-height:1.7;color:var(--text);}
+.news-text{font-size:14px;line-height:1.75;color:rgba(255,255,255,0.88);font-family:'Georgia','Times New Roman',serif;letter-spacing:0.01em;}
 .news-ts{font-size:10px;color:var(--muted);margin-top:7px;font-family:var(--mono);}
 
 /* ── LEADERBOARD ── */
@@ -634,8 +657,6 @@ function startBreakTimer(endTime,total){
   const cd=document.getElementById('timer-countdown');
   const lbl=document.getElementById('hdr-timer-label-text');
   if(lbl) lbl.textContent='⏸ Break ends in';
-  const lbl2=document.getElementById('hdr-timer-label-text');
-  if(lbl2) lbl2.textContent='⏱ Round closes in';
   section.classList.add('visible');
   function tick(){
     const rem=timerEndTime-Date.now()/1000;
@@ -981,7 +1002,17 @@ function toggleCard(cid){
   if(phase!=='trading') return;
   expandedCard=(expandedCard===cid)?null:cid;
   renderMarket();
-  if(expandedCard) setTimeout(()=>document.getElementById('exp-'+cid)?.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  if(expandedCard){
+    // Refresh max values when card opens
+    const p=market[cid]?.price||1;
+    const maxBuy=Math.floor(playerData.cash/p);
+    const owned=playerData.portfolio?.[cid]?.qty||0;
+    const maxEl=document.querySelector(`#exp-${cid} .max-lnk[onclick*="'b'"]`);
+    const allEl=document.querySelector(`#exp-${cid} .max-lnk[onclick*="'s'"]`);
+    if(maxEl) maxEl.textContent=`MAX ${maxBuy}`;
+    if(allEl) allEl.textContent=`ALL ${owned}`;
+    setTimeout(()=>document.getElementById('exp-'+cid)?.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+  }
 }
 function adjQty(side,cid,delta){
   const id=side==='b'?`bq-${cid}`:`sq-${cid}`;
@@ -1075,36 +1106,72 @@ function renderBanks(){
     const balance=(playerData.loans||{})[bankId]||0;
     let rate=bank.rate*100; if(creditCrunch) rate+=5;
     const meta=BANK_META[bankId]||{icon:'🏦',cls:'',color:'var(--gold)'};
+    const isShadow=bankId==='shadow';
+    const remainingCapacity=Math.max(0,bank.limit-balance);
     html+=`<div class="bank-card ${meta.cls}">
       <div class="bank-glow"></div>
-      <div class="bank-top-row">
-        <div class="bank-id">
-          <div class="bank-icon">${meta.icon}</div>
+      <div class="bank-header-stripe">
+        <div class="bank-id-block">
+          <div class="bank-icon-wrap">${meta.icon}</div>
           <div>
             <div class="bank-name">${bank.name}</div>
             <span class="bank-rate-tag">${rate.toFixed(0)}% / round · Limit ${fmt(bank.limit)}</span>
           </div>
         </div>
-        <div class="bank-balance-box">
-          <div class="bank-bal-label">Owed</div>
-          <div class="bank-balance ${balance===0?'zero':''}">${balance>0?fmt(balance):'—'}</div>
+        <div class="bank-owed-pill">
+          <div class="bank-owed-label">Owed</div>
+          <div class="bank-owed-val ${balance===0?'zero':''}">${balance>0?fmt(balance):'—'}</div>
         </div>
       </div>
-      <div class="bank-desc">${bank.desc||''}</div>`;
-    if(balance<bank.limit){
-      html+=`<div class="bank-borrow-grid">`;
-      for(const opt of bank.options){if(opt>bank.limit-balance)continue;html+=`<button class="borrow-btn" onclick="takeLoan('${bankId}',${opt})">+${fmt(opt)}</button>`;}
+      <div class="bank-body">
+        <div class="bank-desc">${bank.desc||''}</div>`;
+    if(remainingCapacity>0){
+      html+=`<div class="bank-borrow-label">Borrow Amount</div><div class="bank-borrow-grid">`;
+      for(const opt of bank.options){
+        if(opt>remainingCapacity) continue;
+        html+=`<div class="borrow-card" onclick="takeLoan('${bankId}',${opt})">
+          <div class="borrow-card-amt">+${fmtShort(opt)}</div>
+          <div class="borrow-card-label">repay ~${fmtShort(Math.round(opt*(1+bank.rate)))}</div>
+        </div>`;
+      }
       html+=`</div>`;
     }
     if(balance>0){
-      if(inBreak) html+=`<div class="repay-row"><input class="repay-input" id="repay-${bankId}" type="number" placeholder="Amount to repay" min="1000"><button class="repay-btn" onclick="repayLoan('${bankId}')">Repay</button></div><button class="repay-full-btn" onclick="repayLoanFull('${bankId}')">Repay Full — ${fmt(balance)}</button>`;
-      // repay note shown at top of page, not per-card
+      if(inBreak){
+        html+=`<div class="bank-repay-section">
+          <div class="bank-repay-title">Repay Loan</div>
+          <div class="repay-row">
+            <input class="repay-input" id="repay-${bankId}" type="number" placeholder="Amount to repay" min="1000">
+            <button class="repay-btn" onclick="repayLoan('${bankId}')">Repay</button>
+          </div>
+          <button class="repay-full-btn" onclick="repayLoanFull('${bankId}')">💳 Repay Full — ${fmt(balance)}</button>
+        </div>`;
+        if(isShadow){
+          html+=`<button class="shadow-demand-btn" onclick="shadowDemandRepayment()">💀 ShadowCredit demands 50% now — Pay ${fmt(Math.ceil(balance*0.5))} or face consequences</button>`;
+        }
+      } else {
+        html+=`<div class="break-only-note">⏸ Repayment available during break periods only.</div>`;
+      }
     }
-    html+=`</div>`;
+    html+=`</div></div>`;
   }
   container.innerHTML=html||'<div style="color:var(--muted);font-size:13px;font-family:var(--mono)">No banks configured.</div>';
 }
+function fmtShort(n){
+  n=Math.round(n);
+  if(n>=100000) return '₹'+(n/100000).toFixed(1)+'L';
+  if(n>=1000)   return '₹'+(n/1000).toFixed(0)+'K';
+  return '₹'+n;
+}
 function takeLoan(bid,amt){if(ws)ws.send(JSON.stringify({action:'take_loan',bank_id:bid,amount:amt}));}
+function shadowDemandRepayment(){
+  const balance=(playerData.loans||{})['shadow']||0;
+  if(!balance) return;
+  const demanded=Math.ceil(balance*0.5);
+  if(playerData.cash<demanded) return toast(`💀 ShadowCredit demands ${fmt(demanded)} but you only have ${fmt(playerData.cash)}!`,'err');
+  if(!confirm(`ShadowCredit demands ${fmt(demanded)} right now (50% of your balance). Pay?`)) return;
+  ws.send(JSON.stringify({action:'repay_loan',bank_id:'shadow',amount:demanded}));
+}
 function repayLoan(bid){
   if(phase!=='break') return toast('Repayment only available during break periods.','err');
   const inp=document.getElementById('repay-'+bid), amt=parseInt(inp?.value);
@@ -1326,6 +1393,62 @@ function switchTab(tab){
   if(tab==='loans')     renderBanks();
 }
 
+// ── Sound System ──────────────────────────────────────────────────────────────
+// Sounds are served from /static/sounds/ — add files there and call playSound()
+// Usage: playSound('trade_buy') → plays /static/sounds/trade_buy.mp3
+const SOUND_FILES = {
+  // Fill these in with your actual file names when ready:
+  // 'trade_buy':    'trade_buy.mp3',
+  // 'trade_sell':   'trade_sell.mp3',
+  // 'round_start':  'round_start.mp3',
+  // 'round_end':    'round_end.mp3',
+  // 'break_start':  'break_start.mp3',
+  // 'news_alert':   'news_alert.mp3',
+  // 'chaos_event':  'chaos_event.mp3',
+  // 'bankrupt':     'bankrupt.mp3',
+  // 'timer_warning':'timer_warning.mp3',
+  // 'game_over':    'game_over.mp3',
+  // 'bg_trading':   'bg_trading.mp3',   // looping background
+  // 'bg_break':     'bg_break.mp3',     // looping background during break
+};
+let soundEnabled = true;
+let bgMusic = null;
+const audioCache = {};
+
+function playSound(name){
+  if(!soundEnabled) return;
+  const file = SOUND_FILES[name];
+  if(!file) return; // sound not configured yet
+  try {
+    if(!audioCache[name]) audioCache[name] = new Audio('/static/sounds/'+file);
+    const a = audioCache[name].cloneNode();
+    a.volume = 0.6;
+    a.play().catch(()=>{}); // ignore autoplay blocks
+  } catch(e){}
+}
+
+function playBgMusic(name){
+  if(!soundEnabled) return;
+  const file = SOUND_FILES[name];
+  stopBgMusic();
+  if(!file) return;
+  try {
+    bgMusic = new Audio('/static/sounds/'+file);
+    bgMusic.loop = true;
+    bgMusic.volume = 0.25;
+    bgMusic.play().catch(()=>{});
+  } catch(e){}
+}
+
+function stopBgMusic(){
+  if(bgMusic){ bgMusic.pause(); bgMusic.currentTime=0; bgMusic=null; }
+}
+
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  if(!soundEnabled) stopBgMusic();
+  toast(soundEnabled?'🔊 Sound on':'🔇 Sound off','info');
+}
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function toast(msg,type='info'){
   const wrap=document.getElementById('toast-wrap'), el=document.createElement('div');
@@ -1341,7 +1464,12 @@ function toast(msg,type='info'){
     <button class="settings-close" onclick="closeSettings()">✕</button>
   </div>
   <div class="settings-body">
-    <div class="settings-placeholder">⚙️<br><br>Settings and features<br>will appear here soon.</div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px;font-weight:600;">Sound</div>
+      <button id="sound-toggle-btn" onclick="toggleSound()" style="width:100%;padding:13px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;text-align:left;transition:background 0.15s;">🔊 Sound On</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:7px;font-family:var(--mono);line-height:1.6;">Sound effects play from <code style="color:var(--green)">/static/sounds/</code> folder on the server.</div>
+    </div>
+    <div class="settings-placeholder">⚙️<br><br>More settings<br>coming soon.</div>
   </div>
 </div>
 </body>

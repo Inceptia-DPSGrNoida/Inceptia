@@ -29,15 +29,16 @@ from typing import Dict, Optional
 import aiosqlite
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 # ═══════════════════════════════════════════════════════════════
 #  CONFIG
 # ═══════════════════════════════════════════════════════════════
 DB_PATH            = Path(os.getenv("DB_PATH", "game.db"))
-HOST_PASSWORD      = os.getenv("HOST_PASSWORD", "InceptiaHost2025")
+HOST_PASSWORD      = os.getenv("HOST_PASSWORD", "Ich_liebe_Siya")
 STARTING_CASH      = 50_000
 ROUND_DURATION     = 1200        # 20 min — host can end early
-BREAK_DURATION     = 300         # 5 min between rounds
+BREAK_DURATION     = 600         # 10 min between rounds
 BANKRUPTCY_RESTART = 25_000
 DRIFT_INTERVAL     = 90          # seconds between passive micro-drifts (reduced magnitude)
 MAX_ROUNDS         = 4
@@ -1106,6 +1107,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 BASE_DIR = Path(__file__).parent
+
+# Mount static files (sounds, music) — create the folder if it doesn't exist
+STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR.mkdir(exist_ok=True)
+(STATIC_DIR / "sounds").mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 # ═══════════════════════════════════════════════════════════════
