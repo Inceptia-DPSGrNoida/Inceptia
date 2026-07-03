@@ -1840,18 +1840,41 @@ async def ws_player(websocket: WebSocket, code: str):
     # ── Single-use code guard ─────────────────────────────────────────────────
     # If someone is already connected on this code AND they have a name (i.e.
     # they've fully joined), reject the new connection to prevent code-sharing.
+    # ── Strict Single-Use Code Guard ──────────────────────────────────────────
     existing_ws = manager.players.get(code)
     if existing_ws is not None:
-        player_check = await get_player(code)
-        if player_check and bool(player_check.get("name")):
+        # Check if the existing socket is actually still alive
+        try:
+            # If it's dead, this will fail and we can reclaim the code
+            await existing_ws.send_json({"type": "ping"}) 
+        except Exception:
+            manager.disconnect_player(code)
+        else:
+            # Socket is alive, actively block the new user
             await websocket.accept()
             await websocket.send_text(json.dumps({
                 "type": "error",
-                "msg":  "This code is already in use by another device. Each code is single-use. Contact your host if you need a new one."
+                "msg":  "Code in use! If you refreshed, wait 5 seconds and try again."
+            }))
+            await websocket.close()
+            return# ── Strict Single-Use Code Guard ──────────────────────────────────────────
+    existing_ws = manager.players.get(code)
+    if existing_ws is not None:
+        # Check if the existing socket is actually still alive
+        try:
+            # If it's dead, this will fail and we can reclaim the code
+            await existing_ws.send_json({"type": "ping"}) 
+        except Exception:
+            manager.disconnect_player(code)
+        else:
+            # Socket is alive, actively block the new user
+            await websocket.accept()
+            await websocket.send_text(json.dumps({
+                "type": "error",
+                "msg":  "Code in use! If you refreshed, wait 5 seconds and try again."
             }))
             await websocket.close()
             return
-
     await manager.connect_player(code, websocket)
     state  = await read_state()
     player = await get_player(code)
@@ -2052,10 +2075,11 @@ async def ws_player(websocket: WebSocket, code: str):
                     player["cash"]     = BANKRUPTCY_RESTART
                     player["holdings"] = {}
                     player["loans"]    = {}
-                    player["bets"]     = {}   # bets cleared; stakes already deducted — treat as lost
+                    player["bets"]     = {}   
                     player["avg_cost"] = {}
-                    player["frozen"]   = False
-                    await save_player(player)
+                    # PENALTY: You get your cash, but your trading floor access is revoked for this round.
+                    player["frozen"]   = True 
+                    await save_player(player)  
                 pv = player_view(player, state)
                 await websocket.send_text(json.dumps({
                     "type":   "bankrupt",

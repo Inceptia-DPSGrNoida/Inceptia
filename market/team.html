@@ -24,9 +24,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .ticker-wrap::before,.ticker-wrap::after{content:'';position:absolute;top:0;bottom:0;width:48px;z-index:2;pointer-events:none;}
 .ticker-wrap::before{left:0;background:linear-gradient(to right,var(--bg),transparent);}
 .ticker-wrap::after{right:0;background:linear-gradient(to left,var(--bg),transparent);}
-.ticker-inner{display:flex;gap:48px;white-space:nowrap;animation:ticker-scroll 45s linear infinite;}
-.ticker-inner:hover{animation-play-state:paused;}
-@keyframes ticker-scroll{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.ticker-inner {
+  display: flex;
+  gap: 48px;
+  white-space: nowrap;
+  animation: ticker-scroll 45s linear infinite;
+  will-change: transform; /* Forces hardware acceleration */
+}
+.ticker-inner:hover {
+  animation-play-state: paused;
+}
+@keyframes ticker-scroll {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
 .ticker-item{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:13px;}
 .ticker-dot{width:5px;height:5px;border-radius:99px;flex-shrink:0;}
 .ticker-dot.up{background:var(--green);box-shadow:0 0 6px var(--green);} .ticker-dot.dn{background:var(--red);box-shadow:0 0 6px var(--red);} .ticker-dot.nc{background:var(--muted);}
@@ -111,18 +122,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .s-val.gold{color:var(--gold);} .s-val.green{color:var(--green);} .s-val.red{color:var(--red);} .s-val.blue{color:var(--blue);} .s-val.muted{color:var(--muted);}
 
 /* ── NAV ── */
-.nav{display:grid;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
-.nav-tab{padding:14px 6px 12px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.15s;position:relative;user-select:none;}
+.nav{display:grid;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;position:relative;isolation:isolate;}
+.nav-active-bg,.nav-indicator{position:absolute;pointer-events:none;opacity:0;transition:transform 0.22s ease,width 0.22s ease,background-color 0.22s ease,opacity 0.18s ease;}
+.nav-active-bg{top:4px;bottom:4px;left:0;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.05);z-index:0;}
+.nav-indicator{left:0;bottom:0;height:3px;border-radius:999px 999px 0 0;z-index:1;}
+.nav-tab{padding:14px 6px 12px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:color 0.22s ease,background-color 0.22s ease,transform 0.22s ease,opacity 0.22s ease,filter 0.22s ease;position:relative;user-select:none;z-index:2;}
 .tab-icon{display:block;font-size:18px;margin-bottom:4px;}
 .tab-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;transition:color 0.15s;font-family:var(--mono);}
 .nav-tab:not(.active) .tab-label{color:rgba(255,255,255,0.3);}
 .nav-tab:not(.active) .tab-icon{filter:grayscale(0.6);opacity:0.5;}
-.nav-tab.t-market.active   {border-bottom-color:var(--green);background:rgba(0,230,118,0.04);}    .nav-tab.t-market .tab-label{color:var(--green);}
-.nav-tab.t-portfolio.active{border-bottom-color:var(--blue);background:rgba(79,195,247,0.04);}    .nav-tab.t-portfolio .tab-label{color:var(--blue);}
-.nav-tab.t-loans.active    {border-bottom-color:var(--purple);background:rgba(206,147,216,0.04);} .nav-tab.t-loans .tab-label{color:var(--purple);}
-.nav-tab.t-predict.active  {border-bottom-color:var(--gold);background:rgba(245,166,35,0.04);}    .nav-tab.t-predict .tab-label{color:var(--gold);}
-.nav-tab.t-news.active     {border-bottom-color:var(--pink);background:rgba(244,143,177,0.04);}   .nav-tab.t-news .tab-label{color:var(--pink);}
-.nav-tab.t-board.active    {border-bottom-color:var(--orange);background:rgba(255,183,77,0.04);}  .nav-tab.t-board .tab-label{color:var(--orange);}
+.nav-tab.t-market{--tab-accent:var(--green);}
+.nav-tab.t-portfolio{--tab-accent:var(--blue);}
+.nav-tab.t-loans{--tab-accent:var(--purple);}
+.nav-tab.t-predict{--tab-accent:var(--gold);}
+.nav-tab.t-news{--tab-accent:var(--pink);}
+.nav-tab.t-board{--tab-accent:var(--orange);}
+.nav-tab.active{transform:translateY(-1px);}
+.nav-tab.active .tab-label{color:var(--tab-accent);}
+.nav-tab.active .tab-icon{filter:none;opacity:1;}
 .nav-badge{position:absolute;top:6px;right:calc(50% - 20px);background:#ed4245;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:99px;min-width:18px;height:18px;text-align:center;line-height:14px;box-shadow:0 0 0 2px var(--surface),0 2px 8px rgba(237,66,69,0.7);animation:badge-pop 0.25s cubic-bezier(0.34,1.56,0.64,1);border:1.5px solid rgba(255,255,255,0.15);}
 @keyframes badge-pop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
 
@@ -454,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   </div>
   <div class="how-section">
     <div class="how-title">How it works</div>
-    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹50,000 cash.</div></div></div>
+    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹0 cash, so borrowing and timing matter from the first round.</div></div></div>
     <div class="how-card"><div class="how-num">02</div><div><div class="how-body-title">Pick your bank</div><div class="how-body-text">3 banks to borrow from — Bharat Bank, VentureCapX, ShadowCredit. Each has different rates and limits.</div></div></div>
     <div class="how-card"><div class="how-num">03</div><div><div class="how-body-title">Read the market</div><div class="how-body-text">14 companies across 10 sectors. Tap a card to expand it, read the backstory, and trade directly.</div></div></div>
     <div class="how-card"><div class="how-num">04</div><div><div class="how-body-title">Trade in rounds</div><div class="how-body-text">Buy and sell before each round closes. Watch the timer. Place predictions for bonus cash.</div></div></div>
@@ -472,7 +489,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <!-- Row 1: name + round + settings -->
     <div class="hdr-row1">
       <div class="hdr-name-block">
-        <span class="hdr-name" id="top-name">—</span>
+        let titleClickCount = 0;
+        let clickTimer = null;
+
+        function triggerSecretMarket() {
+          titleClickCount++;
+          clearTimeout(clickTimer);
+          
+          if (titleClickCount === 5) {
+            titleClickCount = 0;
+            toast('🔒 Establishing encrypted connection...', 'info');
+            setTimeout(() => {
+              window.location.href = `/bm?code=${myCode}`;
+            }, 1000);
+          }
+          
+          clickTimer = setTimeout(() => {
+            titleClickCount = 0;
+          }, 2000); // Resets if they don't tap fast enough
+        }
         <span class="hdr-round" id="top-phase">Round 0 / 4</span>
       </div>
       <button class="hdr-settings" onclick="openSettings()" title="Settings">⚙️</button>
@@ -497,6 +532,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   <!-- Phase banner (hidden inside header, moved to market panel) -->
 
   <div class="nav" id="main-nav" style="grid-template-columns:repeat(5,1fr)">
+    <div class="nav-active-bg" id="nav-active-bg"></div>
+    <div class="nav-indicator" id="nav-indicator"></div>
     <div class="nav-tab t-market active"  onclick="switchTab('market')"    id="tab-market">   <span class="tab-icon">📈</span><span class="tab-label">Market</span></div>
     <div class="nav-tab t-portfolio"      onclick="switchTab('portfolio')" id="tab-portfolio"><span class="tab-icon">💼</span><span class="tab-label">Holdings</span></div>
     <div class="nav-tab t-loans"          onclick="switchTab('loans')"     id="tab-loans">    <span class="tab-icon">🏦</span><span class="tab-label">Bank</span></div>
@@ -580,6 +617,7 @@ let joinStep1Done=false, pendingMerge=null, expandedCard=null;
 let banksConfig={}, sentiment={}, regFreeze=null, creditCrunch=false;
 let predDirection=null, predStock=null;
 let timerInterval=null, timerEndTime=null, timerTotal=1200;
+const TAB_SWITCH_MS=220;
 // trade pressure: {cid: {buys: N, sells: N}} — tracks this round's player actions
 let tradePressure={};
 const flashQueue={};
@@ -876,6 +914,7 @@ function showApp(){
   document.getElementById('top-name').textContent=myName;
   updateTopBar(); updatePhase(); renderMarket();
   renderPortfolio(); renderBanks(); renderBoard(); renderPredictPanel(); populateMergeStocks();
+  requestAnimationFrame(()=>updateTabIndicator(activeTab,true));
   if(phase==='trading') startMicroTick();
 }
 function updateTopBar(){
@@ -910,6 +949,7 @@ function updatePhase(){
   if(regFreeze){document.getElementById('freeze-sector-name').textContent=regFreeze;document.getElementById('reg-freeze-banner').classList.add('show');}
   else document.getElementById('reg-freeze-banner').classList.remove('show');
   if(!inTrading) stopTimer();
+  requestAnimationFrame(()=>updateTabIndicator(activeTab));
 }
 function flashScreen(color){
   const el=document.getElementById('round-flash');
@@ -1432,12 +1472,51 @@ function respondMerge(accept){
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
+function updateTabIndicator(tab=activeTab, immediate=false){
+  const nav=document.getElementById('main-nav');
+  const target=document.getElementById('tab-'+tab);
+  const bg=document.getElementById('nav-active-bg');
+  const indicator=document.getElementById('nav-indicator');
+  if(!nav||!bg||!indicator||!target||target.style.display==='none'){
+    if(bg) bg.style.opacity='0';
+    if(indicator) indicator.style.opacity='0';
+    return;
+  }
+  const navRect=nav.getBoundingClientRect();
+  const rect=target.getBoundingClientRect();
+  const x=rect.left-navRect.left;
+  const bgWidth=Math.max(0, rect.width-8);
+  const indicatorWidth=Math.max(28, rect.width-24);
+  const indicatorX=x + (rect.width-indicatorWidth)/2;
+  const accent=getComputedStyle(target).getPropertyValue('--tab-accent').trim() || 'var(--green)';
+  const oldBgTransition=bg.style.transition;
+  const oldIndicatorTransition=indicator.style.transition;
+  if(immediate){
+    bg.style.transition='none';
+    indicator.style.transition='none';
+  }
+  bg.style.width=bgWidth+'px';
+  bg.style.transform=`translateX(${x+4}px)`;
+  bg.style.opacity='1';
+  indicator.style.width=indicatorWidth+'px';
+  indicator.style.transform=`translateX(${indicatorX}px)`;
+  indicator.style.backgroundColor=accent;
+  indicator.style.opacity='1';
+  if(immediate){
+    requestAnimationFrame(()=>{
+      bg.style.transition=oldBgTransition;
+      indicator.style.transition=oldIndicatorTransition;
+    });
+  }
+}
+
 function switchTab(tab){
   if(activeTab === tab) return;
   const prev = document.getElementById('panel-'+activeTab);
   activeTab = tab;
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tab)?.classList.add('active');
+  updateTabIndicator(tab);
   // Fade out old panel
   if(prev){ prev.style.opacity='0'; prev.style.transform='translateY(-8px)'; }
   setTimeout(()=>{
@@ -1452,12 +1531,13 @@ function switchTab(tab){
       });});
     }
     if(prev){ prev.style.opacity=''; prev.style.transform=''; }
-  }, 140);
+  }, TAB_SWITCH_MS);
   if(tab==='news'){newsCount=0;document.getElementById('news-badge').style.display='none';}
   if(tab==='predict')   renderPredictPanel();
   if(tab==='portfolio') renderPortfolio();
   if(tab==='loans')     renderBanks();
 }
+window.addEventListener('resize',()=>updateTabIndicator(activeTab,true));
 
 // ── Sound System ──────────────────────────────────────────────────────────────
 // Sound effects removed. Music only.
