@@ -20,30 +20,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
 /* ── TICKER ── */
-.ticker-wrap{background:rgba(0,0,0,0.4);border-bottom:1px solid var(--border);overflow:hidden;height:40px;display:flex;align-items:center;flex-shrink:0;position:relative;}
+.ticker-wrap{background:rgba(0,0,0,0.4);border-bottom:1px solid var(--border);overflow:hidden;height:46px;display:flex;align-items:center;flex-shrink:0;position:relative;}
 .ticker-wrap::before,.ticker-wrap::after{content:'';position:absolute;top:0;bottom:0;width:48px;z-index:2;pointer-events:none;}
 .ticker-wrap::before{left:0;background:linear-gradient(to right,var(--bg),transparent);}
 .ticker-wrap::after{right:0;background:linear-gradient(to left,var(--bg),transparent);}
-.ticker-inner {
-  display: flex;
-  gap: 48px;
-  white-space: nowrap;
-  animation: ticker-scroll 45s linear infinite;
-  will-change: transform; /* Forces hardware acceleration */
-}
-.ticker-inner:hover {
-  animation-play-state: paused;
-}
-@keyframes ticker-scroll {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
-}
-.ticker-item{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:13px;}
-.ticker-dot{width:5px;height:5px;border-radius:99px;flex-shrink:0;}
+.ticker-inner{display:flex;gap:48px;white-space:nowrap;animation:ticker-scroll 45s linear infinite;}
+.ticker-inner:hover{animation-play-state:paused;}
+@keyframes ticker-scroll{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:15px;}
+.ticker-dot{width:6px;height:6px;border-radius:99px;flex-shrink:0;}
 .ticker-dot.up{background:var(--green);box-shadow:0 0 6px var(--green);} .ticker-dot.dn{background:var(--red);box-shadow:0 0 6px var(--red);} .ticker-dot.nc{background:var(--muted);}
-.ticker-sym{color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:1.5px;font-weight:500;}
+.ticker-sym{color:rgba(255,255,255,0.5);font-size:12px;letter-spacing:1.5px;font-weight:500;}
 .ticker-price{color:var(--text);font-weight:500;}
-.ticker-chg{font-size:11px;font-weight:700;}
+.ticker-chg{font-size:12px;font-weight:700;}
 .ticker-chg.up{color:var(--green);} .ticker-chg.dn{color:var(--red);} .ticker-chg.nc{color:var(--muted);}
 
 /* ── JOIN SCREEN ── */
@@ -82,15 +71,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .app-header{background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
 
 /* row 1: name + round + settings */
-.hdr-row1{display:flex;align-items:flex-end;justify-content:space-between;padding:14px 16px 14px;}
+.hdr-row1{display:flex;align-items:flex-end;justify-content:space-between;padding:22px 18px 18px;}
 .hdr-name-block{display:flex;align-items:baseline;gap:9px;min-width:0;}
-.hdr-name{font-family:var(--mono);font-size:26px;font-weight:700;color:#ffffff;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 20px rgba(255,255,255,0.15);}
-.hdr-round{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,0.65);letter-spacing:1px;white-space:nowrap;margin-bottom:2px;font-weight:500;}
+.hdr-name{font-family:var(--mono);font-size:30px;font-weight:700;color:#ffffff;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 20px rgba(255,255,255,0.15);}
+.hdr-round{font-family:var(--mono);font-size:14px;color:rgba(255,255,255,0.65);letter-spacing:1px;white-space:nowrap;margin-bottom:2px;font-weight:500;}
 .hdr-settings{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:background 0.15s;}
 .hdr-settings:hover{background:rgba(255,255,255,0.1);}
 
 /* row 2: timer */
-.hdr-row2{padding:0 16px 16px;display:none;}
+.hdr-row2{padding:0 18px 20px;display:none;}
 .hdr-row2.visible{display:block;}
 .hdr-timer-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
 .hdr-timer-val{font-family:var(--mono);font-size:clamp(32px,9vw,52px);font-weight:700;letter-spacing:4px;line-height:1;color:#fff;transition:color 0.5s;}
@@ -108,63 +97,71 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .hdr-timer-bar.c-red{background:var(--red);}
 
 /* row 3: stat pills — taller, bigger text */
-.hdr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:0 16px 18px;}
-.stat-pill{border-radius:12px;padding:14px 10px 13px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;}
+.hdr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 18px 24px;}
+.stat-pill{border-radius:12px;padding:16px 10px 15px;display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden;}
 .stat-pill::before{content:'';position:absolute;inset:0;opacity:0.06;pointer-events:none;}
 .sp-cash  {background:rgba(245,166,35,0.10);border:1px solid rgba(245,166,35,0.28);}  .sp-cash::before{background:var(--gold);}
 .sp-port  {background:rgba(79,195,247,0.10);border:1px solid rgba(79,195,247,0.28);}  .sp-port::before{background:var(--blue);}
 .sp-loan  {background:rgba(255,77,109,0.10);border:1px solid rgba(255,77,109,0.28);}  .sp-loan::before{background:var(--red);}
 .sp-nw    {background:rgba(0,230,118,0.10);border:1px solid rgba(0,230,118,0.28);}    .sp-nw::before{background:var(--green);}
-.sp-label{font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;font-weight:600;}
-.sp-val  {font-family:var(--mono);font-size:clamp(16px,4vw,26px);font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.sp-label{font-size:10px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;font-weight:600;}
+.sp-val  {font-family:var(--mono);font-size:clamp(17px,4.5vw,28px);font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
 .sp-val.gold{color:var(--gold);} .sp-val.blue{color:var(--blue);} .sp-val.red{color:var(--red);} .sp-val.green{color:var(--green);} .sp-val.muted{color:var(--muted);}
 /* keep old aliases so JS still works */
 .s-val.gold{color:var(--gold);} .s-val.green{color:var(--green);} .s-val.red{color:var(--red);} .s-val.blue{color:var(--blue);} .s-val.muted{color:var(--muted);}
 
 /* ── NAV ── */
-.nav{display:grid;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;position:relative;isolation:isolate;}
-.nav-active-bg,.nav-indicator{position:absolute;pointer-events:none;opacity:0;transition:transform 0.22s ease,width 0.22s ease,background-color 0.22s ease,opacity 0.18s ease;}
-.nav-active-bg{top:4px;bottom:4px;left:0;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.05);z-index:0;}
-.nav-indicator{left:0;bottom:0;height:3px;border-radius:999px 999px 0 0;z-index:1;}
-.nav-tab{padding:14px 6px 12px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:color 0.22s ease,background-color 0.22s ease,transform 0.22s ease,opacity 0.22s ease,filter 0.22s ease;position:relative;user-select:none;z-index:2;}
-.tab-icon{display:block;font-size:18px;margin-bottom:4px;}
-.tab-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;transition:color 0.15s;font-family:var(--mono);}
+.nav{display:grid;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;position:relative;}
+/* sliding colour pill — sits behind the active tab */
+.nav-indicator{
+  position:absolute;
+  bottom:0;
+  height:100%;
+  border-radius:0;
+  pointer-events:none;
+  z-index:0;
+  transition:left 0.32s cubic-bezier(0.4,0,0.2,1), background 0.32s ease, width 0.32s cubic-bezier(0.4,0,0.2,1);
+  /* border accent line */
+  border-bottom:3px solid transparent;
+}
+.nav-tab{padding:16px 6px 13px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.15s;position:relative;z-index:1;user-select:none;}
+.tab-icon{display:block;font-size:20px;margin-bottom:5px;}
+.tab-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;transition:color 0.15s;font-family:var(--mono);}
 .nav-tab:not(.active) .tab-label{color:rgba(255,255,255,0.3);}
 .nav-tab:not(.active) .tab-icon{filter:grayscale(0.6);opacity:0.5;}
-.nav-tab.t-market{--tab-accent:var(--green);}
-.nav-tab.t-portfolio{--tab-accent:var(--blue);}
-.nav-tab.t-loans{--tab-accent:var(--purple);}
-.nav-tab.t-predict{--tab-accent:var(--gold);}
-.nav-tab.t-news{--tab-accent:var(--pink);}
-.nav-tab.t-board{--tab-accent:var(--orange);}
-.nav-tab.active{transform:translateY(-1px);}
-.nav-tab.active .tab-label{color:var(--tab-accent);}
-.nav-tab.active .tab-icon{filter:none;opacity:1;}
+/* active tab — only colour, no bg (indicator handles that) */
+.nav-tab.t-market.active    .tab-label{color:var(--green);}
+.nav-tab.t-portfolio.active .tab-label{color:var(--blue);}
+.nav-tab.t-loans.active     .tab-label{color:var(--purple);}
+.nav-tab.t-predict.active   .tab-label{color:var(--gold);}
+.nav-tab.t-news.active      .tab-label{color:var(--pink);}
+.nav-tab.t-board.active     .tab-label{color:var(--orange);}
 .nav-badge{position:absolute;top:6px;right:calc(50% - 20px);background:#ed4245;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:99px;min-width:18px;height:18px;text-align:center;line-height:14px;box-shadow:0 0 0 2px var(--surface),0 2px 8px rgba(237,66,69,0.7);animation:badge-pop 0.25s cubic-bezier(0.34,1.56,0.64,1);border:1.5px solid rgba(255,255,255,0.15);}
 @keyframes badge-pop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
 
-/* ── CONTENT ── */
-.content{flex:1;overflow-y:auto;padding:20px 18px;position:relative;}
+/* ── CONTENT & TAB SLIDER ── */
+.content{flex:1;overflow:hidden;position:relative;}
+.panels-track{
+  display:flex;
+  height:100%;
+  transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);
+  will-change:transform;
+}
 .panel{
-  display:block;
-  opacity:0;
-  transform:translateY(10px);
-  pointer-events:none;
-  position:absolute;
-  inset:0;
-  padding:20px 18px;
+  min-width:100%;
+  height:100%;
   overflow-y:auto;
-  transition:opacity 0.22s ease, transform 0.22s ease;
-  will-change:opacity,transform;
+  padding:24px 18px 32px;
+  box-sizing:border-box;
+  transition:background 0.32s ease;
 }
-.panel.active{
-  opacity:1;
-  transform:translateY(0);
-  pointer-events:all;
-  position:relative;
-  inset:auto;
-  overflow-y:visible;
-}
+/* per-tab background tints */
+.panel-tint-market   {background:rgba(0,230,118,0.015);}
+.panel-tint-portfolio{background:rgba(79,195,247,0.015);}
+.panel-tint-loans    {background:rgba(206,147,216,0.015);}
+.panel-tint-news     {background:rgba(244,143,177,0.015);}
+.panel-tint-predict  {background:rgba(245,166,35,0.015);}
+.panel-tint-board    {background:rgba(255,183,77,0.015);}
 .phase-banner{padding:13px 18px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:20px;border:1px solid;font-family:var(--mono);display:flex;align-items:center;gap:8px;}
 .banner-lobby  {background:rgba(79,195,247,0.06);border-color:rgba(79,195,247,0.2);color:var(--blue);}
 .banner-trading{background:rgba(0,230,118,0.06);border-color:rgba(0,230,118,0.2);color:var(--green);}
@@ -184,20 +181,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 @keyframes flash-green{0%,100%{box-shadow:none}40%{box-shadow:0 0 0 2px rgba(0,230,118,0.5),0 0 20px rgba(0,230,118,0.1)}}
 @keyframes flash-red  {0%,100%{box-shadow:none}40%{box-shadow:0 0 0 2px rgba(255,77,109,0.5),0 0 20px rgba(255,77,109,0.1)}}
 
-.cc-header{cursor:pointer;padding:18px 18px 0;}
+.cc-header{cursor:pointer;padding:22px 20px 0;}
 .cc-header-row{display:flex;align-items:flex-start;gap:14px;}
 .cc-left{flex:1;min-width:0;}
-.cc-name{font-weight:700;font-size:17px;color:#fff;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;}
-.cc-meta{font-size:11px;color:var(--muted);margin-bottom:3px;}
-.cc-trait{font-size:12px;color:rgba(255,255,255,0.38);font-style:italic;}
+.cc-name{font-weight:700;font-size:19px;color:#fff;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.cc-meta{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.cc-trait{font-size:13px;color:rgba(255,255,255,0.38);font-style:italic;}
 .cc-right{flex-shrink:0;text-align:right;width:46%;}
 .cc-price-row{display:flex;align-items:flex-end;justify-content:flex-end;gap:9px;margin-bottom:5px;}
-.cc-price{font-family:var(--mono);font-size:26px;font-weight:500;color:#fff;line-height:1;}
-.cc-chg{font-size:13px;font-family:var(--mono);font-weight:700;}
+.cc-price{font-family:var(--mono);font-size:30px;font-weight:500;color:#fff;line-height:1;}
+.cc-chg{font-size:14px;font-family:var(--mono);font-weight:700;}
 .up{color:var(--green);} .dn{color:var(--red);} .nc{color:var(--muted);}
-.cc-sparkline{height:64px;margin-top:5px;}
-.cc-sparkline svg{width:100%;height:64px;display:block;}
-.cc-badges{display:flex;align-items:center;gap:7px;margin-top:10px;flex-wrap:wrap;padding:0 18px 16px;}
+.cc-sparkline{height:72px;margin-top:6px;}
+.cc-sparkline svg{width:100%;height:72px;display:block;}
+.cc-badges{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;padding:0 20px 18px;}
 .risk-badge{display:inline-block;font-size:9px;font-weight:700;padding:4px 9px;border-radius:6px;letter-spacing:0.5px;text-transform:uppercase;font-family:var(--mono);}
 .risk-Low        {background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2);}
 .risk-Medium     {background:rgba(245,166,35,0.1);color:var(--gold);border:1px solid rgba(245,166,35,0.2);}
@@ -352,11 +349,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .snd-vol-readout{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:32px;text-align:right;}
 .snd-hint{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:8px;line-height:1.6;}
 .snd-hint code{color:var(--green);}
-/* Music section accent */
-.snd-section.music-section .snd-track{background:rgba(255,255,255,0.12);}
-.snd-section.music-section .snd-row:hover{background:rgba(206,147,216,0.07);}
-.snd-section.music-section #mus-track.on{background:var(--purple)!important;}
-.snd-section.music-section .snd-hint code{color:var(--purple);}
 
 /* ── PREDICT REDESIGN ── */
 .pred-stock-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
@@ -393,7 +385,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .pred-submit{width:100%;padding:15px;background:var(--gold);color:#000;border:none;border-radius:12px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;}
 .pred-submit:disabled{opacity:0.35;cursor:not-allowed;}
 .pred-locked-notice{font-size:13px;color:var(--muted);text-align:center;padding:40px 20px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px solid var(--border);font-family:var(--mono);}
-.open-bet-card{background:rgba(245,166,35,0.05);border:1px solid rgba(245,166,35,0.18);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.open-bet-card{border-radius:16px;margin-bottom:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);}
+.obc-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;}
+.obc-name{font-weight:700;font-size:17px;color:#fff;}
+.obc-sector{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.obc-dir{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-weight:800;font-size:15px;letter-spacing:1px;}
+.obc-dir.up{color:var(--green);} .obc-dir.dn{color:var(--red);}
+.obc-stripe{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.06);}
+.obc-cell{padding:12px 14px;display:flex;flex-direction:column;gap:4px;}
+.obc-cell+.obc-cell{border-left:1px solid rgba(255,255,255,0.06);}
+.obc-lbl{font-size:9px;color:rgba(255,255,255,0.35);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;}
+.obc-val{font-family:var(--mono);font-size:14px;font-weight:700;color:#fff;}
+.obc-val.gold{color:var(--gold);} .obc-val.green{color:var(--green);} .obc-val.red{color:var(--red);}
+.obc-status{display:flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:1px;}
+.obc-status.winning{color:var(--green);} .obc-status.losing{color:var(--red);}
 
 /* ── NEWS ── */
 .news-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
@@ -441,6 +446,96 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .toast.ok  {background:rgba(0,230,118,0.9);color:#000;}
 .toast.err {background:rgba(255,77,109,0.9);color:#fff;}
 .toast.info{background:rgba(20,28,44,0.97);color:var(--text);border:1px solid var(--border);}
+/* ── SETTINGS DRAWER ── */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:400;opacity:0;pointer-events:none;transition:opacity 0.28s;}
+.settings-overlay.open{opacity:1;pointer-events:all;}
+.settings-drawer{
+  position:fixed;top:0;right:0;bottom:0;
+  width:min(340px,90vw);
+  background:rgba(11,15,22,0.96);
+  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  border-left:1px solid var(--border);
+  z-index:401;
+  transform:translateX(100%);
+  transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.settings-drawer.open{transform:translateX(0);}
+.settings-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 22px 18px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.settings-title{
+  font-family:var(--mono);font-size:18px;font-weight:800;
+  letter-spacing:3px;text-transform:uppercase;color:#fff;
+}
+.settings-close{
+  width:36px;height:36px;border-radius:8px;
+  background:rgba(255,255,255,0.06);border:1px solid var(--border);
+  color:rgba(255,255,255,0.6);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.15s,color 0.15s;
+}
+.settings-close:hover{background:rgba(255,77,109,0.15);color:var(--red);border-color:rgba(255,77,109,0.3);}
+.settings-body{flex:1;overflow-y:auto;padding:24px 22px;}
+.settings-coming{
+  margin-top:32px;text-align:center;
+  font-family:var(--mono);font-size:12px;color:rgba(255,255,255,0.2);
+  letter-spacing:1px;line-height:2;
+}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 2px;border-bottom:1px solid var(--border);}
+.settings-row-label{font-family:var(--mono);font-size:13px;color:var(--text);letter-spacing:0.5px;}
+.settings-toggle{padding:7px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;min-width:52px;}
+.settings-toggle.on{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.4);color:var(--green);}
+#music-volume{width:120px;accent-color:var(--gold);}
+
+/* ── Secret Black Market trigger (mysterious, low-key) ── */
+.bm-secret-btn{
+  width:100%;margin-top:26px;padding:15px;border-radius:12px;cursor:pointer;
+  background:linear-gradient(150deg,#161616,#2a2a2a);
+  border:1px solid #3a3a3a;color:#7a7a7a;
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  transition:all .2s;
+}
+.bm-secret-btn:hover{background:linear-gradient(150deg,#1c1c1c,#333);color:#aaa;border-color:#555;}
+
+/* ── Black Market drawer ── */
+.bm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:410;opacity:0;pointer-events:none;transition:opacity .28s;}
+.bm-overlay.open{opacity:1;pointer-events:all;}
+.bm-drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(360px,90vw);
+  background:linear-gradient(160deg,rgba(10,10,10,0.97),rgba(18,14,16,0.97));
+  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  border-left:1px solid #332426;z-index:411;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(0.4,0,0.2,1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.bm-drawer.open{transform:translateX(0);}
+.bm-hdr{border-bottom:1px solid #332426;}
+.bm-title{color:#e0d0d0;}
+.bm-cash{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:18px;letter-spacing:1px;}
+.bm-cash strong{color:var(--gold);}
+.bm-item{background:rgba(255,255,255,0.03);border:1px solid #2c2226;border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+.bm-item.locked{opacity:0.45;}
+.bm-item-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.bm-item-icon{font-size:16px;}
+.bm-item-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;flex:1;}
+.bm-item-cost{font-family:var(--mono);font-size:12px;color:var(--red);}
+.bm-item-desc{font-size:11.5px;color:rgba(255,255,255,0.45);line-height:1.6;font-family:var(--mono);margin-bottom:12px;}
+.bm-item-locked-tag{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.bm-item-btn{width:100%;padding:11px;border-radius:9px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.35);color:var(--red);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background .15s;}
+.bm-item-btn:hover:not(:disabled){background:rgba(255,77,109,0.2);}
+.bm-item-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.bm-inline-form{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
+.bm-inline-form select,.bm-inline-form textarea{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 10px;resize:vertical;}
+.bm-inline-form textarea{min-height:60px;}
+.bm-dir-row{display:flex;gap:8px;}
+.bm-dir-btn{flex:1;padding:9px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;}
+.bm-dir-btn.active.up{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.4);color:var(--green);}
+.bm-dir-btn.active.dn{background:rgba(255,77,109,0.12);border-color:rgba(255,77,109,0.4);color:var(--red);}
 </style>
 </head>
 <body>
@@ -471,7 +566,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   </div>
   <div class="how-section">
     <div class="how-title">How it works</div>
-    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹0 cash, so borrowing and timing matter from the first round.</div></div></div>
+    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹50,000 cash.</div></div></div>
     <div class="how-card"><div class="how-num">02</div><div><div class="how-body-title">Pick your bank</div><div class="how-body-text">3 banks to borrow from — Bharat Bank, VentureCapX, ShadowCredit. Each has different rates and limits.</div></div></div>
     <div class="how-card"><div class="how-num">03</div><div><div class="how-body-title">Read the market</div><div class="how-body-text">14 companies across 10 sectors. Tap a card to expand it, read the backstory, and trade directly.</div></div></div>
     <div class="how-card"><div class="how-num">04</div><div><div class="how-body-title">Trade in rounds</div><div class="how-body-text">Buy and sell before each round closes. Watch the timer. Place predictions for bonus cash.</div></div></div>
@@ -489,25 +584,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <!-- Row 1: name + round + settings -->
     <div class="hdr-row1">
       <div class="hdr-name-block">
-        let titleClickCount = 0;
-        let clickTimer = null;
-
-        function triggerSecretMarket() {
-          titleClickCount++;
-          clearTimeout(clickTimer);
-          
-          if (titleClickCount === 5) {
-            titleClickCount = 0;
-            toast('🔒 Establishing encrypted connection...', 'info');
-            setTimeout(() => {
-              window.location.href = `/bm?code=${myCode}`;
-            }, 1000);
-          }
-          
-          clickTimer = setTimeout(() => {
-            titleClickCount = 0;
-          }, 2000); // Resets if they don't tap fast enough
-        }
+        <span class="hdr-name" id="top-name" onclick="handleNameTap()">—</span>
         <span class="hdr-round" id="top-phase">Round 0 / 4</span>
       </div>
       <button class="hdr-settings" onclick="openSettings()" title="Settings">⚙️</button>
@@ -532,7 +609,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   <!-- Phase banner (hidden inside header, moved to market panel) -->
 
   <div class="nav" id="main-nav" style="grid-template-columns:repeat(5,1fr)">
-    <div class="nav-active-bg" id="nav-active-bg"></div>
     <div class="nav-indicator" id="nav-indicator"></div>
     <div class="nav-tab t-market active"  onclick="switchTab('market')"    id="tab-market">   <span class="tab-icon">📈</span><span class="tab-label">Market</span></div>
     <div class="nav-tab t-portfolio"      onclick="switchTab('portfolio')" id="tab-portfolio"><span class="tab-icon">💼</span><span class="tab-label">Holdings</span></div>
@@ -543,7 +619,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   </div>
 
   <div class="content">
-    <div class="panel active" id="panel-market">
+    <div class="panels-track" id="panels-track">
+    <div class="panel panel-tint-market" id="panel-market">
       <div id="phase-banner" style="display:none"></div>
       <div class="frozen-banner"     id="frozen-banner">⚠️ Your portfolio is frozen this round.</div>
       <div class="reg-freeze-banner" id="reg-freeze-banner">🚫 Regulatory Freeze on <span id="freeze-sector-name"></span>.</div>
@@ -557,9 +634,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       </div>
     </div>
 
-    <div class="panel" id="panel-portfolio"><div id="portfolio-list"></div></div>
+    <div class="panel panel-tint-portfolio" id="panel-portfolio"><div id="portfolio-list"></div></div>
 
-    <div class="panel" id="panel-loans">
+    <div class="panel panel-tint-loans" id="panel-loans">
       <div class="section-hdr">Your Loans</div>
       <div id="repay-top-note" style="display:none;margin-bottom:14px;padding:12px 16px;background:rgba(255,183,77,0.07);border:1px solid rgba(255,183,77,0.2);border-radius:10px;font-size:12px;color:var(--orange);font-family:var(--mono)">⏸ Repayment is only available during break periods between rounds.</div>
       <div id="bank-list"></div>
@@ -567,27 +644,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
         <div class="bankruptcy-title">⚠️ Voluntary Bankruptcy</div>
         <div class="bankruptcy-desc">
           Declaring bankruptcy will permanently wipe all your holdings, loans, and open bets.
-          You will restart with ₹25,000 in cash. This action cannot be undone.<br><br>
-          Use this only as a last resort when your debt exceeds any realistic recovery path.
+          You will restart with ₹25,000 in cash and your portfolio will be <strong>frozen for the
+          rest of this round</strong> as a penalty. This action cannot be undone.<br><br>
+          Only available once your total debt exceeds your net worth by ₹9,00,000 or more.
         </div>
-        <button class="bankruptcy-btn" onclick="declareBankruptcy()">⚠️ DECLARE BANKRUPTCY</button>
+        <div class="bankruptcy-desc" id="bankruptcy-eligibility" style="color:var(--orange)"></div>
+        <button class="bankruptcy-btn" id="bankruptcy-btn" onclick="declareBankruptcy()">⚠️ DECLARE BANKRUPTCY</button>
       </div>
     </div>
 
-    <div class="panel" id="panel-predict">
-      <div class="section-hdr">Prediction Market</div>
-      <div id="predict-content"></div>
-    </div>
-
-    <div class="panel" id="panel-news">
+    <div class="panel panel-tint-news" id="panel-news">
       <div class="section-hdr">News Feed</div>
       <div id="news-list"><div class="empty"><div class="empty-icon">📰</div><div class="empty-text">No news yet</div></div></div>
     </div>
 
-    <div class="panel" id="panel-board">
+    <div class="panel panel-tint-predict" id="panel-predict">
+      <div id="predict-content"></div>
+    </div>
+
+    <div class="panel panel-tint-board" id="panel-board">
       <div class="section-hdr">Live Rankings</div>
       <div id="board-list"></div>
     </div>
+    </div><!-- /panels-track -->
   </div>
 </div>
 
@@ -613,11 +692,10 @@ let ws=null, myCode='', myName='';
 let phase='lobby', currentRound=0;
 let market={}, playerData={cash:0,loans:{},total_loan:0,frozen:false,net_worth:0,portfolio:{},bets:{}};
 let boardData=[], prevPrices={}, priceHistory={}, newsCount=0, activeTab='market';
-let joinStep1Done=false, pendingMerge=null, expandedCard=null;
+let joinStep1Done=false, wasKicked=false, pendingMerge=null, expandedCard=null, bankruptFrozen=false;
 let banksConfig={}, sentiment={}, regFreeze=null, creditCrunch=false;
 let predDirection=null, predStock=null;
 let timerInterval=null, timerEndTime=null, timerTotal=1200;
-const TAB_SWITCH_MS=220;
 // trade pressure: {cid: {buys: N, sells: N}} — tracks this round's player actions
 let tradePressure={};
 const flashQueue={};
@@ -764,6 +842,8 @@ function joinStep(){
     const code=document.getElementById('code-input').value.trim().toUpperCase();
     if(code.length<4) return showJoinErr('Enter a valid code.');
     myCode=code;
+    document.getElementById('code-input').style.borderColor='var(--green)';
+    document.getElementById('code-input').style.boxShadow='0 0 0 3px rgba(0,230,118,0.12)';
     document.getElementById('name-field').style.display='block';
     document.getElementById('join-btn').textContent='Enter Market →';
     joinStep1Done=true;
@@ -772,7 +852,7 @@ function joinStep(){
   } else {
     const name=document.getElementById('name-input').value.trim();
     if(!name) return showJoinErr('Pick a display name.');
-    myName=name; connectWS();
+    myName=name; wasKicked=false; connectWS();
   }
 }
 document.getElementById('code-input').addEventListener('keydown',e=>{if(e.key==='Enter')joinStep();});
@@ -787,10 +867,12 @@ function connectWS(){
   ws.onmessage=e=>handleMsg(JSON.parse(e.data));
   ws.onerror=()=>{showJoinErr('Connection failed. Try again.');btn.disabled=false;btn.textContent='Enter Market →';};
   ws.onclose=()=>{
+    if(wasKicked) return;
     if(document.getElementById('app').style.display==='flex'){
       toast('Disconnected. Reconnecting...','err'); setTimeout(connectWS,2500);
     } else {
       if(!document.getElementById('join-err').textContent) showJoinErr('Connection closed. Check your code and try again.');
+      const btn=document.getElementById('join-btn');
       btn.disabled=false; btn.textContent='Enter Market →';
     }
   };
@@ -849,7 +931,12 @@ function handleMsg(msg){
       break;
     case 'trade_ok':
     case 'bm_ok':
-      playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks(); renderPredictPanel();
+      playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks();
+      // If this was a bet confirmation, clear predict form state
+      if(msg.player?.bets && predStock && msg.player.bets[predStock]){
+        predStock=null; predDirection=null; _predSavedTarget=''; _predSavedAmount='';
+      }
+      renderPredictPanel();
       toast(msg.msg,'ok'); break;
     case 'player_update':
       playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks(); renderPredictPanel();
@@ -872,6 +959,7 @@ function handleMsg(msg){
     case 'reset': location.reload(); break;
     case 'info':  toast(msg.msg,'info'); break;
     case 'bankrupt':
+      bankruptFrozen=true;
       playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks();
       showChaos('💀','BANKRUPTCY',msg.msg);
       addNews({type:'chaos',type_tag:'chaos',label:'Chaos Event',text:msg.msg}); break;
@@ -880,8 +968,14 @@ function handleMsg(msg){
       document.getElementById('merge-popup-body').innerHTML=`<strong>${msg.from}</strong> wants to jointly buy <strong>${msg.qty}× ${market[msg.stock]?.name||msg.stock}</strong>. You each pay <strong>${fmt(msg.each)}</strong>.`;
       document.getElementById('merge-popup').classList.add('show'); break;
     case 'kicked':
+      wasKicked=true;
       document.getElementById('app').style.display='none';
       document.getElementById('join-screen').style.display='flex';
+      joinStep1Done=false;
+      document.getElementById('name-field').style.display='none';
+      document.getElementById('join-btn').textContent='Enter Market →';
+      document.getElementById('join-btn').disabled=false;
+      document.getElementById('code-input').style.borderColor='';
       showJoinErr(msg.msg||'You were removed from the game.');
       if(ws){ws.onclose=null;ws.close();ws=null;} break;
   }
@@ -912,10 +1006,14 @@ function showApp(){
   document.getElementById('join-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   document.getElementById('top-name').textContent=myName;
+  // Initialise slider position
+  const track=document.getElementById('panels-track');
+  if(track) track.style.transform='translateX(0)';
   updateTopBar(); updatePhase(); renderMarket();
   renderPortfolio(); renderBanks(); renderBoard(); renderPredictPanel(); populateMergeStocks();
-  requestAnimationFrame(()=>updateTabIndicator(activeTab,true));
   if(phase==='trading') startMicroTick();
+  // Init nav indicator after layout
+  requestAnimationFrame(()=>_moveNavIndicator(activeTab));
 }
 function updateTopBar(){
   const p=playerData;
@@ -928,7 +1026,12 @@ function updateTopBar(){
   loanEl.className='sp-val '+(loanTot>0?'red':'muted');
   const nw=p.net_worth, el=document.getElementById('top-nw');
   el.textContent=fmt(nw); el.className='sp-val '+(nw>=0?'green':'red');
-  document.getElementById('frozen-banner').classList.toggle('show',!!p.frozen);
+  const fb=document.getElementById('frozen-banner');
+  fb.classList.toggle('show',!!p.frozen);
+  fb.textContent = (p.frozen && bankruptFrozen)
+    ? '🔒 Bankruptcy freeze: trading is locked until the next round starts.'
+    : '⚠️ Your portfolio is frozen this round.';
+  if(!p.frozen) bankruptFrozen=false;
 }
 function updatePhase(){
   const el=document.getElementById('phase-banner'), phEl=document.getElementById('top-phase');
@@ -945,11 +1048,12 @@ function updatePhase(){
   document.getElementById('tab-board').style.display=inTrading?'none':'';
   document.getElementById('main-nav').style.gridTemplateColumns=inTrading?'repeat(5,1fr)':'repeat(6,1fr)';
   if(inTrading&&activeTab==='board') switchTab('market');
+  // Reposition indicator after grid reflow
+  requestAnimationFrame(()=>_moveNavIndicator(activeTab));
   const rn=document.getElementById('repay-top-note'); if(rn) rn.style.display=phase!=='break'?'block':'none';
   if(regFreeze){document.getElementById('freeze-sector-name').textContent=regFreeze;document.getElementById('reg-freeze-banner').classList.add('show');}
   else document.getElementById('reg-freeze-banner').classList.remove('show');
   if(!inTrading) stopTimer();
-  requestAnimationFrame(()=>updateTabIndicator(activeTab));
 }
 function flashScreen(color){
   const el=document.getElementById('round-flash');
@@ -957,14 +1061,132 @@ function flashScreen(color){
   setTimeout(()=>{el.style.opacity='0';},600);
 }
 function openSettings(){
-  playSwoosh();
   document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-drawer').classList.add('open');
+  renderSettingsExtras();
 }
 function closeSettings(){
-  playSwoosh();
   document.getElementById('settings-overlay').classList.remove('open');
   document.getElementById('settings-drawer').classList.remove('open');
+}
+function renderSettingsExtras(){
+  const slot=document.getElementById('bm-secret-slot');
+  slot.innerHTML = bmUnlocked
+    ? '<button class="bm-secret-btn" onclick="openBlackMarket()">● Black Market</button>'
+    : '';
+}
+
+// ── Background music (served as a real static file — see /static/music.mp3) ──
+let musicOn=false;
+function toggleMusic(){
+  const audio=document.getElementById('bg-music'), btn=document.getElementById('music-toggle');
+  musicOn=!musicOn;
+  if(musicOn){ audio.play().catch(()=>{}); btn.textContent='ON'; btn.classList.add('on'); }
+  else { audio.pause(); btn.textContent='OFF'; btn.classList.remove('on'); }
+}
+function setMusicVolume(v){
+  document.getElementById('bg-music').volume = Math.max(0,Math.min(100,v))/100;
+}
+
+// ── Black Market — secret unlock: tap the name 5× within 1 second ────────────
+// bmUnlocked lives only in memory, so it resets the moment the tab is closed
+// or reloaded, exactly like it did on a separate page requiring re-login.
+let bmUnlocked=false, _nameTapTimes=[];
+function handleNameTap(){
+  const now=Date.now();
+  _nameTapTimes.push(now);
+  _nameTapTimes=_nameTapTimes.filter(t=>now-t<=1000);
+  if(_nameTapTimes.length>=5){
+    _nameTapTimes=[];
+    if(!bmUnlocked){ bmUnlocked=true; renderSettingsExtras(); }
+  }
+}
+let bmItemsCache=null;
+function openBlackMarket(){
+  document.getElementById('bm-overlay').classList.add('open');
+  document.getElementById('bm-drawer').classList.add('open');
+  loadBMItems();
+}
+function closeBlackMarket(){
+  document.getElementById('bm-overlay').classList.remove('open');
+  document.getElementById('bm-drawer').classList.remove('open');
+}
+async function loadBMItems(){
+  const body=document.getElementById('bm-body');
+  body.innerHTML='<div class="settings-coming">Loading…</div>';
+  try{
+    const r=await fetch(`/api/bm/items?code=${encodeURIComponent(myCode)}`);
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.detail||'Could not load Black Market.');
+    bmItemsCache=data.items;
+    renderBMItems(data);
+  }catch(e){
+    body.innerHTML=`<div class="settings-coming">${e.message}</div>`;
+  }
+}
+function renderBMItems(data){
+  const body=document.getElementById('bm-body');
+  let html=`<div class="bm-cash">Cash on hand: <strong>${fmt(data.cash)}</strong></div>`;
+  data.items.forEach(item=>{
+    const canAfford=data.cash>=item.cost, disabled=item.locked||!canAfford;
+    html+=`<div class="bm-item ${item.locked?'locked':''}" id="bm-card-${item.id}">
+      <div class="bm-item-top"><span class="bm-item-icon">${item.icon}</span><span class="bm-item-name">${item.name}</span><span class="bm-item-cost">${fmt(item.cost)}</span></div>
+      <div class="bm-item-desc">${item.desc}</div>
+      ${item.locked
+        ? '<div class="bm-item-locked-tag">Already used this game</div>'
+        : `<button class="bm-item-btn" ${disabled?'disabled':''} onclick="bmBuyFlow('${item.id}')">${item.id==='insider_hint'?'Buy':'Set up'}</button>`}
+    </div>`;
+  });
+  body.innerHTML=html;
+}
+function bmBuyFlow(itemId){
+  const item=(bmItemsCache||[]).find(i=>i.id===itemId);
+  if(!item) return;
+  if(itemId==='insider_hint'){
+    if(!confirm(`Buy Insider Hint for ${fmt(item.cost)}?`)) return;
+    bmBuy(itemId,{});
+    return;
+  }
+  const existing=document.getElementById('bm-form-'+itemId);
+  if(existing){ existing.remove(); return; }
+  const container=document.getElementById('bm-card-'+itemId);
+  const stockOpts=Object.entries(market).map(([cid,c])=>`<option value="${cid}">${c.name}</option>`).join('');
+  const form=document.createElement('div');
+  form.className='bm-inline-form'; form.id='bm-form-'+itemId; form.dataset.dir='1';
+  form.innerHTML=`
+    <select id="bm-stock-${itemId}">${stockOpts}</select>
+    <div class="bm-dir-row">
+      <button type="button" class="bm-dir-btn up active" onclick="setBMDir('${itemId}',1,this)">▲ UP</button>
+      <button type="button" class="bm-dir-btn dn" onclick="setBMDir('${itemId}',-1,this)">▼ DOWN</button>
+    </div>
+    <textarea id="bm-text-${itemId}" maxlength="200" placeholder="Write the rumour text..."></textarea>
+    <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Deploy — ${fmt(item.cost)}</button>`;
+  container.appendChild(form);
+}
+function setBMDir(itemId,dir,btn){
+  const form=document.getElementById('bm-form-'+itemId);
+  form.dataset.dir=dir;
+  form.querySelectorAll('.bm-dir-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function confirmBMBuy(itemId){
+  const form=document.getElementById('bm-form-'+itemId);
+  const stock=document.getElementById('bm-stock-'+itemId).value;
+  const text=document.getElementById('bm-text-'+itemId).value.trim();
+  const direction=parseInt(form.dataset.dir||'1');
+  if(!text) return toast('Write the rumour text first.','err');
+  bmBuy(itemId,{stock,direction,text});
+}
+async function bmBuy(itemId,extra){
+  try{
+    const r=await fetch('/api/bm/buy',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code:myCode,item_id:itemId,...extra})});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.detail||'Purchase failed.');
+    playerData.cash=data.cash; updateTopBar();
+    toast('Black Market purchase complete.','ok');
+    loadBMItems();
+  }catch(e){ toast(e.message,'err'); }
 }
 
 // ── Sparkline SVG — animated, stock-market style ──────────────────────────────
@@ -1247,6 +1469,20 @@ function renderBanks(){
     html+=`</div></div>`;
   }
   container.innerHTML=html||'<div style="color:var(--muted);font-size:13px;font-family:var(--mono)">No banks configured.</div>';
+  renderBankruptcyEligibility();
+}
+const BANKRUPTCY_MIN_DEBT_GAP=900000;
+function renderBankruptcyEligibility(){
+  const note=document.getElementById('bankruptcy-eligibility'), btn=document.getElementById('bankruptcy-btn');
+  if(!note||!btn) return;
+  const gap=(playerData.total_loan||0)-(playerData.net_worth||0);
+  if(gap>=BANKRUPTCY_MIN_DEBT_GAP){
+    note.textContent=''; btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
+  } else {
+    const short=BANKRUPTCY_MIN_DEBT_GAP-gap;
+    note.textContent=`Not eligible yet — debt needs to exceed net worth by ₹${short.toLocaleString('en-IN')} more.`;
+    btn.disabled=true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed';
+  }
 }
 function fmtShort(n){
   n=Math.round(n);
@@ -1288,37 +1524,44 @@ function renderPredictPanel(){
 
   // Open bets section
   if(Object.keys(openBets).length){
-    html+='<div class="section-hdr" style="margin-bottom:12px">Your Active Bets</div>';
+    html+='<div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">YOUR ACTIVE BETS</div>';
     for(const [cid,bet] of Object.entries(openBets)){
       const cname=market[cid]?.name||cid;
+      const sector=market[cid]?.sector||'';
       const curPrice=market[cid]?.price||0;
-      const dir=bet.direction==='up';
-      const dcls=dir?'up':'dn', ar=dir?'▲':'▼';
-      const isWinning=dir?(curPrice>=bet.target):(curPrice<=bet.target);
-      const pnlPreview=isWinning?bet.amount*3:bet.amount*1.5;
-      html+=`<div class="open-bet-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      const isUp=bet.direction==='up';
+      const isWinning=isUp?(curPrice>=bet.target):(curPrice<=bet.target);
+      const dirArrow=isUp?'▲':'▼';
+      const dirLabel=isUp?'GOING UP':'GOING DOWN';
+      const bgCol=isUp?'rgba(0,230,118,0.04)':'rgba(255,77,109,0.04)';
+      const borderCol=isUp?'rgba(0,230,118,0.15)':'rgba(255,77,109,0.15)';
+      const pctToTarget=((Math.abs(curPrice-bet.target)/bet.target)*100).toFixed(1);
+      const statusLabel=isWinning?'● ON TRACK':'● NEEDS MOVE';
+      html+=`<div class="open-bet-card" style="background:${bgCol};border-color:${borderCol}">
+        <div class="obc-header">
           <div>
-            <div style="font-weight:700;font-size:16px;color:#fff">${cname}</div>
-            <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">Staked ${fmt(bet.amount)}</div>
+            <div class="obc-name">${cname}</div>
+            <div class="obc-sector">${sector}</div>
           </div>
-          <div style="text-align:right">
-            <div class="${dcls}" style="font-weight:700;font-size:18px">${ar} ${bet.direction.toUpperCase()}</div>
-            <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">Target ₹${Math.round(bet.target).toLocaleString('en-IN')}</div>
-          </div>
+          <div class="obc-dir ${isUp?'up':'dn'}">${dirArrow} ${dirLabel}</div>
         </div>
-        <div style="display:flex;gap:8px">
-          <div style="flex:1;background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Now</div>
-            <div style="font-family:var(--mono);font-size:13px;font-weight:700">₹${curPrice.toLocaleString('en-IN')}</div>
+        <div class="obc-stripe">
+          <div class="obc-cell">
+            <div class="obc-lbl">Staked</div>
+            <div class="obc-val gold">${fmt(bet.amount)}</div>
           </div>
-          <div style="flex:1;background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center">
-            <div style="font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Target</div>
-            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold)">₹${Math.round(bet.target).toLocaleString('en-IN')}</div>
+          <div class="obc-cell">
+            <div class="obc-lbl">Target</div>
+            <div class="obc-val gold">₹${Math.round(bet.target).toLocaleString('en-IN')}</div>
           </div>
-          <div style="flex:1;background:${isWinning?'rgba(0,230,118,0.08)':'rgba(255,77,109,0.08)'};border-radius:8px;padding:8px;text-align:center;border:1px solid ${isWinning?'rgba(0,230,118,0.2)':'rgba(255,77,109,0.15)'}">
-            <div style="font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">If Win</div>
-            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${isWinning?'var(--green)':'var(--red)'}">${fmt(bet.amount*3)}</div>
+          <div class="obc-cell">
+            <div class="obc-lbl">Current</div>
+            <div class="obc-val">₹${curPrice.toLocaleString('en-IN')}</div>
+          </div>
+          <div class="obc-cell">
+            <div class="obc-lbl">If Win</div>
+            <div class="obc-val ${isWinning?'green':'red'}">${fmt(bet.amount*3)}</div>
+            <div class="obc-status ${isWinning?'winning':'losing'}">${statusLabel}</div>
           </div>
         </div>
       </div>`;
@@ -1352,11 +1595,10 @@ function renderPredictPanel(){
   }
   html+=`</div>`;
 
-  // Bet form — only shown when stock selected
+  // Bet form — always rendered if stock selected, direction buttons update in-place
   if(predStock&&market[predStock]){
     const c=market[predStock];
-    const win3='—', win15='—';
-    html+=`<div class="pred-bet-form">
+    html+=`<div class="pred-bet-form" id="pred-bet-form">
       <div class="pred-selected-stock">
         <div><div class="pred-sel-name">${c.name}</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px">${c.sector||''} · ${c.risk||''}</div></div>
         <div class="pred-sel-price">₹${c.price.toLocaleString('en-IN')}</div>
@@ -1378,33 +1620,75 @@ function renderPredictPanel(){
       </div>
       <div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Payout Preview</div>
       <div class="pred-payout-preview">
-        <div class="pred-payout-box ppb-win"><div class="ppb-label">Dir + Target ✓</div><div class="ppb-val" id="ppb-win">${win3}</div></div>
-        <div class="pred-payout-box ppb-half"><div class="ppb-label">Dir only ✓</div><div class="ppb-val" id="ppb-half">${win15}</div></div>
+        <div class="pred-payout-box ppb-win"><div class="ppb-label">Dir + Target ✓</div><div class="ppb-val" id="ppb-win">—</div></div>
+        <div class="pred-payout-box ppb-half"><div class="ppb-label">Dir only ✓</div><div class="ppb-val" id="ppb-half">—</div></div>
         <div class="pred-payout-box ppb-lose"><div class="ppb-label">Wrong ✗</div><div class="ppb-val" id="ppb-lose">₹0</div></div>
       </div>
       <button class="pred-submit" onclick="submitBet()">🔒 Lock In Bet</button>
     </div>`;
   }
 
+  // Preserve input values across re-renders (stock picker re-renders on market updates)
+  const _prevTarget = _predSavedTarget;
+  const _prevAmount = _predSavedAmount;
+
   el.innerHTML=html;
+
+  // Restore saved input values
+  if(predStock){
+    const tEl=document.getElementById('pred-target');
+    const aEl=document.getElementById('pred-amount');
+    if(tEl&&_prevTarget) tEl.value=_prevTarget;
+    if(aEl&&_prevAmount){ aEl.value=_prevAmount; refreshPayouts(_prevAmount); }
+    // Re-attach listeners to save values on input
+    if(tEl) tEl.addEventListener('input',()=>{ _predSavedTarget=tEl.value; });
+    if(aEl) aEl.addEventListener('input',()=>{ _predSavedAmount=aEl.value; refreshPayouts(aEl.value); });
+  }
 }
+
+// Saved input state — persists across renderPredictPanel calls
+let _predSavedTarget='', _predSavedAmount='';
+
 function refreshPayouts(val){
   const amt=parseInt(val)||0;
   const w=document.getElementById('ppb-win'), h=document.getElementById('ppb-half');
   if(w) w.textContent=amt?fmt(amt*3):'—';
   if(h) h.textContent=amt?fmt(amt*1.5):'—';
 }
-function selectPredStock(cid){predStock=cid;renderPredictPanel();}
-function setDir(dir){predDirection=dir;renderPredictPanel();}
+
+function selectPredStock(cid){
+  if(predStock===cid) return; // clicking same stock does nothing
+  predStock=cid;
+  // Clear saved inputs when switching to a different stock
+  _predSavedTarget=''; _predSavedAmount='';
+  renderPredictPanel();
+}
+
+function setDir(dir){
+  if(predDirection===dir) return; // no-op if already selected
+  predDirection=dir;
+  // Only update the two direction buttons, don't re-render the whole panel
+  document.querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active-dir'));
+  const target = dir==='up' ? document.querySelector('.dir-up') : document.querySelector('.dir-down');
+  if(target) target.classList.add('active-dir');
+}
+
 function submitBet(){
-  if(!predStock)     return toast('Select a stock.','err');
+  if(!predStock)     return toast('Select a stock first.','err');
   if(!predDirection) return toast('Choose UP or DOWN.','err');
-  const target=parseFloat(document.getElementById('pred-target')?.value);
-  const amount=parseInt(document.getElementById('pred-amount')?.value);
+  const tEl=document.getElementById('pred-target');
+  const aEl=document.getElementById('pred-amount');
+  const target=parseFloat(tEl?.value);
+  const amount=parseInt(aEl?.value);
   if(!target||target<=0) return toast('Enter a valid target price.','err');
   if(!amount||amount<1000) return toast('Minimum bet is ₹1,000.','err');
+  if(amount > playerData.cash) return toast(`You only have ${fmt(playerData.cash)} cash.`,'err');
+  const currPrice = market[predStock]?.price||0;
+  if(predDirection==='up' && target<=currPrice) return toast(`Target must be above current price ₹${currPrice.toLocaleString('en-IN')}.`,'err');
+  if(predDirection==='down' && target>=currPrice) return toast(`Target must be below current price ₹${currPrice.toLocaleString('en-IN')}.`,'err');
   ws.send(JSON.stringify({action:'place_bet',stock:predStock,direction:predDirection,target,amount}));
-  predStock=null; predDirection=null;
+  // Only clear state after successful send — server confirms via trade_ok
+  // (actual clear happens in the trade_ok handler below)
 }
 
 // ── News ──────────────────────────────────────────────────────────────────────
@@ -1471,290 +1755,63 @@ function respondMerge(accept){
   document.getElementById('merge-popup').classList.remove('show'); pendingMerge=null;
 }
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function updateTabIndicator(tab=activeTab, immediate=false){
-  const nav=document.getElementById('main-nav');
-  const target=document.getElementById('tab-'+tab);
-  const bg=document.getElementById('nav-active-bg');
-  const indicator=document.getElementById('nav-indicator');
-  if(!nav||!bg||!indicator||!target||target.style.display==='none'){
-    if(bg) bg.style.opacity='0';
-    if(indicator) indicator.style.opacity='0';
-    return;
-  }
-  const navRect=nav.getBoundingClientRect();
-  const rect=target.getBoundingClientRect();
-  const x=rect.left-navRect.left;
-  const bgWidth=Math.max(0, rect.width-8);
-  const indicatorWidth=Math.max(28, rect.width-24);
-  const indicatorX=x + (rect.width-indicatorWidth)/2;
-  const accent=getComputedStyle(target).getPropertyValue('--tab-accent').trim() || 'var(--green)';
-  const oldBgTransition=bg.style.transition;
-  const oldIndicatorTransition=indicator.style.transition;
-  if(immediate){
-    bg.style.transition='none';
-    indicator.style.transition='none';
-  }
-  bg.style.width=bgWidth+'px';
-  bg.style.transform=`translateX(${x+4}px)`;
-  bg.style.opacity='1';
-  indicator.style.width=indicatorWidth+'px';
-  indicator.style.transform=`translateX(${indicatorX}px)`;
-  indicator.style.backgroundColor=accent;
-  indicator.style.opacity='1';
-  if(immediate){
-    requestAnimationFrame(()=>{
-      bg.style.transition=oldBgTransition;
-      indicator.style.transition=oldIndicatorTransition;
-    });
-  }
+// ── Tab order for directional sliding ────────────────────────────────────────
+const TAB_ORDER = ['market','portfolio','loans','news','predict','board'];
+
+// Tab accent colours for the sliding indicator
+const TAB_COLORS = {
+  market:    {bg:'rgba(0,230,118,0.07)',  border:'var(--green)'},
+  portfolio: {bg:'rgba(79,195,247,0.07)', border:'var(--blue)'},
+  loans:     {bg:'rgba(206,147,216,0.07)',border:'var(--purple)'},
+  news:      {bg:'rgba(244,143,177,0.07)',border:'var(--pink)'},
+  predict:   {bg:'rgba(245,166,35,0.07)', border:'var(--gold)'},
+  board:     {bg:'rgba(255,183,77,0.07)', border:'var(--orange)'},
+};
+
+function _moveNavIndicator(tab){
+  const el  = document.getElementById('nav-indicator');
+  const btn = document.getElementById('tab-'+tab);
+  if(!el || !btn) return;
+  const nav  = document.getElementById('main-nav');
+  const navR = nav.getBoundingClientRect();
+  const btnR = btn.getBoundingClientRect();
+  const col  = TAB_COLORS[tab] || TAB_COLORS.market;
+  el.style.left   = (btnR.left - navR.left) + 'px';
+  el.style.width  = btnR.width + 'px';
+  el.style.background     = col.bg;
+  el.style.borderBottomColor = col.border;
 }
 
 function switchTab(tab){
   if(activeTab === tab) return;
-  const prev = document.getElementById('panel-'+activeTab);
   activeTab = tab;
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+
+  // Slide the panels track
+  const track = document.getElementById('panels-track');
+  const toIdx = TAB_ORDER.indexOf(tab);
+  if(track) track.style.transform = `translateX(-${toIdx * 100}%)`;
+
+  // Update active classes
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-'+tab)?.classList.add('active');
-  updateTabIndicator(tab);
-  // Fade out old panel
-  if(prev){ prev.style.opacity='0'; prev.style.transform='translateY(-8px)'; }
-  setTimeout(()=>{
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    const next = document.getElementById('panel-'+tab);
-    if(next){
-      next.style.opacity='0';
-      next.style.transform='translateY(12px)';
-      next.classList.add('active');
-      requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-        next.style.opacity=''; next.style.transform='';
-      });});
-    }
-    if(prev){ prev.style.opacity=''; prev.style.transform=''; }
-  }, TAB_SWITCH_MS);
+
+  // Slide the nav indicator
+  _moveNavIndicator(tab);
+
+  // Scroll new panel to top
+  setTimeout(()=>{ document.getElementById('panel-'+tab)?.scrollTo(0,0); }, 50);
+
   if(tab==='news'){newsCount=0;document.getElementById('news-badge').style.display='none';}
   if(tab==='predict')   renderPredictPanel();
   if(tab==='portfolio') renderPortfolio();
   if(tab==='loans')     renderBanks();
 }
-window.addEventListener('resize',()=>updateTabIndicator(activeTab,true));
 
-// ── Sound System ──────────────────────────────────────────────────────────────
-// Sound effects removed. Music only.
-function playSound(){}   // stub so any old calls don't crash
-
-// ── Music state ───────────────────────────────────────────────────────────────
-let musicEnabled  = true;
-let musicVolume   = 0.45;
-let lastMusicVol  = 0.45;
-let bgMusic       = null;   // HTMLAudioElement for file-based music
-let _lobbyMusicCtx= null;   // AudioContext for procedural lobby music
-let _lobbyMusicRunning = false;
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  PROCEDURAL LOBBY MUSIC
-//  Calm, dreamy elevator ambience — soft pad drones + wandering bell melody.
-//  Inspired by the slow, warm tone of the Doors (Roblox) elevator music.
-// ─────────────────────────────────────────────────────────────────────────────
-function startLobbyMusic(){
-  if(_lobbyMusicRunning) return;
-  if(!musicEnabled || musicVolume === 0) return;
-  try {
-    _lobbyMusicCtx = new (window.AudioContext || window.webkitAudioContext)();
-    _lobbyMusicRunning = true;
-    const ctx = _lobbyMusicCtx;
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0, ctx.currentTime);
-    masterGain.gain.linearRampToValueAtTime(musicVolume * 0.55, ctx.currentTime + 3.5);
-    masterGain.connect(ctx.destination);
-
-    // ── Reverb (convolver with synthesised impulse) ──
-    function makeReverb(ctx, duration=3.2, decay=2.0){
-      const len  = ctx.sampleRate * duration;
-      const buf  = ctx.createBuffer(2, len, ctx.sampleRate);
-      for(let c=0;c<2;c++){
-        const d=buf.getChannelData(c);
-        for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len, decay);
-      }
-      const conv=ctx.createConvolver(); conv.buffer=buf; return conv;
-    }
-    const reverb = makeReverb(ctx);
-    const reverbGain = ctx.createGain(); reverbGain.gain.value = 0.55;
-    reverb.connect(reverbGain); reverbGain.connect(masterGain);
-
-    // Dry path
-    const dryGain = ctx.createGain(); dryGain.gain.value = 0.45;
-    dryGain.connect(masterGain);
-
-    function connectNode(node){ node.connect(dryGain); node.connect(reverb); }
-
-    // ── Pad drone — two detuned sines forming a soft chord ──
-    // Root: D2 = 73.42 Hz  |  Fifth: A2 = 110 Hz  |  Octave: D3 = 146.83 Hz
-    const padNotes = [73.42, 110.0, 146.83, 195.99]; // D2 A2 D3 G3
-    padNotes.forEach((freq, i) => {
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = i % 2 === 0 ? 'sine' : 'triangle';
-      osc.frequency.value = freq;
-      osc.detune.value    = (i % 3 - 1) * 4; // slight detune for warmth
-      gain.gain.value     = [0.18, 0.12, 0.14, 0.09][i];
-      osc.connect(gain); connectNode(gain);
-      osc.start(ctx.currentTime + i * 0.4);
-    });
-
-    // ── Slow LFO tremolo on pad ──
-    const lfo     = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    lfo.frequency.value = 0.09; // ~9 sec cycle
-    lfoGain.gain.value  = 0.06;
-    lfo.connect(lfoGain);
-    lfo.start(ctx.currentTime);
-
-    // ── Bell melody — pentatonic scale, slow notes, each with attack/release ──
-    // Pentatonic in D: D4(293.66) F#4(369.99) A4(440) B4(493.88) D5(587.33) E5(659.25)
-    const bellScale = [293.66, 369.99, 440.00, 493.88, 587.33, 659.25, 587.33, 493.88];
-    const bellPattern = [0, 2, 4, 3, 5, 1, 4, 2, 0, 3, 5, 4, 2, 0, 1, 3];
-    const bellTiming  = [0, 2.8, 5.2, 7.6, 10.4, 13.0, 15.6, 18.0,
-                         20.8, 23.2, 25.6, 28.4, 31.0, 33.6, 36.0, 38.8];
-
-    function scheduleNote(freq, startTime, duration){
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      // Add subtle upper harmonic for bell-like quality
-      const osc2 = ctx.createOscillator();
-      const g2   = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.value = freq * 2.76; // bell partial
-      g2.gain.value = 0.06;
-      osc2.connect(g2); connectNode(g2);
-      osc2.start(startTime); osc2.stop(startTime + duration);
-
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.13, startTime + 0.06);
-      gain.gain.setValueAtTime(0.13, startTime + 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + Math.min(duration, 2.6));
-      osc.connect(gain); connectNode(gain);
-      osc.start(startTime); osc.stop(startTime + duration);
-    }
-
-    bellPattern.forEach((idx, i) => {
-      const t    = ctx.currentTime + bellTiming[i] + 1.5;
-      const dur  = (bellTiming[i+1] || bellTiming[i]+2.6) - bellTiming[i] + 0.8;
-      scheduleNote(bellScale[idx % bellScale.length], t, dur);
-    });
-
-    // Loop: schedule next cycle just before the last note ends
-    const loopAfter = bellTiming[bellTiming.length-1] + 4.2;
-    let _loopTimeout;
-    function scheduleLoop(){
-      if(!_lobbyMusicRunning) return;
-      _loopTimeout = setTimeout(()=>{
-        if(!_lobbyMusicRunning) return;
-        const now = ctx.currentTime;
-        bellPattern.forEach((idx, i) => {
-          const t   = now + bellTiming[i] + 0.5;
-          const dur = (bellTiming[i+1] || bellTiming[i]+2.6) - bellTiming[i] + 0.8;
-          scheduleNote(bellScale[idx % bellScale.length], t, dur);
-        });
-        scheduleLoop();
-      }, loopAfter * 1000);
-    }
-    scheduleLoop();
-
-    // Store cleanup ref
-    _lobbyMusicCtx._loopTimeout = null;
-    _lobbyMusicCtx._scheduleLoop = scheduleLoop;
-
-  } catch(e){ _lobbyMusicRunning = false; }
-}
-
-function stopLobbyMusic(){
-  _lobbyMusicRunning = false;
-  if(_lobbyMusicCtx){
-    try { _lobbyMusicCtx.close(); } catch(e){}
-    _lobbyMusicCtx = null;
-  }
-}
-
-// ── File-based bg music (trading/break phases) ───────────────────────────────
-function playBgMusic(name){
-  stopBgMusic();
-  if(!musicEnabled || musicVolume === 0) return;
-  const MUSIC_FILES = {
-    // 'bg_trading': 'bg_trading.mp3',
-    // 'bg_break':   'bg_break.mp3',
-  };
-  const file = MUSIC_FILES[name];
-  if(!file) return;
-  try {
-    bgMusic = new Audio('/static/sounds/'+file);
-    bgMusic.loop   = true;
-    bgMusic.volume = Math.min(1, musicVolume);
-    bgMusic.play().catch(()=>{});
-  } catch(e){}
-}
-function stopBgMusic(){
-  stopLobbyMusic();
-  if(bgMusic){ bgMusic.pause(); bgMusic.currentTime=0; bgMusic=null; }
-}
-
-// ── Music controls ────────────────────────────────────────────────────────────
-function setMusicVolume(v){
-  v = Math.max(0, Math.min(1, v));
-  if(v === 0 && musicEnabled){ musicEnabled = false; stopBgMusic(); }
-  else if(v > 0 && !musicEnabled){ musicEnabled = true; }
-  if(v > 0) lastMusicVol = v;
-  musicVolume = v;
-  // Update live lobby music gain
-  if(_lobbyMusicCtx){
-    try {
-      // Find masterGain — easiest: restart at new volume
-      stopLobbyMusic();
-      if(musicEnabled && musicVolume > 0) startLobbyMusic();
-    } catch(e){}
-  }
-  if(bgMusic) bgMusic.volume = Math.min(1, v);
-  _syncMusicUI();
-}
-
-function toggleMusic(){
-  if(musicEnabled){
-    lastMusicVol  = musicVolume > 0 ? musicVolume : lastMusicVol;
-    musicEnabled  = false;
-    musicVolume   = 0;
-    stopBgMusic();
-  } else {
-    musicEnabled = true;
-    musicVolume  = lastMusicVol > 0.05 ? lastMusicVol : 0.45;
-    startLobbyMusic();
-  }
-  _syncMusicUI();
-}
-
-function _syncMusicUI(){
-  const knob    = document.getElementById('mus-knob');
-  const track   = document.getElementById('mus-track');
-  const wrap    = document.getElementById('music-slider-wrap');
-  const slider  = document.getElementById('music-vol-slider');
-  const readout = document.getElementById('music-vol-readout');
-  const label   = document.getElementById('mus-label');
-  if(!knob) return;
-  if(musicEnabled){
-    knob.style.transform   = 'translateX(22px)';
-    track.style.background = 'var(--purple)';
-    if(wrap)  { wrap.style.maxHeight='56px'; wrap.style.opacity='1'; }
-    if(label) label.textContent = 'Music On';
-  } else {
-    knob.style.transform   = 'translateX(0)';
-    track.style.background = 'rgba(255,255,255,0.12)';
-    if(wrap)  { wrap.style.maxHeight='0'; wrap.style.opacity='0'; }
-    if(label) label.textContent = 'Music Off';
-  }
-  if(slider)  slider.value        = Math.round((musicEnabled ? musicVolume : 0) * 100);
-  if(readout) readout.textContent = musicEnabled ? Math.round(musicVolume*100)+'%' : '0%';
-}
+// ── Stubs so any lingering calls don't crash ──────────────────────────────────
+function playSound(){}
+function playBgMusic(){}
+function stopBgMusic(){}
+function playSwoosh(){}
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function toast(msg,type='info'){
@@ -1762,60 +1819,37 @@ function toast(msg,type='info'){
   el.className=`toast ${type}`; el.textContent=msg;
   wrap.appendChild(el); setTimeout(()=>el.remove(),3200);
 }
-
-// ── Start lobby music on first interaction (browser autoplay policy) ───────
-(function(){
-  let _started = false;
-  function _tryStart(){
-    if(_started) return;
-    _started = true;
-    document.removeEventListener('pointerdown', _tryStart);
-    document.removeEventListener('keydown', _tryStart);
-    if(musicEnabled && musicVolume > 0) startLobbyMusic();
-  }
-  document.addEventListener('pointerdown', _tryStart);
-  document.addEventListener('keydown', _tryStart);
-}());
 </script>
 <div id="round-flash" style="position:fixed;inset:0;pointer-events:none;z-index:500;opacity:0;transition:opacity 0.4s;"></div>
+<audio id="bg-music" src="/static/music.mp3" loop preload="auto"></audio>
+
 <div class="settings-overlay" id="settings-overlay" onclick="closeSettings()"></div>
 <div class="settings-drawer" id="settings-drawer">
   <div class="settings-hdr">
     <span class="settings-title">Settings</span>
     <button class="settings-close" onclick="closeSettings()">✕</button>
   </div>
-  <div class="settings-body">
-
-    <!-- Music section -->
-    <div class="snd-section music-section">
-      <div class="snd-section-label">Music</div>
-
-      <div class="snd-row" onclick="toggleMusic()">
-        <div class="snd-row-left">
-          <span class="snd-icon">🎵</span>
-          <span class="snd-label" id="mus-label">Music On</span>
-        </div>
-        <div class="snd-pill">
-          <div class="snd-track" id="mus-track" style="background:var(--purple)"></div>
-          <div class="snd-knob" id="mus-knob" style="transform:translateX(22px)"></div>
-        </div>
-      </div>
-
-      <div class="snd-slider-wrap" id="music-slider-wrap" style="max-height:56px;opacity:1;">
-        <div class="snd-slider-row">
-          <span class="snd-vol-icon">🔈</span>
-          <input class="snd-slider" id="music-vol-slider"
-            type="range" min="0" max="100" value="45"
-            oninput="setMusicVolume(this.value/100)">
-          <span class="snd-vol-icon">🎵</span>
-          <span class="snd-vol-readout" id="music-vol-readout">45%</span>
-        </div>
-      </div>
-
-      <div class="snd-hint">Calm lobby ambience · plays while waiting to start</div>
+  <div class="settings-body" id="settings-body">
+    <div class="settings-row">
+      <div class="settings-row-label">🎵 Music</div>
+      <button class="settings-toggle" id="music-toggle" onclick="toggleMusic()">OFF</button>
     </div>
+    <div class="settings-row">
+      <div class="settings-row-label">Volume</div>
+      <input type="range" id="music-volume" min="0" max="100" value="50" oninput="setMusicVolume(this.value)">
+    </div>
+    <div id="bm-secret-slot"></div>
+  </div>
+</div>
 
-    <div class="settings-placeholder">⚙️<br><br>More settings<br>coming soon.</div>
+<div class="bm-overlay" id="bm-overlay" onclick="closeBlackMarket()"></div>
+<div class="bm-drawer" id="bm-drawer">
+  <div class="settings-hdr bm-hdr">
+    <span class="settings-title bm-title">🖤 Black Market</span>
+    <button class="settings-close" onclick="closeBlackMarket()">✕</button>
+  </div>
+  <div class="settings-body" id="bm-body">
+    <div class="settings-coming">Loading…</div>
   </div>
 </div>
 </body>

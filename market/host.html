@@ -86,6 +86,19 @@ label:first-child{margin-top:0;}
 .modal-title{font-family:var(--display);font-size:18px;font-weight:800;color:#fff;margin-bottom:18px;}
 .modal-actions{display:flex;gap:10px;margin-top:20px;}
 .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+
+/* ── Player-disconnect alert (side popup) ── */
+.disc-alert-wrap{position:fixed;top:80px;right:20px;z-index:260;display:flex;flex-direction:column;gap:10px;max-width:280px;}
+.disc-alert{background:rgba(30,10,12,0.96);border:1px solid rgba(229,83,75,0.5);border-left:4px solid var(--red);border-radius:10px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,0.45);animation:disc-in .25s ease;}
+@keyframes disc-in{from{opacity:0;transform:translateX(24px);}to{opacity:1;transform:translateX(0);}}
+.disc-alert-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.disc-alert-name{font-family:var(--display);font-size:14px;color:#fff;margin-bottom:12px;}
+.disc-alert-name span{color:var(--muted);font-weight:400;font-family:var(--mono);font-size:12px;}
+.disc-alert-actions{display:flex;gap:8px;}
+.disc-alert-btn{flex:1;padding:7px 8px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:var(--text);transition:background .15s;}
+.disc-alert-btn.leave:hover{background:rgba(255,255,255,0.1);}
+.disc-alert-btn.close{background:rgba(229,83,75,0.15);border-color:rgba(229,83,75,0.4);color:var(--red);}
+.disc-alert-btn.close:hover{background:rgba(229,83,75,0.28);}
 .toast{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;animation:slideIn .2s ease;max-width:320px;}
 .toast.ok{background:rgba(38,194,129,.15);border:1px solid rgba(38,194,129,.4);color:var(--green);}
 .toast.err{background:rgba(229,83,75,.15);border:1px solid rgba(229,83,75,.4);color:var(--red);}
@@ -428,6 +441,7 @@ label:first-child{margin-top:0;}
 </div>
 
 <div class="toast-wrap" id="toast-wrap"></div>
+<div class="disc-alert-wrap" id="disc-alert-wrap"></div>
 
 <script>
 let pw='', state=null, board=[], ws=null, nameToCode={};
@@ -493,6 +507,10 @@ function connectWS() {
       toast(`${msg.name} was kicked.`, 'info');
       if (msg.board) board = msg.board;
       refreshPlayers(); renderLeaderboard();
+    } else if (msg.type === 'player_offline') {
+      showDiscAlert(msg.code, msg.name || msg.code);
+    } else if (msg.type === 'player_online') {
+      dismissDiscAlert(msg.code); // reconnected on their own — clear any pending alert
     } else if (msg.type === 'bm_log_update') {
       // Optionally refresh BM log on new purchase
     } else if (msg.type === 'reset') { location.reload(); }
@@ -903,6 +921,32 @@ function toast(msg,type='info') {
   const wrap=document.getElementById('toast-wrap'), el=document.createElement('div');
   el.className=`toast ${type}`; el.textContent=msg;
   wrap.appendChild(el); setTimeout(()=>el.remove(),3500);
+}
+
+// ── Player disconnect alerts (no auto-timer — stays until host acts) ──────────
+const discAlerts = {}; // code -> element
+function showDiscAlert(code, name) {
+  if (discAlerts[code]) return; // already showing one for this code
+  const wrap = document.getElementById('disc-alert-wrap');
+  const el = document.createElement('div');
+  el.className = 'disc-alert';
+  el.innerHTML = `
+    <div class="disc-alert-title">🔴 Player Disconnected</div>
+    <div class="disc-alert-name">${name} <span>(${code})</span></div>
+    <div class="disc-alert-actions">
+      <button class="disc-alert-btn leave" onclick="dismissDiscAlert('${code}')">Leave Active</button>
+      <button class="disc-alert-btn close" onclick="closeCodeFromAlert('${code}')">Close Code</button>
+    </div>`;
+  wrap.appendChild(el);
+  discAlerts[code] = el;
+}
+function dismissDiscAlert(code) {
+  const el = discAlerts[code];
+  if (el) { el.remove(); delete discAlerts[code]; }
+}
+function closeCodeFromAlert(code) {
+  dismissDiscAlert(code);
+  deleteCode(code); // existing function — confirms, removes code, kicks player, toasts
 }
 </script>
 </body>

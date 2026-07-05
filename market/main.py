@@ -40,7 +40,8 @@ STARTING_CASH      = 50_000
 ROUND_DURATION     = 1200        # 20 min — host can end early
 BREAK_DURATION     = 600         # 10 min between rounds
 BANKRUPTCY_RESTART = 25_000
-DRIFT_INTERVAL     = 15          # seconds between passive micro-drifts
+BANKRUPTCY_MIN_DEBT_GAP = 900_000   # debt must exceed net worth by ~9 lakh to qualify
+DRIFT_INTERVAL     = 90          # seconds between passive micro-drifts (reduced magnitude)
 MAX_ROUNDS         = 4
 
 # Per-player asyncio lock to prevent concurrent buy/sell race conditions
@@ -54,22 +55,22 @@ BANKS = {
         "name":    "Bharat Bank",
         "limit":   90_000,
         "options": [20_000, 40_000, 60_000, 90_000],
-        "rate":    0.05,    # 5% per round, compounds on balance
+        "rate":    0.09,    # 9% per round (was 5%), compounds on balance
         "desc":    "Safe, government-backed. Low rate, low limit. The sensible choice.",
     },
     "vcx": {
         "name":    "VentureCapX",
         "limit":   1_50_000,
         "options": [50_000, 75_000, 1_00_000, 1_50_000],
-        "rate":    0.09,    # 9% per round
+        "rate":    0.13,    # 13% per round (was 9%)
         "desc":    "Aggressive growth lender. Higher limit, higher cost. For calculated risks.",
     },
     "shadow": {
         "name":    "ShadowCredit",
         "limit":   3_00_000,
         "options": [1_00_000, 1_50_000, 2_00_000, 3_00_000],
-        "rate":    0.16,    # 16% per round — compounding is brutal over 4 rounds
-        "desc":    "No questions asked. Maximum leverage. Minimum mercy. 4-round compound: ~2.7×.",
+        "rate":    0.20,    # 20% per round (was 16%) — compounding is brutal over 4 rounds
+        "desc":    "No questions asked. Maximum leverage. Minimum mercy. 4-round compound: brutal.",
     },
 }
 
@@ -1168,6 +1169,13 @@ async def list_codes():
 
 @app.delete("/api/codes/{code}")
 async def delete_code(code: str):
+    # Send kicked message to the player's WS before disconnecting
+    ws = manager.players.get(code)
+    if ws:
+        try:
+            await ws.send_text(json.dumps({"type": "kicked", "msg": "Your access code was removed by the host."}))
+        except Exception:
+            pass
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("DELETE FROM codes WHERE code=?", (code,))
         await db.execute("DELETE FROM players WHERE code=?", (code,))
@@ -1645,9 +1653,11 @@ async def chaos_credit_crunch(pw: str):
     state = await read_state()
     state["credit_crunch"] = True
     await write_state(state)
+    bumped = {bid: round(b["rate"] * 100 + 5) for bid, b in BANKS.items()}
     msg = (
         "💸 CREDIT CRUNCH — All bank interest rates +5% this round! "
-        "Bharat→10%, VentureCapX→14%, ShadowCredit→21%. Heavy borrowers beware."
+        f"Bharat→{bumped['bharat']}%, VentureCapX→{bumped['vcx']}%, ShadowCredit→{bumped['shadow']}%. "
+        "Heavy borrowers beware."
     )
     await manager.broadcast_all({"type": "chaos", "event": "credit_crunch", "msg": msg})
     return {"ok": True}
@@ -1840,41 +1850,18 @@ async def ws_player(websocket: WebSocket, code: str):
     # ── Single-use code guard ─────────────────────────────────────────────────
     # If someone is already connected on this code AND they have a name (i.e.
     # they've fully joined), reject the new connection to prevent code-sharing.
-    # ── Strict Single-Use Code Guard ──────────────────────────────────────────
     existing_ws = manager.players.get(code)
     if existing_ws is not None:
-        # Check if the existing socket is actually still alive
-        try:
-            # If it's dead, this will fail and we can reclaim the code
-            await existing_ws.send_json({"type": "ping"}) 
-        except Exception:
-            manager.disconnect_player(code)
-        else:
-            # Socket is alive, actively block the new user
+        player_check = await get_player(code)
+        if player_check and bool(player_check.get("name")):
             await websocket.accept()
             await websocket.send_text(json.dumps({
                 "type": "error",
-                "msg":  "Code in use! If you refreshed, wait 5 seconds and try again."
-            }))
-            await websocket.close()
-            return# ── Strict Single-Use Code Guard ──────────────────────────────────────────
-    existing_ws = manager.players.get(code)
-    if existing_ws is not None:
-        # Check if the existing socket is actually still alive
-        try:
-            # If it's dead, this will fail and we can reclaim the code
-            await existing_ws.send_json({"type": "ping"}) 
-        except Exception:
-            manager.disconnect_player(code)
-        else:
-            # Socket is alive, actively block the new user
-            await websocket.accept()
-            await websocket.send_text(json.dumps({
-                "type": "error",
-                "msg":  "Code in use! If you refreshed, wait 5 seconds and try again."
+                "msg":  "This code is already in use by another device. Each code is single-use. Contact your host if you need a new one."
             }))
             await websocket.close()
             return
+
     await manager.connect_player(code, websocket)
     state  = await read_state()
     player = await get_player(code)
@@ -2070,20 +2057,30 @@ async def ws_player(websocket: WebSocket, code: str):
             elif action == "declare_bankruptcy":
                 if not player:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                pre_check = player_view(player, state)
+                debt_gap  = pre_check["total_loan"] - pre_check["net_worth"]
+                if debt_gap < BANKRUPTCY_MIN_DEBT_GAP:
+                    shortfall = BANKRUPTCY_MIN_DEBT_GAP - debt_gap
+                    await websocket.send_text(json.dumps({
+                        "type": "error",
+                        "msg":  (f"Bankruptcy isn't available yet. Your debt needs to exceed your net worth "
+                                 f"by ₹{BANKRUPTCY_MIN_DEBT_GAP:,}+ (you're ₹{int(shortfall):,} short)."),
+                    })); continue
                 async with _player_locks[code]:
                     player = await get_player(code)
                     player["cash"]     = BANKRUPTCY_RESTART
                     player["holdings"] = {}
                     player["loans"]    = {}
-                    player["bets"]     = {}   
+                    player["bets"]     = {}   # bets cleared; stakes already deducted — treat as lost
                     player["avg_cost"] = {}
-                    # PENALTY: You get your cash, but your trading floor access is revoked for this round.
-                    player["frozen"]   = True 
-                    await save_player(player)  
+                    player["frozen"]   = True   # frozen for the rest of this round as a bankruptcy penalty
+                    await save_player(player)
                 pv = player_view(player, state)
                 await websocket.send_text(json.dumps({
                     "type":   "bankrupt",
-                    "msg":    f"💀 Bankruptcy declared. Wiped clean. Restarting with ₹{BANKRUPTCY_RESTART:,}.",
+                    "msg":    (f"💀 Bankruptcy declared. Wiped clean. Restarting with ₹{BANKRUPTCY_RESTART:,}. "
+                               "🔒 Trading is frozen for the rest of this round as a penalty — it unlocks "
+                               "automatically when the next round starts."),
                     "player": pv,
                 }))
                 players = await all_players()
@@ -2255,8 +2252,14 @@ async def ws_player(websocket: WebSocket, code: str):
         pass
     finally:
         manager.disconnect_player(code)
-        # Notify host that this player went offline
-        await manager.broadcast_hosts({"type": "player_offline", "code": code})
+        # Notify host that this player went offline (include name so the host
+        # panel can show a proper alert instead of just a bare code)
+        p_off = await get_player(code)
+        await manager.broadcast_hosts({
+            "type": "player_offline",
+            "code": code,
+            "name": (p_off["name"] if p_off and p_off.get("name") else code),
+        })
 
 
 # ═══════════════════════════════════════════════════════════════
