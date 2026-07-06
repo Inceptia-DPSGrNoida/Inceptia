@@ -31,18 +31,20 @@ from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from news_presets import NEWS_PRESETS
+
 # ═══════════════════════════════════════════════════════════════
 #  CONFIG
 # ═══════════════════════════════════════════════════════════════
 DB_PATH            = Path(os.getenv("DB_PATH", "game.db"))
 HOST_PASSWORD      = os.getenv("HOST_PASSWORD", "Ich_liebe_Siya")
-STARTING_CASH      = 50_000
+STARTING_CASH      = 0
 ROUND_DURATION     = 1200        # 20 min — host can end early
 BREAK_DURATION     = 600         # 10 min between rounds
 BANKRUPTCY_RESTART = 25_000
 BANKRUPTCY_MIN_DEBT_GAP = 900_000   # debt must exceed net worth by ~9 lakh to qualify
 DRIFT_INTERVAL     = 90          # seconds between passive micro-drifts (reduced magnitude)
-MAX_ROUNDS         = 4
+MAX_ROUNDS         = 6
 
 # Per-player asyncio lock to prevent concurrent buy/sell race conditions
 _player_locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
@@ -320,277 +322,277 @@ IPO_COMPANIES = {
 # ═══════════════════════════════════════════════════════════════
 NEWS_POOL = [
     # ── ZORA (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"zora", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"zora", "direction": 1, "strength":0.10, "real":True,
      "text":"Zora Industries secures ₹2,800 crore defence infrastructure contract from the Ministry of Defence — its third major government award this fiscal year."},
-    {"type":"verified",   "label":"Market Event",      "affects":"zora", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"zora", "direction":-1, "strength":0.09, "real":True,
      "text":"BREAKING: National union declares a 3-day strike at manufacturing hubs across 5 states. Zora's flagship Pune plant has shut down."},
-    {"type":"verified",   "label":"Market Event",      "affects":"zora", "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"zora", "direction": 1, "strength":0.08, "real":True,
      "text":"Zora Industries marks 30 consecutive years of uninterrupted dividend payouts. LIC raises its stake by 4.2% in the latest quarter."},
-    {"type":"verified",   "label":"Market Event",      "affects":"zora", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"zora", "direction": 1, "strength":0.11, "real":True,
      "text":"Zora wins ₹4,600 crore port infrastructure contract in Odisha. Management upgrades full-year revenue guidance by 14%."},
-    {"type":"verified",   "label":"Market Event",      "affects":"zora", "direction":-1, "strength":0.08, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"zora", "direction":-1, "strength":0.08, "real":True,
      "text":"Steel import duties slashed by 8%. Cheaper Chinese steel undercuts Zora's pricing in the domestic structural market."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"zora", "direction":-1, "strength":0.11, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"zora", "direction":-1, "strength":0.11, "real":False,
      "text":"Rumour: A whistleblower claims Zora used substandard materials in a recent government project. The company calls the allegations completely fabricated."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"zora", "direction": 1, "strength":0.13, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"zora", "direction": 1, "strength":0.13, "real":True,
      "text":"Insider tip: Zora is in the final stage of negotiations for a ₹4,000 crore highway bridge contract. Award expected within days."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"zora", "direction": 1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"zora", "direction": 1, "strength":0.10, "real":False,
      "text":"Rumour: A large sovereign wealth fund is accumulating Zora shares quietly ahead of an expected Q4 earnings beat."},
     # ── STREAMVERSE (9)
-    {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction":-1, "strength":0.12, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"streamvx", "direction":-1, "strength":0.12, "real":True,
      "text":"BREAKING: StreamVerse reports a 14% jump in subscriber churn after hiking monthly subscription prices by ₹100. Net adds turn negative for the first time."},
-    {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction": 1, "strength":0.13, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"streamvx", "direction": 1, "strength":0.13, "real":True,
      "text":"StreamVerse's latest original crime drama crosses 200 million watch hours in its first week — the biggest debut in Indian OTT history."},
-    {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"streamvx", "direction":-1, "strength":0.09, "real":True,
      "text":"Disney+ Hotstar announces an aggressive price cut and a major IPL streaming deal, directly targeting StreamVerse's urban subscriber base."},
-    {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"streamvx", "direction": 1, "strength":0.10, "real":True,
      "text":"StreamVerse signs a 3-year exclusive deal with India's top film studio, locking out all competitors from its most bankable directors."},
-    {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction":-1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"streamvx", "direction":-1, "strength":0.11, "real":True,
      "text":"BREAKING: StreamVerse reports Q2 cash burn of ₹1,100 crore — 34% worse than analyst estimates. CFO steps down citing 'personal reasons'."},
-    {"type":"verified",   "label":"Market Event",      "affects":"streamvx", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"streamvx", "direction": 1, "strength":0.09, "real":True,
      "text":"StreamVerse ad-supported tier crosses 18 million users in 6 months — monetisation path finally becoming credible to sceptical analysts."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"streamvx", "direction":-1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"streamvx", "direction":-1, "strength":0.10, "real":False,
      "text":"Rumour: A former StreamVerse VP claims the platform artificially inflates subscriber numbers to attract brand advertising. Management denies."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"streamvx", "direction": 1, "strength":0.14, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"streamvx", "direction": 1, "strength":0.14, "real":True,
      "text":"Insider tip: StreamVerse is close to signing an exclusive cricket streaming deal for 3 IPL seasons — a contract reportedly worth ₹4,200 crore."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"streamvx", "direction": 1, "strength":0.12, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"streamvx", "direction": 1, "strength":0.12, "real":False,
      "text":"Rumour: A US streaming giant is in preliminary acquisition talks for StreamVerse at a 45% premium to current market price. Both sides unconfirmed."},
     # ── FRESHCO (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.08, "real":True,
      "text":"Rural FMCG consumption hits a 6-year high. FreshCo's 6 million kirana distribution network gives it unmatched last-mile reach in the surge."},
-    {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction":-1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"freshco", "direction":-1, "strength":0.10, "real":True,
      "text":"BREAKING: A cyclone warning is issued for the eastern coast. FreshCo's largest manufacturing cluster in Odisha has suspended operations."},
-    {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.09, "real":True,
      "text":"FreshCo's new premium biscuit line sells out in 48 hours across modern trade. Early data suggests 22% margin improvement over base SKUs."},
-    {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction":-1, "strength":0.08, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"freshco", "direction":-1, "strength":0.08, "real":True,
      "text":"BREAKING: Palm oil prices surge 19% globally. FreshCo's input costs rise materially — margin guidance cut for the next two quarters."},
-    {"type":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"freshco", "direction": 1, "strength":0.09, "real":True,
      "text":"FreshCo announces entry into the premium skincare segment targeting urban millennials. Analysts project ₹1,200 crore in incremental revenue by Year 3."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"freshco", "direction":-1, "strength":0.09, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"freshco", "direction":-1, "strength":0.09, "real":False,
      "text":"Rumour: A viral social media post claims FreshCo's popular biscuit brand contains banned additives. Company calls it fabricated and is pursuing legal action."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"freshco", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"freshco", "direction": 1, "strength":0.11, "real":True,
      "text":"Insider tip: FreshCo's rural distribution numbers for this quarter are reportedly far ahead of estimates. Formal guidance upgrade expected next week."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"freshco", "direction": 1, "strength":0.09, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"freshco", "direction": 1, "strength":0.09, "real":False,
      "text":"Rumour: A global FMCG giant is reportedly in talks to acquire FreshCo's branded foods division at a significant premium. Unverified."},
     # ── VOLTEX (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.12, "real":True,
      "text":"BREAKING: Government announces ₹4,200 crore renewable energy subsidy expansion. Voltex Energy named explicitly in the policy document as a primary beneficiary."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.11, "real":True,
      "text":"BREAKING: Two Voltex solar parks in Rajasthan fail safety inspections. Ministry of New Energy suspends project clearances pending a full review."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.10, "real":True,
      "text":"Voltex Energy signs its largest contract yet — a 900MW solar park for a state electricity board. Analysts revise price target upward by 35%."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"voltex", "direction":-1, "strength":0.09, "real":True,
      "text":"Solar panel import tariffs hiked by 12%. Voltex's upcoming projects face a cost overrun of approximately ₹600 crore. Capex guidance raised."},
-    {"type":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"voltex", "direction": 1, "strength":0.09, "real":True,
      "text":"India achieves a new solar installation record. REC prices jump 14%, directly boosting Voltex's near-term revenue per MW."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction": 1, "strength":0.13, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction": 1, "strength":0.13, "real":False,
      "text":"Rumour: Voltex Energy allegedly in advanced merger talks with a UAE sovereign wealth fund. Could value the company at 3× current market cap. Unconfirmed."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"voltex", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"voltex", "direction": 1, "strength":0.12, "real":True,
      "text":"Insider tip: Government officials have reportedly signed off internally on Voltex's subsidy renewal — announcement expected before close of quarter."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction":-1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"voltex", "direction":-1, "strength":0.10, "real":False,
      "text":"Rumour: Voltex's Rajasthan solar project is reportedly 4 months behind schedule due to grid connection delays. Penalty clauses may apply."},
     # ── MEDIQ (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.14, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.14, "real":True,
      "text":"MediQ's Phase 3 drug trial results submitted to DCGI. Internal sources describe the efficacy data as 'exceptionally strong'. Approval timeline: 30 days."},
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction":-1, "strength":0.15, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"mediq", "direction":-1, "strength":0.15, "real":True,
      "text":"BREAKING: DCGI rejects MediQ's blockbuster drug application citing insufficient long-term safety data. Additional trials required — timeline pushed back 18 months."},
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.10, "real":True,
      "text":"MediQ quietly files 4 new patents for next-generation oncology drugs. Pipeline depth far exceeds what the market has priced in."},
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction":-1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"mediq", "direction":-1, "strength":0.10, "real":True,
      "text":"US FDA issues import alerts on MediQ's Hyderabad API manufacturing plant. Export revenues at risk until remediation is certified."},
-    {"type":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"mediq", "direction": 1, "strength":0.09, "real":True,
      "text":"WHO qualifies MediQ as a preferred supplier for generic oncology APIs in 40 developing nations. Long-term export revenue locked in."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction": 1, "strength":0.14, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction": 1, "strength":0.14, "real":False,
      "text":"Rumour: A global pharma giant is reportedly in acquisition talks for MediQ at a 60% premium to current price. Neither company has confirmed."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"mediq", "direction": 1, "strength":0.14, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"mediq", "direction": 1, "strength":0.14, "real":True,
      "text":"Insider tip: MediQ's Zytravax trial data is reportedly clean and strong. DCGI submission is imminent. Management unusually confident internally."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction":-1, "strength":0.12, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"mediq", "direction":-1, "strength":0.12, "real":False,
      "text":"Rumour: An adverse event in MediQ's Phase 3 trial is being reviewed internally. Nothing has been filed yet but whispers are spreading."},
     # ── SKYLINK (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"skylink", "direction": 1, "strength":0.11, "real":True,
      "text":"SkyLink Tech posts 34% YoY revenue growth in Q2, beating analyst consensus by ₹420 crore. Founder announces entry into Southeast Asian markets."},
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.13, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.13, "real":True,
      "text":"BREAKING: A massive data breach at SkyLink exposes 11 million user records. Government issues show-cause notice. Fines expected to exceed ₹800 crore."},
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.10, "real":True,
      "text":"SkyLink loses two large enterprise contracts to IndraNet in a competitive rebid. Churn at the top of the client book raises retention concerns."},
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"skylink", "direction": 1, "strength":0.12, "real":True,
      "text":"SkyLink announces an AI product partnership with a top US tech firm — a deal that could fundamentally revalue the company's TAM story."},
-    {"type":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"skylink", "direction":-1, "strength":0.09, "real":True,
      "text":"BREAKING: SkyLink founder sells ₹800 crore of personal stock. Insider selling at this scale typically signals concern about near-term outlook."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction":-1, "strength":0.11, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction":-1, "strength":0.11, "real":False,
      "text":"Rumour: Three senior SkyLink engineers have resigned en masse over a dispute with the founder. Anonymous posts describe 'toxic leadership'. Unverified."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"skylink", "direction": 1, "strength":0.13, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"skylink", "direction": 1, "strength":0.13, "real":True,
      "text":"Insider tip: SkyLink's Q3 deal pipeline is reportedly the strongest in company history. An earnings surprise is quietly expected internally."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction": 1, "strength":0.12, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"skylink", "direction": 1, "strength":0.12, "real":False,
      "text":"Rumour: A global tech giant has submitted a non-binding indicative offer for SkyLink at 2.2× current price. Completely unverified."},
     # ── SWIFTHAUL (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.10, "real":True,
      "text":"SwiftHaul reports a 28% surge in same-day delivery volume as festive season kicks off. Signs exclusive 3-year contract with India's largest e-commerce platform."},
-    {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction":-1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction":-1, "strength":0.10, "real":True,
      "text":"BREAKING: Fuel prices rise 12% following a global crude oil surge. SwiftHaul's fleet of 18,000 vehicles faces immediate margin compression."},
-    {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.09, "real":True,
      "text":"SwiftHaul's cold-chain pharma division signs its first hospital chain client. High-margin recurring revenue materialises ahead of analyst forecasts."},
-    {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction":-1, "strength":0.09, "real":True,
      "text":"A competing logistics firm poaches SwiftHaul's head of enterprise sales along with the team managing three key accounts. Client at-risk notices issued."},
-    {"type":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"swifthaul", "direction": 1, "strength":0.08, "real":True,
      "text":"GST Council simplifies e-way bill compliance. SwiftHaul estimates ₹120 crore in annual cost savings from reduced administrative overhead."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"swifthaul", "direction":-1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"swifthaul", "direction":-1, "strength":0.10, "real":False,
      "text":"Rumour: SwiftHaul allegedly under-reporting delivery failure rates to maintain contract metrics. An internal audit is said to be underway."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"swifthaul", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"swifthaul", "direction": 1, "strength":0.11, "real":True,
      "text":"Insider tip: SwiftHaul's cold-chain pharma division has onboarded 3 hospital chains. Revenue starts next quarter — not in consensus estimates."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"swifthaul", "direction":-1, "strength":0.09, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"swifthaul", "direction":-1, "strength":0.09, "real":False,
      "text":"Rumour: SwiftHaul's primary e-commerce partner is running a quiet RFQ process with rival logistics firms. Contract renewal may not be automatic."},
     # ── CROWNMART (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.11, "real":True,
      "text":"CrownMart's new CEO unveils a restructuring plan: closing 120 loss-making stores and doubling down on high-margin private label products. Analysts react positively."},
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.11, "real":True,
      "text":"BREAKING: Blinkit announces 10-minute grocery delivery expansion to 50 new cities — directly attacking CrownMart's core customer base in Tier-2 markets."},
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.10, "real":True,
      "text":"CrownMart's Q3 same-store sales data shows a 9% decline. Results below guidance for the second consecutive quarter. Analysts cut targets."},
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"crownmart", "direction": 1, "strength":0.10, "real":True,
      "text":"CrownMart's private label division posts 34% revenue growth. Margins on own-brand products are 18 percentage points above branded equivalents."},
-    {"type":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"crownmart", "direction":-1, "strength":0.09, "real":True,
      "text":"CrownMart announces 40 additional store closures beyond the previously disclosed 120, citing structurally unviable lease terms."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction": 1, "strength":0.12, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction": 1, "strength":0.12, "real":False,
      "text":"Rumour: A major private equity firm is building a stake in CrownMart ahead of an alleged management buyout. Unusual after-hours trading activity spotted."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"crownmart", "direction":-1, "strength":0.11, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"crownmart", "direction":-1, "strength":0.11, "real":True,
      "text":"Insider tip: CrownMart's Q3 same-store sales data, not yet public, shows a 9% decline. Insiders are quietly reducing positions ahead of results."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction": 1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"crownmart", "direction": 1, "strength":0.10, "real":False,
      "text":"Rumour: CrownMart is in preliminary talks with a GCC-based sovereign retailer about a strategic investment and regional expansion partnership."},
     # ── SHIELDGEN (8)
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.12, "real":True,
      "text":"BREAKING: Escalating border tensions prompt the government to fast-track ₹18,000 crore in emergency defence procurement. ShieldGen is primary supplier for 3 of 5 categories."},
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.10, "real":True,
      "text":"ShieldGen receives export clearance to supply radar systems to two allied nations — India's defence export push directly boosts order visibility."},
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction":-1, "strength":0.09, "real":True,
      "text":"A parliamentary committee review flags ShieldGen's pricing on a recent armoured vehicle contract. Overpricing investigation formally initiated."},
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.11, "real":True,
      "text":"Defence budget hiked 18% in supplementary demands. ShieldGen's order book grows by ₹6,800 crore in a single day of inbound procurement notices."},
-    {"type":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"shieldgen", "direction": 1, "strength":0.09, "real":True,
      "text":"'Make in India' defence mandate raises domestic content requirement to 70%. ShieldGen, as a fully domestic manufacturer, gains a structural competitive advantage."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction":-1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction":-1, "strength":0.10, "real":False,
      "text":"Rumour: A parliamentary committee is allegedly reviewing ShieldGen's pricing on a recent armoured vehicle contract. Government has not confirmed any probe."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"shieldgen", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"shieldgen", "direction": 1, "strength":0.12, "real":True,
      "text":"Insider tip: ShieldGen has secured a 7-year maintenance contract for a classified drone programme worth ₹6,000 crore. Announcement expected post budget session."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction": 1, "strength":0.11, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"shieldgen", "direction": 1, "strength":0.11, "real":False,
      "text":"Rumour: A further ₹12,000 crore supplementary defence allocation is being discussed in Cabinet. ShieldGen would be the single largest beneficiary."},
     # ── INDRANET (7)
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.10, "real":True,
      "text":"IndraNet closes 3 large enterprise renewals at 20% higher ARR. Net revenue retention at 118% for the fourth consecutive quarter."},
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"indranet", "direction":-1, "strength":0.09, "real":True,
      "text":"SkyLink launches a competing workflow automation product at 30% lower pricing, directly targeting IndraNet's mid-market client base."},
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.09, "real":True,
      "text":"IndraNet wins a ₹480 crore 5-year contract with a major public sector bank — its largest PSU deal ever. Management raises full-year guidance."},
-    {"type":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"indranet", "direction": 1, "strength":0.08, "real":True,
      "text":"Gartner names IndraNet a Leader in its Asia-Pacific Workflow Automation Magic Quadrant for the third consecutive year. International inbounds accelerate."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"indranet", "direction":-1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"indranet", "direction":-1, "strength":0.10, "real":False,
      "text":"Rumour: A key IndraNet engineering team is reportedly being poached by SkyLink en masse, including the architect of the core automation engine."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"indranet", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"indranet", "direction": 1, "strength":0.11, "real":True,
      "text":"Insider tip: IndraNet just closed 3 large enterprise renewals at 20% higher ARR. Not announced yet — formal guidance upgrade expected next quarter."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"indranet", "direction": 1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"indranet", "direction": 1, "strength":0.10, "real":False,
      "text":"Rumour: A global enterprise software firm is running diligence on IndraNet as an acquisition target. Premium to current price estimated at 40%."},
     # ── NOVAPAY (IPO, 7)
-    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction":-1, "strength":0.13, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"novapay", "direction":-1, "strength":0.13, "real":True,
      "text":"BREAKING: RBI sends NovaPay a show-cause notice over KYC compliance gaps in its BNPL product. ₹200 crore fine and product pause possible."},
-    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.12, "real":True,
      "text":"NovaPay's monthly transaction volume crosses ₹1 lakh crore for the first time. Market share vs PhonePe narrows to 4 percentage points."},
-    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction":-1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"novapay", "direction":-1, "strength":0.11, "real":True,
      "text":"BREAKING: UPI interchange fee framework revised downward by RBI. NovaPay's core revenue per transaction drops 18%. Profitability timeline extends."},
-    {"type":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"novapay", "direction": 1, "strength":0.10, "real":True,
      "text":"NovaPay BNPL product reaches 8 million users in 5 months — fastest adoption for any credit product in Indian fintech history."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"novapay", "direction": 1, "strength":0.14, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"novapay", "direction": 1, "strength":0.14, "real":False,
      "text":"Rumour: A Singapore sovereign fund is eyeing a 20% strategic stake in NovaPay at a valuation of 2× current market price. Completely unconfirmed."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"novapay", "direction":-1, "strength":0.12, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"novapay", "direction":-1, "strength":0.12, "real":True,
      "text":"Insider tip: NovaPay's internal audit has flagged irregularities in transaction fee reporting that may require a revenue restatement."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"novapay", "direction": 1, "strength":0.11, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"novapay", "direction": 1, "strength":0.11, "real":False,
      "text":"Rumour: NovaPay has quietly applied for a small finance bank licence — if granted, this transforms it from a fintech into a fully regulated bank."},
     # ── GREENLEAF (IPO, 7)
-    {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.11, "real":True,
      "text":"GreenLeaf Agri onboards 200,000 new farmers this season. The government farm-to-fork subsidy scheme has been renewed for 3 more years."},
-    {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction":-1, "strength":0.12, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction":-1, "strength":0.12, "real":True,
      "text":"BREAKING: Drought conditions declared across 3 of GreenLeaf's key operating states. Crop yield outlook revised down 28%. Revenue guidance cut."},
-    {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.10, "real":True,
      "text":"GreenLeaf signs supply agreements with 6 major retail chains, securing offtake for 40% of its produce network for the next 2 years."},
-    {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction":-1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction":-1, "strength":0.10, "real":True,
      "text":"A government review of agritech subsidies proposes 30% cuts in allocation. GreenLeaf, which relies on these for 31% of operating costs, faces margin risk."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"greenleaf", "direction": 1, "strength":0.11, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"greenleaf", "direction": 1, "strength":0.11, "real":True,
      "text":"Insider tip: GreenLeaf's Gulf export deal is reportedly finalised at ₹2,000 crore annually. Transformative if confirmed — not in any public guidance."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"greenleaf", "direction":-1, "strength":0.09, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"greenleaf", "direction":-1, "strength":0.09, "real":False,
      "text":"Rumour: A government audit has flagged GreenLeaf's subsidy claims as potentially inflated. A formal investigation may be underway."},
-    {"type":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"greenleaf", "direction": 1, "strength":0.09, "real":True,
      "text":"GreenLeaf expands cold storage to 40 new mandis. Post-harvest losses drop 18% — a key metric that directly affects subsidy renewal prospects."},
     # ── ARMORINC (IPO, 7)
-    {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.10, "real":True,
      "text":"ArmorInc wins its first central paramilitary contract — 50,000 bulletproof vests for CRPF at ₹840 crore. Recurring annual procurement expected."},
-    {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.09, "real":True,
      "text":"ArmorInc's surveillance division signs a ₹420 crore contract with 3 state police forces. High-margin, recurring service revenue begins."},
-    {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction":-1, "strength":0.09, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"armorinc", "direction":-1, "strength":0.09, "real":True,
      "text":"A foreign OEM wins an import tender for personal protective equipment that ArmorInc had expected to secure. 12% revenue shortfall anticipated."},
-    {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.10, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.10, "real":True,
      "text":"Escalating internal security concerns prompt ₹3,200 crore state government equipment procurement. ArmorInc wins the largest single order in its history."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"armorinc", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"armorinc", "direction": 1, "strength":0.12, "real":True,
      "text":"Insider tip: ArmorInc is in advanced acquisition talks for a Pune-based surveillance tech startup. A deal could double its addressable market overnight."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"armorinc", "direction": 1, "strength":0.10, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"armorinc", "direction": 1, "strength":0.10, "real":False,
      "text":"Rumour: ShieldGen is in preliminary talks to acquire ArmorInc at a 35% premium as part of a domestic defence consolidation play."},
-    {"type":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"armorinc", "direction": 1, "strength":0.08, "real":True,
      "text":"ArmorInc receives defence export licence. First shipment of ₹120 crore of personal protection equipment to an African nation dispatched."},
     # ── BYTECORP (IPO, 8)
-    {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.15, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.15, "real":True,
      "text":"ByteCorp AI's BharatGPT demo goes viral after a prominent US tech analyst calls it 'the most impressive multilingual AI model built outside the US'. Retail frenzy begins."},
-    {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.14, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.14, "real":True,
      "text":"BREAKING: ByteCorp's AI enterprise pilot with a major private bank collapses after accuracy failures in Hindi and Tamil. The hype cycle takes a hard hit."},
-    {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.13, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.13, "real":True,
      "text":"ByteCorp signs its first revenue-generating enterprise contract — a 2-year deal with a government ministry for AI-powered document processing at ₹180 crore."},
-    {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.13, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.13, "real":True,
      "text":"OpenAI launches an Indian-language optimised model that benchmarks above BharatGPT on 7 of 11 regional language tests. ByteCorp's core moat narrative cracks."},
-    {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.12, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction": 1, "strength":0.12, "real":True,
      "text":"ByteCorp partners with India's largest telecom to embed BharatGPT across 480 million mobile users. Distribution reach far exceeds any competitor."},
-    {"type":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.11, "real":True,
+    {"type_tag":"verified",   "label":"Market Event",      "affects":"bytecorp", "direction":-1, "strength":0.11, "real":True,
      "text":"ByteCorp reports net cash burn of ₹420 crore for the quarter with no clear timeline to profitability. Institutional investors begin trimming positions."},
-    {"type":"unverified", "label":"Unverified Rumour", "affects":"bytecorp", "direction": 1, "strength":0.15, "real":False,
+    {"type_tag":"unverified", "label":"Unverified Rumour", "affects":"bytecorp", "direction": 1, "strength":0.15, "real":False,
      "text":"Rumour: Microsoft is in serious talks to invest ₹2,000 crore in ByteCorp AI. The CEO responded 'no comment'. Market has fully priced in the best case."},
-    {"type":"unverified", "label":"Insider Hint",      "affects":"bytecorp", "direction": 1, "strength":0.14, "real":True,
+    {"type_tag":"unverified", "label":"Insider Hint",      "affects":"bytecorp", "direction": 1, "strength":0.14, "real":True,
      "text":"Insider tip: ByteCorp is weeks away from announcing a government AI contract worth ₹800 crore — the company's first large public-sector revenue deal."},
     # ── SECTOR-WIDE (20)
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction": 1, "strength":0.08, "real":True,
      "text":"SECTOR: Government launches a ₹10,000 crore Digital India 3.0 push. Cloud, SaaS, and AI companies are the primary intended beneficiaries."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction":-1, "strength":0.08, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction":-1, "strength":0.08, "real":True,
      "text":"SECTOR: A sweeping data localisation bill clears Rajya Sabha. Compliance costs for tech companies estimated at ₹4,000–8,000 crore industry-wide."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction": 1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: India climbs to #3 globally in tech startup funding. Analyst upgrades across the sector as global capital inflows accelerate."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction":-1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Technology",       "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: Global tech selloff after US Fed signals higher-for-longer rates. Indian tech stocks, with high P/E multiples, bear the sharpest correction."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:FMCG",             "direction": 1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:FMCG",             "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: Rural consumption surges 11% YoY as crop prices rise and rural wages hit a 5-year high. FMCG companies are broadly re-rated upward."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:FMCG",             "direction":-1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:FMCG",             "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: Palm oil and edible oil prices spike 22% globally. Input cost pressure hits all FMCG manufacturers simultaneously."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Defence",          "direction": 1, "strength":0.09, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Defence",          "direction": 1, "strength":0.09, "real":True,
      "text":"SECTOR: Defence budget hiked 18% in supplementary demands. Domestic manufacturers across the sector receive order upgrades."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Defence",          "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Defence",          "direction": 1, "strength":0.08, "real":True,
      "text":"SECTOR: 'Make in India' defence mandate requires 70% domestic content. Foreign OEMs must partner with Indian firms — domestic players gain structural edge."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Pharma",           "direction":-1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Pharma",           "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: US FDA issues import alerts on 4 Indian pharmaceutical plants. Export revenue for multiple companies at immediate risk."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Pharma",           "direction": 1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Pharma",           "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: WHO qualifies 3 more Indian generic manufacturers for global supply. Export opportunity worth ₹12,000 crore opens up across the sector."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Logistics",        "direction":-1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Logistics",        "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: New national highway toll policy hikes rates by 15%. All logistics and trucking companies face immediate cost increases."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Logistics",        "direction": 1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Logistics",        "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: GST Council announces simplified e-way bill process, reducing logistics compliance costs. Entire sector benefits from the efficiency gain."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Renewable Energy", "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Renewable Energy", "direction": 1, "strength":0.08, "real":True,
      "text":"SECTOR: India achieves a new solar installation record. Government doubles renewable energy subsidies for the next 3 fiscal years."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Renewable Energy", "direction":-1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Renewable Energy", "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: Solar panel import tariffs hiked 12%. Domestic project costs rise for all renewable energy companies."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Fintech",          "direction": 1, "strength":0.08, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Fintech",          "direction": 1, "strength":0.08, "real":True,
      "text":"SECTOR: UPI transaction volume crosses 20 billion monthly. RBI announces new incentive framework for digital payment platforms."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Fintech",          "direction":-1, "strength":0.08, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Fintech",          "direction":-1, "strength":0.08, "real":True,
      "text":"SECTOR: RBI tightens digital lending norms. Fintech companies face new capital adequacy requirements that squeeze short-term profitability."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Agriculture",      "direction": 1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Agriculture",      "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: Government announces largest-ever agritech investment package at ₹8,500 crore. Agritech startups and listed companies both benefit."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Agriculture",      "direction":-1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Agriculture",      "direction":-1, "strength":0.07, "real":True,
      "text":"SECTOR: A poor monsoon forecast triggers broad-based selling in agri-dependent businesses. Crop yield estimates revised down 15%."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Media / OTT",      "direction": 1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Media / OTT",      "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: Internet penetration reaches 900 million users in India. OTT platforms are the biggest beneficiaries of the next digital adoption wave."},
-    {"type":"verified", "label":"Market Event", "affects":"sector:Manufacturing",    "direction": 1, "strength":0.07, "real":True,
+    {"type_tag":"verified", "label":"Market Event", "affects":"sector:Manufacturing",    "direction": 1, "strength":0.07, "real":True,
      "text":"SECTOR: PLI (Production Linked Incentive) scheme extended for 3 years. Manufacturing companies across steel, defence, and infrastructure to benefit."},
 ]
 
@@ -654,7 +656,7 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS players (
                 code     TEXT PRIMARY KEY,
                 name     TEXT,
-                cash     REAL    DEFAULT 50000,
+                cash     REAL    DEFAULT 0,
                 holdings TEXT    DEFAULT '{}',
                 loans    TEXT    DEFAULT '{}',
                 frozen   INTEGER DEFAULT 0,
@@ -703,6 +705,7 @@ def _default_state() -> dict:
         "round":              0,
         "round_end_time":     None,
         "break_end_time":     None,
+        "break_duration":     BREAK_DURATION,
         "companies":          companies,
         "ipo_listed":         [],
         "news":               [],
@@ -1365,7 +1368,10 @@ async def end_round(pw: str):
         raise HTTPException(400, "Not in trading phase")
     state["phase"]          = "break"
     state["round_end_time"] = None
-    state["break_end_time"] = time.time() + BREAK_DURATION
+    # Round 3 -> 4 break is extended to 20 min — reserved for a bigger event/twist later on.
+    this_break_duration     = 1200 if state["round"] == 3 else BREAK_DURATION
+    state["break_end_time"] = time.time() + this_break_duration
+    state["break_duration"] = this_break_duration
     state["regulatory_freeze"] = None
     state["acquisition_pair"]  = None
     state["merge_bids"]        = {}
@@ -1398,10 +1404,12 @@ async def end_round(pw: str):
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_all({
-        "type":  "phase_change",
-        "phase": "break",
-        "round": state["round"],
-        "board": board,
+        "type":           "phase_change",
+        "phase":          "break",
+        "round":          state["round"],
+        "board":          board,
+        "break_end_time": state["break_end_time"],
+        "break_duration": state["break_duration"],
     })
     await manager.broadcast_hosts({
         "type":  "state_update",
@@ -1467,24 +1475,37 @@ async def inject_news(data: dict, pw: str):
     is_verified = data.get("verified", True)
     is_real     = is_verified  # verified always moves; unverified may or may not
     strength    = float(data.get("strength", 0.10))
+    affects     = data["affects"]
+    direction   = data.get("direction", 1)
+    text        = (data.get("text") or "").strip()
+    if not text:
+        # Host left the text field blank — auto-pick a matching preset headline.
+        dir_key = "up" if direction > 0 else "down"
+        options = NEWS_PRESETS.get(affects, {}).get(dir_key, [])
+        if options:
+            text = random.choice(options)
+        else:
+            cname = state["companies"].get(affects, {}).get("name", affects)
+            text  = (f"Market update: {cname} sees notable "
+                     f"{'gains' if direction > 0 else 'losses'} amid shifting investor sentiment.")
     n = {
-        "type":      "verified" if is_verified else "unverified",
+        "type_tag":  "verified" if is_verified else "unverified",
         "label":     "Market Event" if is_verified else "Unverified Rumour",
-        "text":      data["text"],
-        "affects":   data["affects"],
-        "direction": data.get("direction", 1),
+        "text":      text,
+        "affects":   affects,
+        "direction": direction,
         "strength":  strength,
         "real":      is_real,
     }
     state["news"].append(n)
-    c = state["companies"].get(data["affects"])
+    c = state["companies"].get(affects)
     if c and state["phase"] == "trading":
         c["prev_price"] = c["price"]
         if is_verified:
             move = strength
         else:
             move = strength if random.random() < 0.4 else random.uniform(0.005, 0.02)
-        floor         = PRICE_FLOORS.get(data["affects"], 10)
+        floor         = PRICE_FLOORS.get(affects, 10)
         c["price"]    = max(floor, round(c["price"] * (1 + n["direction"] * move)))
     await write_state(state)
     await manager.broadcast_all({"type": "news", **n})
@@ -1495,7 +1516,8 @@ async def inject_news(data: dict, pw: str):
         "prices": {k: v["price"] for k, v in state["companies"].items()},
         "board":  board,
     })
-    return {"ok": True}
+    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
+    return {"ok": True, "text": text}
 
 
 @app.post("/api/host/manual_price")
@@ -1527,10 +1549,10 @@ async def secret_intel(data: dict, pw: str):
         raise HTTPException(403, "Wrong password")
     code = data["code"]
     n = {
-        "type":    "unverified",
-        "label":   "Secret Intel",
-        "text":    data["text"],
-        "private": True,
+        "type_tag": "unverified",
+        "label":    "Secret Intel",
+        "text":     data["text"],
+        "private":  True,
     }
     await manager.send_player(code, {"type": "news", **n})
     return {"ok": True}
@@ -1580,6 +1602,9 @@ async def chaos_regulatory_freeze(data: dict, pw: str):
         "frozen_stocks":  affected,
         "msg":            msg,
     })
+    players = await all_players()
+    board   = leaderboard(players, state)
+    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
     return {"ok": True, "sector": sector, "frozen_stocks": affected}
 
 
@@ -1642,6 +1667,9 @@ async def chaos_acquisition(data: dict, pw: str):
         "affects": cid1, "direction": 1, "real": False,
         "text": msg,
     })
+    players = await all_players()
+    board   = leaderboard(players, state)
+    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
     return {"ok": True}
 
 
@@ -1660,6 +1688,9 @@ async def chaos_credit_crunch(pw: str):
         "Heavy borrowers beware."
     )
     await manager.broadcast_all({"type": "chaos", "event": "credit_crunch", "msg": msg})
+    players = await all_players()
+    board   = leaderboard(players, state)
+    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
     return {"ok": True}
 
 
@@ -1686,6 +1717,9 @@ async def chaos_ipo_drop(ipo_id: str, pw: str):
         "msg":     msg,
         "company": {"id": ipo_id, **ipo},
     })
+    players = await all_players()
+    board   = leaderboard(players, state)
+    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
     return {"ok": True, "company": {"id": ipo_id, **ipo}}
 
 
@@ -1786,7 +1820,7 @@ async def bm_buy(data: dict):
             strength = random.uniform(0.10, 0.18) if is_leak else random.uniform(0.06, 0.12)
             is_real  = True if is_leak else (random.random() < 0.5)
             n = {
-                "type":      "unverified",
+                "type_tag":  "unverified",
                 "label":     "Unverified Rumour",
                 "affects":   stock,
                 "direction": direction,
@@ -1814,6 +1848,7 @@ async def bm_buy(data: dict):
                 "type": "info",
                 "msg":  f"{icon} {'Leak Card deployed' if is_leak else 'Rumour spread'} on {state['companies'][stock]['name']}. Anonymous.",
             })
+            await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board_now})
 
         p["bm_log"] = p.get("bm_log", []) + [log_entry]
         await save_player(p)
@@ -1872,6 +1907,8 @@ async def ws_player(websocket: WebSocket, code: str):
         "phase":         state["phase"],
         "round":         state["round"],
         "round_end_time": state.get("round_end_time"),
+        "break_end_time": state.get("break_end_time"),
+        "break_duration": state.get("break_duration", BREAK_DURATION),
         "market":        state["companies"],
         "board":         leaderboard(await all_players(), state),
         "banks":         BANKS,

@@ -566,7 +566,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   </div>
   <div class="how-section">
     <div class="how-title">How it works</div>
-    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹50,000 cash.</div></div></div>
+    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹0 cash — borrow from a bank to get going.</div></div></div>
     <div class="how-card"><div class="how-num">02</div><div><div class="how-body-title">Pick your bank</div><div class="how-body-text">3 banks to borrow from — Bharat Bank, VentureCapX, ShadowCredit. Each has different rates and limits.</div></div></div>
     <div class="how-card"><div class="how-num">03</div><div><div class="how-body-title">Read the market</div><div class="how-body-text">14 companies across 10 sectors. Tap a card to expand it, read the backstory, and trade directly.</div></div></div>
     <div class="how-card"><div class="how-num">04</div><div><div class="how-body-title">Trade in rounds</div><div class="how-body-text">Buy and sell before each round closes. Watch the timer. Place predictions for bonus cash.</div></div></div>
@@ -585,7 +585,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <div class="hdr-row1">
       <div class="hdr-name-block">
         <span class="hdr-name" id="top-name" onclick="handleNameTap()">—</span>
-        <span class="hdr-round" id="top-phase">Round 0 / 4</span>
+        <span class="hdr-round" id="top-phase">Round 0 / 6</span>
       </div>
       <button class="hdr-settings" onclick="openSettings()" title="Settings">⚙️</button>
     </div>
@@ -900,8 +900,9 @@ function handleMsg(msg){
       if(!msg.joined) ws.send(JSON.stringify({action:'set_name',name:myName}));
       else {
         myName=msg.name; showApp();
-        // If already in trading and round_end_time provided, start timer
+        // If already mid-round or mid-break, resume the right timer
         if(phase==='trading'&&msg.round_end_time) startTimer(msg.round_end_time,1200);
+        else if(phase==='break'&&msg.break_end_time) startBreakTimer(msg.break_end_time,msg.break_duration||600);
       }
       break;
     case 'joined':
@@ -910,6 +911,7 @@ function handleMsg(msg){
       if(msg.banks)  banksConfig=msg.banks;
       showApp();
       if(phase==='trading'&&msg.round_end_time) startTimer(msg.round_end_time,1200);
+      else if(phase==='break'&&msg.break_end_time) startBreakTimer(msg.break_end_time,msg.break_duration||600);
       break;
     case 'phase_change':
       phase=msg.phase; if(msg.round) currentRound=msg.round;
@@ -923,7 +925,7 @@ function handleMsg(msg){
       } else {
         stopMicroTick();
         if(phase==='break'||phase==='ended') flashScreen('rgba(255,77,109,0.18)');
-        if(phase==='break'&&msg.break_end_time) startBreakTimer(msg.break_end_time,600);
+        if(msg.break_end_time) startBreakTimer(msg.break_end_time,msg.break_duration||600);
         else stopTimer();
       }
       updatePhase(); renderMarket(); renderPredictPanel();
@@ -1012,6 +1014,13 @@ function showApp(){
   updateTopBar(); updatePhase(); renderMarket();
   renderPortfolio(); renderBanks(); renderBoard(); renderPredictPanel(); populateMergeStocks();
   if(phase==='trading') startMicroTick();
+  // Music defaults to ON — this call sits right after the user's "Enter Market"
+  // click, so browsers treat it as a valid user-gesture-triggered play().
+  if(musicOn){
+    const bg=document.getElementById('bg-music');
+    bg.volume=(parseInt(document.getElementById('music-volume')?.value)||50)/100;
+    bg.play().catch(()=>{});
+  }
   // Init nav indicator after layout
   requestAnimationFrame(()=>_moveNavIndicator(activeTab));
 }
@@ -1036,13 +1045,20 @@ function updateTopBar(){
 function updatePhase(){
   const el=document.getElementById('phase-banner'), phEl=document.getElementById('top-phase');
   const map={
-    lobby:  ['banner-lobby',  '⏳ Waiting for round to start...'],
+    lobby:  ['banner-lobby',  '⏳ Waiting Lobby — the market will open once the host starts Round 1.'],
     trading:['banner-trading', `🟢 ROUND ${currentRound} — LIVE — Trading is open. Buy and sell before the round ends.`],
     break:  ['banner-break',  '⏸ Break — next round starting soon'],
     ended:  ['banner-ended',  '🏁 Game Over']
   };
-  // phase banner hidden — no text shown
-  phEl.textContent={lobby:'Lobby · Market Mayhem',trading:`Round ${currentRound} / 4`,break:'Break · Market Mayhem',ended:'Game Ended'}[phase]||phase;
+  if(phase==='lobby'){
+    const [cls,text]=map.lobby;
+    el.className='phase-banner '+cls;
+    el.textContent=text;
+    el.style.display='flex';
+  } else {
+    el.style.display='none';
+  }
+  phEl.textContent={lobby:'Lobby · Market Mayhem',trading:`Round ${currentRound} / 6`,break:'Break · Market Mayhem',ended:'Game Ended'}[phase]||phase;
   document.getElementById('merge-section').style.display=phase==='trading'?'block':'none';
   const inTrading=phase==='trading';
   document.getElementById('tab-board').style.display=inTrading?'none':'';
@@ -1068,6 +1084,9 @@ function openSettings(){
 function closeSettings(){
   document.getElementById('settings-overlay').classList.remove('open');
   document.getElementById('settings-drawer').classList.remove('open');
+  // Re-lock the Black Market button — they have to redo the tap gesture next time
+  bmUnlocked=false;
+  renderSettingsExtras();
 }
 function renderSettingsExtras(){
   const slot=document.getElementById('bm-secret-slot');
@@ -1077,7 +1096,7 @@ function renderSettingsExtras(){
 }
 
 // ── Background music (served as a real static file — see /static/music.mp3) ──
-let musicOn=false;
+let musicOn=true;
 function toggleMusic(){
   const audio=document.getElementById('bg-music'), btn=document.getElementById('music-toggle');
   musicOn=!musicOn;
@@ -1088,15 +1107,15 @@ function setMusicVolume(v){
   document.getElementById('bg-music').volume = Math.max(0,Math.min(100,v))/100;
 }
 
-// ── Black Market — secret unlock: tap the name 5× within 1 second ────────────
+// ── Black Market — secret unlock: tap the name 3× within 1 second ────────────
 // bmUnlocked lives only in memory, so it resets the moment the tab is closed
-// or reloaded, exactly like it did on a separate page requiring re-login.
+// or reloaded, and also re-locks whenever Settings is closed.
 let bmUnlocked=false, _nameTapTimes=[];
 function handleNameTap(){
   const now=Date.now();
   _nameTapTimes.push(now);
   _nameTapTimes=_nameTapTimes.filter(t=>now-t<=1000);
-  if(_nameTapTimes.length>=5){
+  if(_nameTapTimes.length>=3){
     _nameTapTimes=[];
     if(!bmUnlocked){ bmUnlocked=true; renderSettingsExtras(); }
   }
@@ -1832,7 +1851,7 @@ function toast(msg,type='info'){
   <div class="settings-body" id="settings-body">
     <div class="settings-row">
       <div class="settings-row-label">🎵 Music</div>
-      <button class="settings-toggle" id="music-toggle" onclick="toggleMusic()">OFF</button>
+      <button class="settings-toggle on" id="music-toggle" onclick="toggleMusic()">ON</button>
     </div>
     <div class="settings-row">
       <div class="settings-row-label">Volume</div>

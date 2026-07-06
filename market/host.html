@@ -239,8 +239,8 @@ label:first-child{margin-top:0;}
           </div>
           <label>Strength (0.05–0.25)</label>
           <input type="number" id="news-strength" value="0.10" min="0.01" max="0.30" step="0.01">
-          <label>News Text</label>
-          <textarea id="news-text" rows="3" placeholder="e.g. BREAKING: RBI approves NovaPay lending licence..."></textarea>
+          <label>News Text (optional — leave blank to auto-pick a matching headline)</label>
+          <textarea id="news-text" rows="3" placeholder="Leave blank to auto-pick from presets for this stock + direction, or write your own..."></textarea>
           <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="injectNews()">Inject Event</button>
 
           <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
@@ -445,6 +445,7 @@ label:first-child{margin-top:0;}
 
 <script>
 let pw='', state=null, board=[], ws=null, nameToCode={};
+const MAX_ROUNDS = 6; // must match MAX_ROUNDS in main.py
 
 // Auto-load saved password on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -527,7 +528,7 @@ function render() {
   renderPhase(); renderPrices(); renderLeaderboard(); renderNewsLog();
   renderRoundGuide(); populateSelects();
   document.getElementById('stat-players').textContent = board.length;
-  document.getElementById('stat-round').textContent   = state.round + ' / 4';
+  document.getElementById('stat-round').textContent   = state.round + ' / ' + MAX_ROUNDS;
   document.getElementById('stat-phase').textContent   = {lobby:'Lobby',trading:'Trading',break:'Break',ended:'Ended'}[state.phase] || state.phase;
 }
 
@@ -546,11 +547,11 @@ function renderPhase() {
   if (state.phase === 'lobby') {
     s.textContent='▶ Start Round 1'; s.disabled=false; e.disabled=true; eg.disabled=true;
   } else if (state.phase === 'trading') {
-    s.textContent='▶ Round '+state.round; s.disabled=true; e.disabled=false; eg.disabled=(state.round < 4);
+    s.textContent='▶ Round '+state.round; s.disabled=true; e.disabled=false; eg.disabled=(state.round < MAX_ROUNDS);
   } else if (state.phase === 'break') {
     const next = state.round + 1;
-    s.textContent = next <= 4 ? '▶ Start Round ' + next : '(All rounds done)';
-    s.disabled = next > 4; e.disabled = true; eg.disabled = (state.round < 4);
+    s.textContent = next <= MAX_ROUNDS ? '▶ Start Round ' + next : '(All rounds done)';
+    s.disabled = next > MAX_ROUNDS; e.disabled = true; eg.disabled = (state.round < MAX_ROUNDS);
   } else { s.disabled=true; e.disabled=true; eg.disabled=true; }
 }
 
@@ -594,7 +595,7 @@ function renderNewsLog() {
       : '';
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-        <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">${n.label||n.type}</span>
+        <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">${n.label||n.type_tag}</span>
         ${tag}
         <span style="font-size:11px;color:var(--muted);margin-left:auto">${(n.affects||'').toUpperCase()}</span>
       </div>
@@ -620,7 +621,8 @@ function startTimerTick() {
     if (state.phase === 'trading' && state.round_end_time) {
       remaining = Math.max(0, state.round_end_time - Date.now()/1000); total = 1200;
     } else if (state.phase === 'break' && state.break_end_time) {
-      remaining = Math.max(0, state.break_end_time - Date.now()/1000); total = 300;
+      total = state.break_duration || 600;
+      remaining = Math.max(0, state.break_end_time - Date.now()/1000);
     } else { bar.style.width='0%'; label.textContent='—'; return; }
     const pct = Math.min(100, ((total - remaining) / total) * 100);
     bar.style.width = pct + '%';
@@ -704,19 +706,18 @@ async function manualPrice() {
 // ── News injection ────────────────────────────────────────────────────────────
 async function injectNews() {
   const text = document.getElementById('news-text').value.trim();
-  if (!text) return toast('Enter news text.','err');
   const type = document.getElementById('news-type').value;
   const verified = (type === 'event');
   try {
-    await apiPost('/api/host/inject_news', {
+    const res = await apiPost('/api/host/inject_news', {
       verified,
-      text,
+      text,   // may be blank — backend auto-picks a matching preset headline
       affects:   document.getElementById('news-stock').value,
       direction: parseInt(document.getElementById('news-dir').value),
       strength:  parseFloat(document.getElementById('news-strength').value)||0.10,
     });
     document.getElementById('news-text').value='';
-    toast('News injected!','ok');
+    toast(text ? 'News injected!' : `Auto-picked: "${res.text}"`, 'ok');
   } catch(e) { toast(e.message,'err'); }
 }
 async function injectFakeReport(isFake) {
@@ -883,8 +884,10 @@ async function loadBMLog() {
 const ROUND_GUIDE = [
   {round:1,theme:"Stable Opener",colour:"var(--green)",tips:["2 news events, no chaos","Let players learn the companies","Watch buy/sell patterns to spot leaders","Good time: Insider Scandal vs #1 early leader"]},
   {round:2,theme:"First Shock",colour:"var(--orange)",tips:["Drop 1 negative + 1 positive news","Trigger Credit Crunch or Regulatory Freeze","Good time for first IPO drop (NovaPay or GreenLeaf)","Send Secret Intel to 1–2 players to create info asymmetry"]},
-  {round:3,theme:"Mid-Game Chaos",colour:"var(--blue)",tips:["Acquisition Rumour between two popular stocks","2nd IPO drop (ArmorInc or ByteCorp)","Dividend on most-held stock creates leaderboard shift","Portfolio Freeze on the current leader for drama"]},
-  {round:4,theme:"Final Round",colour:"var(--red)",tips:["Maximum chaos — credit crunch + aggressive news","All 4 IPOs should be listed by now","End game triggers final leaderboard reveal","Host: reveal which rumours were real vs fake"]},
+  {round:3,theme:"Mid-Game Chaos",colour:"var(--blue)",tips:["Acquisition Rumour between two popular stocks","2nd IPO drop (ArmorInc or ByteCorp)","Dividend on most-held stock creates leaderboard shift","⏰ REMINDER: the break after this round is 20 min — reserved for a bigger planned event/twist (not built yet)"]},
+  {round:4,theme:"The Turn",colour:"var(--purple)",tips:["Fresh off the extended break — good spot for a big reveal or twist","Portfolio Freeze on the current leader for drama","Keep an eye on who used the extended break to reload cash via banks","Re-check bankruptcy eligibility — debt should be piling up for some players by now"]},
+  {round:5,theme:"Escalation",colour:"var(--gold)",tips:["Stack 2-3 chaos events back to back — this is where fortunes flip","3rd/4th IPO drop if not already listed","Good time for a second Credit Crunch if borrowers are heavy","Watch for merger bids consolidating the lead"]},
+  {round:6,theme:"Final Round",colour:"var(--red)",tips:["Maximum chaos — credit crunch + aggressive news","All 4 IPOs should be listed by now","End game triggers final leaderboard reveal","Host: reveal which rumours were real vs fake"]},
 ];
 function renderRoundGuide() {
   const el=document.getElementById('round-guide');
