@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Mayhem — Live Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f; --surface:#0d1119; --border:#1e2736;
+  --gold:#f5a623; --green:#00e676; --red:#ff4d6d; --blue:#4fc3f7; --muted:rgba(255,255,255,0.35); --text:#dde6f0;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden;}
+body{display:flex;flex-direction:column;padding:36px 56px;}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.title{font-size:34px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:#fff;text-shadow:0 0 40px rgba(0,230,118,0.25);}
+.title span{color:var(--green);}
+.meta{display:flex;gap:36px;align-items:center;}
+.meta-item{text-align:right;}
+.meta-label{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.meta-val{font-size:26px;font-weight:700;color:#fff;}
+.meta-val.timer{font-variant-numeric:tabular-nums;}
+.list{flex:1;display:flex;flex-direction:column;gap:10px;overflow:hidden;justify-content:center;}
+.row{display:flex;align-items:center;gap:24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 28px;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s;}
+.row.rank-1{border-color:rgba(245,166,35,0.5);box-shadow:0 0 40px rgba(245,166,35,0.08);}
+.rank{font-size:30px;font-weight:800;width:64px;text-align:center;color:var(--muted);flex-shrink:0;}
+.rank.gold{color:#ffd700;} .rank.silver{color:#c0c0c0;} .rank.bronze{color:#cd7f32;}
+.name{flex:1;font-size:28px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nw{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;flex-shrink:0;}
+.nw.pos{color:var(--green);} .nw.neg{color:var(--red);}
+.empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px;letter-spacing:2px;}
+.status-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="title">Market <span>Mayhem</span></div>
+    <div class="meta">
+      <div class="meta-item"><div class="meta-label">Round</div><div class="meta-val" id="m-round">— / 6</div></div>
+      <div class="meta-item"><div class="meta-label">Phase</div><div class="meta-val" id="m-phase">—</div></div>
+      <div class="meta-item"><div class="meta-label"><span class="status-dot"></span> Live</div><div class="meta-val timer" id="m-timer">--:--</div></div>
+    </div>
+  </div>
+  <div class="list" id="list"><div class="empty">Waiting for players…</div></div>
+
+<script>
+const params=new URLSearchParams(location.search);
+const pw=params.get('pw')||'';
+let ws=null, timerInterval=null;
+
+function fmt(n){ return '₹'+Math.round(n).toLocaleString('en-IN'); }
+
+function connect(){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}/ws/host`);
+  ws.onmessage=e=>handleMsg(JSON.parse(e.data));
+  ws.onclose=()=>setTimeout(connect,2000);
+  ws.onerror=()=>{};
+  setInterval(()=>{ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping'})); },5000);
+}
+
+function handleMsg(msg){
+  if(msg.type!=='state_update') return;
+  const state=msg.state, board=msg.board||[];
+  document.getElementById('m-round').textContent = `${state.round} / 6`;
+  document.getElementById('m-phase').textContent = {lobby:'Lobby',trading:'Trading',break:'Break',ended:'Final'}[state.phase]||state.phase;
+  updateTimer(state);
+  renderBoard(board);
+}
+
+function updateTimer(state){
+  clearInterval(timerInterval);
+  const el=document.getElementById('m-timer');
+  let endTime=null;
+  if(state.phase==='trading') endTime=state.round_end_time;
+  else if(state.phase==='break') endTime=state.break_end_time;
+  if(!endTime){ el.textContent='--:--'; return; }
+  function tick(){
+    const rem=Math.max(0,endTime-Date.now()/1000);
+    const m=Math.floor(rem/60), s=Math.floor(rem%60);
+    el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.style.color = rem<60 ? 'var(--red)' : '#fff';
+  }
+  tick(); timerInterval=setInterval(tick,1000);
+}
+
+let lastOrder={};
+function renderBoard(board){
+  const list=document.getElementById('list');
+  if(!board.length){ list.innerHTML='<div class="empty">Waiting for players…</div>'; return; }
+  const cls=['gold','silver','bronze'];
+  list.innerHTML=board.slice(0,12).map(p=>{
+    const rankCls=cls[p.rank-1]||'';
+    const nwCls=p.net_worth>=0?'pos':'neg';
+    return `<div class="row ${p.rank===1?'rank-1':''}">
+      <div class="rank ${rankCls}">${p.rank}</div>
+      <div class="name">${p.name}</div>
+      <div class="nw ${nwCls}">${fmt(p.net_worth)}</div>
+    </div>`;
+  }).join('');
+}
+
+connect();
+</script>
+</body>
+</html>

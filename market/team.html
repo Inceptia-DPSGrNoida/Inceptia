@@ -15,6 +15,44 @@
   --muted:rgba(255,255,255,0.32); --text:#dde6f0;
   --mono:'JetBrains Mono','IBM Plex Mono',monospace; --sans:'JetBrains Mono','IBM Plex Mono',monospace; --display:'JetBrains Mono','IBM Plex Mono',monospace;
 }
+/* ── LIGHT THEME — first pass. Core surfaces/text are variable-driven so most
+   components (cards, banks, nav, pills) adapt automatically. A handful of
+   components use hardcoded dark rgba() values instead of the variables above
+   (drawers, overlays, hero, chaos screen) — those get explicit overrides
+   below. Accent colours (gold/green/red/blue/purple/pink/orange) are left
+   as-is since they still read fine on a light background. Treat this as a
+   rough draft — happy to fine-tune exact shades once you've seen it live. */
+[data-theme="light"]{
+  --bg:#f3f5f9; --surface:#ffffff; --surface2:#eef1f6; --border:#dde3ec;
+  --muted:rgba(20,30,48,0.42); --text:#1a2332;
+}
+[data-theme="light"] .hero{background:linear-gradient(160deg,#eaf1fb 0%,#f3f5f9 60%);}
+[data-theme="light"] .hero::before{opacity:0.5;}
+[data-theme="light"] .hero-title{text-shadow:none;}
+[data-theme="light"] .hdr-name{color:#0a0f1a;text-shadow:none;}
+[data-theme="light"] .ticker-wrap{background:rgba(255,255,255,0.7);}
+[data-theme="light"] .ticker-sym{color:rgba(20,30,48,0.5);}
+[data-theme="light"] .join-field input{background:#fff;color:var(--text);}
+[data-theme="light"] .repay-input,[data-theme="light"] .merge-input,[data-theme="light"] .pred-input,[data-theme="light"] .bm-inline-form select,[data-theme="light"] .bm-inline-form textarea{background:#fff;color:var(--text);}
+[data-theme="light"] .settings-drawer{background:rgba(255,255,255,0.98);}
+[data-theme="light"] .settings-coming{color:rgba(20,30,48,0.3);}
+[data-theme="light"] .bm-drawer{background:linear-gradient(160deg,rgba(255,250,250,0.98),rgba(250,242,244,0.98));border-left-color:#e6d8da;}
+[data-theme="light"] .bm-title{color:#5a3a3e;}
+[data-theme="light"] .bm-item{background:rgba(0,0,0,0.02);border-color:#ecdfe1;}
+[data-theme="light"] .merge-popup{background:#fff;border-color:rgba(206,147,216,0.5);}
+[data-theme="light"] .chaos-overlay{background:rgba(255,255,255,0.98);}
+[data-theme="light"] .chaos-msg{color:rgba(20,30,48,0.6);}
+[data-theme="light"] .toast.info{background:#fff;color:var(--text);border-color:var(--border);}
+[data-theme="light"] .bank-desc,[data-theme="light"] .cc-bio,[data-theme="light"] .bank-repay-section{background:rgba(20,30,48,0.03);}
+[data-theme="light"] .bank-glow{opacity:0.06;}
+[data-theme="light"] .qty-btn,[data-theme="light"] .qty-field{background:#fff;}
+[data-theme="light"] .guide-modal{background:#fff;}
+[data-theme="light"] .guide-sidebar{background:rgba(20,30,48,0.03);}
+[data-theme="light"] .how-body-title{color:#0a0f1a;}
+[data-theme="light"] .obc-name{color:#0a0f1a;}
+[data-theme="light"] .cc-name,[data-theme="light"] .port-name,[data-theme="light"] .bank-name,[data-theme="light"] .news-text{color:#0a0f1a;}
+[data-theme="light"] .cc-price,[data-theme="light"] .pred-sel-price{color:#0a0f1a;}
+[data-theme="light"] .obc-val{color:#0a0f1a;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overscroll-behavior:none;}
 ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
@@ -71,18 +109,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .app-header{background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
 
 /* row 1: name + round + settings */
-.hdr-row1{display:flex;align-items:flex-end;justify-content:space-between;padding:22px 18px 18px;}
-.hdr-name-block{display:flex;align-items:baseline;gap:9px;min-width:0;}
-.hdr-name{font-family:var(--mono);font-size:30px;font-weight:700;color:#ffffff;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 20px rgba(255,255,255,0.15);}
+.hdr-peek{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:8px 14px;cursor:pointer;user-select:none;border-bottom:1px solid transparent;}
+.hdr-peek-round{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;margin-right:auto;}
+.hdr-peek-timer{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
+.hdr-peek-chevron{font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.5px;text-transform:uppercase;transition:opacity 0.2s;}
+.hdr-expand-chevron{display:none;} /* legacy, unused now */
+.hdr-expand-wrap{max-height:0;overflow:hidden;transition:max-height 0.28s cubic-bezier(0.4,0,0.2,1);padding:0 18px;}
+#hdr-expand-wrap.open{max-height:220px;padding:4px 18px 10px;}
+@media (hover:hover) and (pointer:fine){
+  .hdr-peek:hover{background:rgba(255,255,255,0.03);}
+  .hdr-peek:hover + .hdr-expand-wrap{max-height:220px;padding:4px 18px 10px;}
+}
+.hdr-name-block{display:flex;align-items:baseline;gap:9px;min-width:0;margin-bottom:10px;padding-top:6px;}
+.hdr-name{font-family:var(--mono);font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 20px rgba(255,255,255,0.15);max-width:38vw;}
 .hdr-round{font-family:var(--mono);font-size:14px;color:rgba(255,255,255,0.65);letter-spacing:1px;white-space:nowrap;margin-bottom:2px;font-weight:500;}
 .hdr-settings{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:background 0.15s;}
 .hdr-settings:hover{background:rgba(255,255,255,0.1);}
 
 /* row 2: timer */
-.hdr-row2{padding:0 18px 20px;display:none;}
+.hdr-row2{padding:0 0 4px;display:none;}
 .hdr-row2.visible{display:block;}
 .hdr-timer-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
-.hdr-timer-val{font-family:var(--mono);font-size:clamp(32px,9vw,52px);font-weight:700;letter-spacing:4px;line-height:1;color:#fff;transition:color 0.5s;}
+.hdr-timer-val{font-family:var(--mono);font-size:clamp(24px,7vw,38px);font-weight:700;letter-spacing:4px;line-height:1;color:#fff;transition:color 0.5s;}
 .hdr-timer-val.c-green{color:var(--green);}
 .hdr-timer-val.c-lime{color:var(--lime);}
 .hdr-timer-val.c-yellow{color:#ffe566;}
@@ -97,15 +145,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .hdr-timer-bar.c-red{background:var(--red);}
 
 /* row 3: stat pills — taller, bigger text */
-.hdr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 18px 24px;}
-.stat-pill{border-radius:12px;padding:16px 10px 15px;display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden;}
+.hdr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:10px 18px 12px;}
+.stat-pill{border-radius:9px;padding:8px 7px 7px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden;}
 .stat-pill::before{content:'';position:absolute;inset:0;opacity:0.06;pointer-events:none;}
 .sp-cash  {background:rgba(245,166,35,0.10);border:1px solid rgba(245,166,35,0.28);}  .sp-cash::before{background:var(--gold);}
 .sp-port  {background:rgba(79,195,247,0.10);border:1px solid rgba(79,195,247,0.28);}  .sp-port::before{background:var(--blue);}
 .sp-loan  {background:rgba(255,77,109,0.10);border:1px solid rgba(255,77,109,0.28);}  .sp-loan::before{background:var(--red);}
 .sp-nw    {background:rgba(0,230,118,0.10);border:1px solid rgba(0,230,118,0.28);}    .sp-nw::before{background:var(--green);}
 .sp-label{font-size:10px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);position:relative;font-weight:600;}
-.sp-val  {font-family:var(--mono);font-size:clamp(17px,4.5vw,28px);font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.sp-val  {font-family:var(--mono);font-size:clamp(14px,3.8vw,22px);font-weight:700;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
 .sp-val.gold{color:var(--gold);} .sp-val.blue{color:var(--blue);} .sp-val.red{color:var(--red);} .sp-val.green{color:var(--green);} .sp-val.muted{color:var(--muted);}
 /* keep old aliases so JS still works */
 .s-val.gold{color:var(--gold);} .s-val.green{color:var(--green);} .s-val.red{color:var(--red);} .s-val.blue{color:var(--blue);} .s-val.muted{color:var(--muted);}
@@ -124,8 +172,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   /* border accent line */
   border-bottom:3px solid transparent;
 }
-.nav-tab{padding:16px 6px 13px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.15s;position:relative;z-index:1;user-select:none;}
-.tab-icon{display:block;font-size:20px;margin-bottom:5px;}
+.nav-tab{padding:11px 6px 9px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.15s;position:relative;z-index:1;user-select:none;}
+.tab-icon{display:block;font-size:17px;margin-bottom:3px;}
 .tab-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;transition:color 0.15s;font-family:var(--mono);}
 .nav-tab:not(.active) .tab-label{color:rgba(255,255,255,0.3);}
 .nav-tab:not(.active) .tab-icon{filter:grayscale(0.6);opacity:0.5;}
@@ -492,6 +540,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .settings-toggle.on{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.4);color:var(--green);}
 #music-volume{width:120px;accent-color:var(--gold);}
 
+.chart-type-row{display:flex;gap:6px;}
+.chart-type-btn{flex:1;padding:9px 4px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;}
+.chart-type-btn.active{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.4);color:var(--green);}
+.guide-btn{width:100%;margin-top:22px;padding:14px;border-radius:12px;cursor:pointer;background:rgba(79,195,247,0.08);border:1px solid rgba(79,195,247,0.25);color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;transition:background .15s;}
+.guide-btn:hover{background:rgba(79,195,247,0.16);}
+
+/* ── Guide modal (centered, tabbed) ── */
+.guide-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:420;opacity:0;pointer-events:none;transition:opacity .25s;}
+.guide-overlay.open{opacity:1;pointer-events:all;}
+.guide-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.96);width:min(720px,92vw);height:min(600px,84vh);background:rgba(13,17,25,0.98);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:18px;z-index:421;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5);}
+.guide-modal.open{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1);}
+.guide-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.guide-title{font-family:var(--mono);font-size:16px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;}
+.guide-body{flex:1;display:flex;overflow:hidden;}
+.guide-sidebar{width:160px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;padding:12px 8px;}
+.guide-group-label{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);padding:12px 8px 6px;font-weight:700;}
+.guide-topic-btn{display:block;width:100%;text-align:left;padding:9px 10px;border-radius:8px;background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:12px;cursor:pointer;margin-bottom:2px;transition:background .15s,color .15s;}
+.guide-topic-btn:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+.guide-topic-btn.active{background:rgba(0,230,118,0.1);color:var(--green);font-weight:700;}
+.guide-content{flex:1;overflow-y:auto;padding:22px 26px;}
+.guide-content h3{font-family:var(--mono);font-size:18px;color:#fff;margin-bottom:14px;letter-spacing:0.5px;}
+.guide-content p{font-size:13.5px;line-height:1.75;color:rgba(255,255,255,0.68);margin-bottom:14px;}
+.guide-content strong{color:var(--text);}
+@media (max-width:560px){
+  .guide-body{flex-direction:column;}
+  .guide-sidebar{width:100%;display:flex;gap:2px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);white-space:nowrap;padding:8px;}
+  .guide-group-label{display:none;}
+  .guide-topic-btn{display:inline-block;width:auto;white-space:nowrap;flex-shrink:0;}
+}
+
 /* ── Secret Black Market trigger (mysterious, low-key) ── */
 .bm-secret-btn{
   width:100%;margin-top:26px;padding:15px;border-radius:12px;cursor:pointer;
@@ -581,23 +659,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
   <!-- Unified header -->
   <div class="app-header">
-    <!-- Row 1: name + round + settings -->
-    <div class="hdr-row1">
+    <!-- Thin persistent strip — tap or hover to reveal name/round/timer -->
+    <div class="hdr-peek" id="hdr-peek" onclick="toggleHeaderCollapse()">
+      <span class="hdr-peek-round" id="top-phase-mini">Round 0/6</span>
+      <span class="hdr-peek-timer" id="hdr-compact-timer"></span>
+      <span class="hdr-peek-chevron" id="hdr-chevron">▾ tap for details</span>
+      <button class="hdr-settings" onclick="event.stopPropagation();openSettings()" title="Settings">⚙️</button>
+    </div>
+
+    <div class="hdr-expand-wrap" id="hdr-expand-wrap">
       <div class="hdr-name-block">
         <span class="hdr-name" id="top-name" onclick="handleNameTap()">—</span>
         <span class="hdr-round" id="top-phase">Round 0 / 6</span>
       </div>
-      <button class="hdr-settings" onclick="openSettings()" title="Settings">⚙️</button>
+      <div class="hdr-row2" id="timer-section">
+        <div class="hdr-timer-label"><span id="hdr-timer-label-text">⏱ Round closes in</span></div>
+        <div class="hdr-timer-val" id="timer-countdown">—</div>
+        <div class="hdr-timer-bar-wrap"><div class="hdr-timer-bar" id="timer-bar"></div></div>
+      </div>
     </div>
 
-    <!-- Row 2: timer (shown only during trading) -->
-    <div class="hdr-row2" id="timer-section">
-      <div class="hdr-timer-label"><span id="hdr-timer-label-text">⏱ Round closes in</span></div>
-      <div class="hdr-timer-val" id="timer-countdown">—</div>
-      <div class="hdr-timer-bar-wrap"><div class="hdr-timer-bar" id="timer-bar"></div></div>
-    </div>
-
-    <!-- Row 3: stat pills -->
+    <!-- Always visible, just shorter than before -->
     <div class="hdr-stats">
       <div class="stat-pill sp-cash"><span class="sp-label">Cash</span><span class="sp-val gold" id="top-cash">₹0</span></div>
       <div class="stat-pill sp-port"><span class="sp-label">Portfolio</span><span class="sp-val blue" id="top-port">₹0</span></div>
@@ -643,10 +725,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <div class="bankruptcy-section">
         <div class="bankruptcy-title">⚠️ Voluntary Bankruptcy</div>
         <div class="bankruptcy-desc">
-          Declaring bankruptcy will permanently wipe all your holdings, loans, and open bets.
-          You will restart with ₹25,000 in cash and your portfolio will be <strong>frozen for the
-          rest of this round</strong> as a penalty. This action cannot be undone.<br><br>
-          Only available once your total debt exceeds your net worth by ₹9,00,000 or more.
+          Resets your account with ₹25,000 cash — but wipes everything else and freezes you until the
+          next round. Irreversible.
         </div>
         <div class="bankruptcy-desc" id="bankruptcy-eligibility" style="color:var(--orange)"></div>
         <button class="bankruptcy-btn" id="bankruptcy-btn" onclick="declareBankruptcy()">⚠️ DECLARE BANKRUPTCY</button>
@@ -693,7 +773,7 @@ let phase='lobby', currentRound=0;
 let market={}, playerData={cash:0,loans:{},total_loan:0,frozen:false,net_worth:0,portfolio:{},bets:{}};
 let boardData=[], prevPrices={}, priceHistory={}, newsCount=0, activeTab='market';
 let joinStep1Done=false, wasKicked=false, pendingMerge=null, expandedCard=null, bankruptFrozen=false;
-let banksConfig={}, sentiment={}, regFreeze=null, creditCrunch=false;
+let banksConfig={}, sentiment={}, regFreeze=null, creditCrunch=false, priceFrozenStocks={};
 let predDirection=null, predStock=null;
 let timerInterval=null, timerEndTime=null, timerTotal=1200;
 // trade pressure: {cid: {buys: N, sells: N}} — tracks this round's player actions
@@ -701,31 +781,14 @@ let tradePressure={};
 const flashQueue={};
 const fmt=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 
-// ── Per-second micro-tick (client-side visual only, tiny moves) ───────────────
-// Simulates live market feel. Magnitude is tiny: 0.01–0.08% per second.
-// Does NOT send anything to server — purely visual between server pushes.
-const MICRO_VOL={
-  zora:0.0003,streamvx:0.0008,freshco:0.0003,voltex:0.0007,mediq:0.0007,
-  skylink:0.0010,swifthaul:0.0005,crownmart:0.0007,shieldgen:0.0003,indranet:0.0005,
-  novapay:0.0012,greenleaf:0.0006,armorinc:0.0004,bytecorp:0.0016,
-};
-let microTickInterval=null;
-function startMicroTick(){
-  if(microTickInterval) return;
-  microTickInterval=setInterval(()=>{
-    if(phase!=='trading') return;
-    let changed=false;
-    for(const [cid,c] of Object.entries(market)){
-      const vol=MICRO_VOL[cid]||0.0005;
-      const mag=Math.random()*vol;
-      const dir=Math.random()>0.5?1:-1;
-      const newPrice=Math.max(1,Math.round(c.price*(1+dir*mag)));
-      if(newPrice!==c.price){c.price=newPrice;changed=true;}
-    }
-    if(changed) renderMarketPricesOnly();
-  },1000);
-}
-function stopMicroTick(){clearInterval(microTickInterval);microTickInterval=null;}
+// ── Micro-tick: now a no-op ────────────────────────────────────────────────
+// Prices used to jitter client-side purely for show. That's gone — the
+// server now recomputes the REAL tradable price every 4s (price_tick_loop
+// in main.py) and pushes it via prices_bulk, so what you see is exactly
+// what you'd trade at. These functions are kept as harmless no-ops so we
+// don't have to touch every call site that starts/stops them per phase.
+function startMicroTick(){}
+function stopMicroTick(){}
 // Lightweight price-only re-render (no full DOM rebuild, just update numbers + sparklines)
 function renderMarketPricesOnly(){
   for(const [cid,c] of Object.entries(market)){
@@ -799,6 +862,7 @@ function startTimer(endTime,total){
     bar.className='hdr-timer-bar '+stage.cls;
     cd.className='hdr-timer-val '+stage.cls;
     cd.textContent=fmtTime(rem);
+    const ct=document.getElementById('hdr-compact-timer'); if(ct) ct.textContent='⏱ '+fmtTime(rem);
     if(rem<=0){clearInterval(timerInterval);cd.textContent='00:00';bar.style.width='0%';}
   }
   tick(); timerInterval=setInterval(tick,1000);
@@ -806,6 +870,7 @@ function startTimer(endTime,total){
 function stopTimer(){
   clearInterval(timerInterval);
   document.getElementById('timer-section').classList.remove('visible');
+  const ct=document.getElementById('hdr-compact-timer'); if(ct) ct.textContent='';
 }
 const BREAK_TIMER_STAGES=[
   {pct:80, cls:'c-red'},
@@ -831,6 +896,7 @@ function startBreakTimer(endTime,total){
     bar.className='hdr-timer-bar '+stage.cls;
     cd.className='hdr-timer-val '+stage.cls;
     cd.textContent=fmtTime(rem);
+    const ct=document.getElementById('hdr-compact-timer'); if(ct) ct.textContent='⏸ '+fmtTime(rem);
     if(rem<=0){clearInterval(timerInterval);cd.textContent='00:00';bar.style.width='0%';}
   }
   tick(); timerInterval=setInterval(tick,1000);
@@ -928,7 +994,7 @@ function handleMsg(msg){
         if(msg.break_end_time) startBreakTimer(msg.break_end_time,msg.break_duration||600);
         else stopTimer();
       }
-      updatePhase(); renderMarket(); renderPredictPanel();
+      updatePhase(); renderMarket(); renderPredictPanel(); syncMusicForPhase();
       toast({trading:`🟢 Round ${currentRound} — TRADE!`,break:'⏸ Break time.',ended:'🏁 Game over!'}[phase]||phase,'info');
       break;
     case 'trade_ok':
@@ -1014,13 +1080,10 @@ function showApp(){
   updateTopBar(); updatePhase(); renderMarket();
   renderPortfolio(); renderBanks(); renderBoard(); renderPredictPanel(); populateMergeStocks();
   if(phase==='trading') startMicroTick();
-  // Music defaults to ON — this call sits right after the user's "Enter Market"
-  // click, so browsers treat it as a valid user-gesture-triggered play().
-  if(musicOn){
-    const bg=document.getElementById('bg-music');
-    bg.volume=(parseInt(document.getElementById('music-volume')?.value)||50)/100;
-    bg.play().catch(()=>{});
-  }
+  // Music defaults to ON but only plays outside trading — this call sits right
+  // after the user's "Enter Market" click, so browsers allow the play() call.
+  setMusicVolume(document.getElementById('music-volume')?.value||100);
+  syncMusicForPhase();
   // Init nav indicator after layout
   requestAnimationFrame(()=>_moveNavIndicator(activeTab));
 }
@@ -1058,7 +1121,9 @@ function updatePhase(){
   } else {
     el.style.display='none';
   }
-  phEl.textContent={lobby:'Lobby · Market Mayhem',trading:`Round ${currentRound} / 6`,break:'Break · Market Mayhem',ended:'Game Ended'}[phase]||phase;
+  const phaseTxt={lobby:'Lobby · Market Mayhem',trading:`Round ${currentRound} / 6`,break:'Break · Market Mayhem',ended:'Game Ended'}[phase]||phase;
+  phEl.textContent=phaseTxt;
+  const phMini=document.getElementById('top-phase-mini'); if(phMini) phMini.textContent=phaseTxt;
   document.getElementById('merge-section').style.display=phase==='trading'?'block':'none';
   const inTrading=phase==='trading';
   document.getElementById('tab-board').style.display=inTrading?'none':'';
@@ -1076,11 +1141,33 @@ function flashScreen(color){
   el.style.background=color; el.style.opacity='1';
   setTimeout(()=>{el.style.opacity='0';},600);
 }
+let headerExpanded=false;
+function toggleHeaderCollapse(){
+  headerExpanded=!headerExpanded;
+  document.getElementById('hdr-expand-wrap').classList.toggle('open',headerExpanded);
+  const chev=document.getElementById('hdr-chevron');
+  if(chev) chev.textContent = headerExpanded ? '▴ tap to hide' : '▾ tap for details';
+}
 function openSettings(){
   document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-drawer').classList.add('open');
   renderSettingsExtras();
+  const themeBtn=document.getElementById('theme-toggle');
+  if(themeBtn) themeBtn.textContent=(document.documentElement.getAttribute('data-theme')==='light')?'LIGHT':'DARK';
 }
+function toggleTheme(){
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  if(isLight) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme','light');
+  const btn=document.getElementById('theme-toggle'); if(btn) btn.textContent=isLight?'DARK':'LIGHT';
+  try{ localStorage.setItem('mm-theme', isLight?'dark':'light'); }catch(e){}
+}
+// Restore saved theme on load
+(function(){
+  try{
+    if(localStorage.getItem('mm-theme')==='light') document.documentElement.setAttribute('data-theme','light');
+  }catch(e){}
+})();
 function closeSettings(){
   document.getElementById('settings-overlay').classList.remove('open');
   document.getElementById('settings-drawer').classList.remove('open');
@@ -1096,15 +1183,44 @@ function renderSettingsExtras(){
 }
 
 // ── Background music (served as a real static file — see /static/music.mp3) ──
-let musicOn=true;
+// Volume uses a WebAudio GainNode instead of the native <audio>.volume cap,
+// so the slider can push past 100% (the old normal max) up to 200% boosted.
+let musicOn=true, audioCtx=null, gainNode=null, audioGraphReady=false;
+function ensureAudioGraph(){
+  if(audioGraphReady) return;
+  try{
+    const bg=document.getElementById('bg-music');
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=audioCtx.createMediaElementSource(bg);
+    gainNode=audioCtx.createGain();
+    gainNode.gain.value=1.0;
+    src.connect(gainNode).connect(audioCtx.destination);
+    audioGraphReady=true;
+  }catch(e){ /* WebAudio unsupported — falls back to native .volume, capped at 100% */ }
+}
 function toggleMusic(){
-  const audio=document.getElementById('bg-music'), btn=document.getElementById('music-toggle');
+  const btn=document.getElementById('music-toggle');
   musicOn=!musicOn;
-  if(musicOn){ audio.play().catch(()=>{}); btn.textContent='ON'; btn.classList.add('on'); }
-  else { audio.pause(); btn.textContent='OFF'; btn.classList.remove('on'); }
+  if(musicOn){ btn.textContent='ON'; btn.classList.add('on'); }
+  else { btn.textContent='OFF'; btn.classList.remove('on'); }
+  syncMusicForPhase();
+}
+// Music plays during lobby/break/ended, and pauses during active trading rounds
+// so it doesn't compete with the trading energy / any future sound effects.
+function syncMusicForPhase(){
+  const bg=document.getElementById('bg-music'); if(!bg) return;
+  if(musicOn && phase!=='trading'){
+    ensureAudioGraph();
+    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
+    bg.play().catch(()=>{});
+  } else bg.pause();
 }
 function setMusicVolume(v){
-  document.getElementById('bg-music').volume = Math.max(0,Math.min(100,v))/100;
+  ensureAudioGraph();
+  const pct=Math.max(0,Math.min(200,parseInt(v)||0));
+  const readout=document.getElementById('music-volume-readout'); if(readout) readout.textContent=pct+'%';
+  if(gainNode) gainNode.gain.value=pct/100;              // 100 = old normal max, up to 200 = 2x boosted
+  else document.getElementById('bg-music').volume=Math.min(1,pct/100); // fallback, hard-capped at 100%
 }
 
 // ── Black Market — secret unlock: tap the name 3× within 1 second ────────────
@@ -1147,13 +1263,18 @@ function renderBMItems(data){
   const body=document.getElementById('bm-body');
   let html=`<div class="bm-cash">Cash on hand: <strong>${fmt(data.cash)}</strong></div>`;
   data.items.forEach(item=>{
-    const canAfford=data.cash>=item.cost, disabled=item.locked||!canAfford;
+    const canAfford=data.cash>=item.cost;
+    const breakOnly=item.id==='early_word';
+    const breakBlocked=breakOnly&&phase!=='break';
+    const disabled=item.locked||!canAfford||breakBlocked;
+    const btnLabel={insider_hint:'Buy',early_word:'Buy',price_freeze:'Set up',rate_freeze:'Set up',portfolio_peek:'Set up'}[item.id]||'Set up';
     html+=`<div class="bm-item ${item.locked?'locked':''}" id="bm-card-${item.id}">
       <div class="bm-item-top"><span class="bm-item-icon">${item.icon}</span><span class="bm-item-name">${item.name}</span><span class="bm-item-cost">${fmt(item.cost)}</span></div>
       <div class="bm-item-desc">${item.desc}</div>
+      ${breakBlocked?'<div class="bm-item-locked-tag">Only available during a break</div>':''}
       ${item.locked
         ? '<div class="bm-item-locked-tag">Already used this game</div>'
-        : `<button class="bm-item-btn" ${disabled?'disabled':''} onclick="bmBuyFlow('${item.id}')">${item.id==='insider_hint'?'Buy':'Set up'}</button>`}
+        : `<button class="bm-item-btn" ${disabled?'disabled':''} onclick="bmBuyFlow('${item.id}')">${btnLabel}</button>`}
     </div>`;
   });
   body.innerHTML=html;
@@ -1163,23 +1284,54 @@ function bmBuyFlow(itemId){
   if(!item) return;
   if(itemId==='insider_hint'){
     if(!confirm(`Buy Insider Hint for ${fmt(item.cost)}?`)) return;
-    bmBuy(itemId,{});
-    return;
+    bmBuy(itemId,{}); return;
+  }
+  if(itemId==='early_word'){
+    if(!confirm(`Buy Early Word for ${fmt(item.cost)}? Reveals next round's real headlines now.`)) return;
+    bmBuy(itemId,{}); return;
   }
   const existing=document.getElementById('bm-form-'+itemId);
   if(existing){ existing.remove(); return; }
   const container=document.getElementById('bm-card-'+itemId);
-  const stockOpts=Object.entries(market).map(([cid,c])=>`<option value="${cid}">${c.name}</option>`).join('');
   const form=document.createElement('div');
   form.className='bm-inline-form'; form.id='bm-form-'+itemId; form.dataset.dir='1';
-  form.innerHTML=`
-    <select id="bm-stock-${itemId}">${stockOpts}</select>
-    <div class="bm-dir-row">
-      <button type="button" class="bm-dir-btn up active" onclick="setBMDir('${itemId}',1,this)">▲ UP</button>
-      <button type="button" class="bm-dir-btn dn" onclick="setBMDir('${itemId}',-1,this)">▼ DOWN</button>
-    </div>
-    <textarea id="bm-text-${itemId}" maxlength="200" placeholder="Write the rumour text..."></textarea>
-    <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Deploy — ${fmt(item.cost)}</button>`;
+
+  if(itemId==='spread_rumour'||itemId==='leak_card'){
+    const stockOpts=Object.entries(market).map(([cid,c])=>`<option value="${cid}">${c.name}</option>`).join('');
+    form.innerHTML=`
+      <select id="bm-stock-${itemId}">${stockOpts}</select>
+      <div class="bm-dir-row">
+        <button type="button" class="bm-dir-btn up active" onclick="setBMDir('${itemId}',1,this)">▲ UP</button>
+        <button type="button" class="bm-dir-btn dn" onclick="setBMDir('${itemId}',-1,this)">▼ DOWN</button>
+      </div>
+      <textarea id="bm-text-${itemId}" maxlength="200" placeholder="Write the rumour text..."></textarea>
+      <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Deploy — ${fmt(item.cost)}</button>`;
+  } else if(itemId==='price_freeze'){
+    const stockOpts=Object.entries(market).map(([cid,c])=>`<option value="${cid}">${c.name}</option>`).join('');
+    form.innerHTML=`
+      <select id="bm-stock-${itemId}">${stockOpts}</select>
+      <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Freeze it — ${fmt(item.cost)}</button>`;
+  } else if(itemId==='rate_freeze'){
+    const myBanks=Object.entries(banksConfig).filter(([bid])=>((playerData.loans||{})[bid]||0)>0);
+    if(!myBanks.length){
+      form.innerHTML=`<div class="bm-item-desc">You don't owe any bank right now — nothing to lock.</div>`;
+    } else {
+      const bankOpts=myBanks.map(([bid,b])=>`<option value="${bid}">${b.name} (owe ${fmt((playerData.loans||{})[bid]||0)})</option>`).join('');
+      form.innerHTML=`
+        <select id="bm-bank-${itemId}">${bankOpts}</select>
+        <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Lock it in — ${fmt(item.cost)}</button>`;
+    }
+  } else if(itemId==='portfolio_peek'){
+    const rivals=(boardData||[]).filter(p=>p.name!==myName);
+    if(!rivals.length){
+      form.innerHTML=`<div class="bm-item-desc">No other players to peek at yet.</div>`;
+    } else {
+      const rivalOpts=rivals.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+      form.innerHTML=`
+        <select id="bm-target-${itemId}">${rivalOpts}</select>
+        <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Peek — ${fmt(item.cost)}</button>`;
+    }
+  }
   container.appendChild(form);
 }
 function setBMDir(itemId,dir,btn){
@@ -1190,11 +1342,22 @@ function setBMDir(itemId,dir,btn){
 }
 function confirmBMBuy(itemId){
   const form=document.getElementById('bm-form-'+itemId);
-  const stock=document.getElementById('bm-stock-'+itemId).value;
-  const text=document.getElementById('bm-text-'+itemId).value.trim();
-  const direction=parseInt(form.dataset.dir||'1');
-  if(!text) return toast('Write the rumour text first.','err');
-  bmBuy(itemId,{stock,direction,text});
+  if(itemId==='spread_rumour'||itemId==='leak_card'){
+    const stock=document.getElementById('bm-stock-'+itemId).value;
+    const text=document.getElementById('bm-text-'+itemId).value.trim();
+    const direction=parseInt(form.dataset.dir||'1');
+    if(!text) return toast('Write the rumour text first.','err');
+    bmBuy(itemId,{stock,direction,text});
+  } else if(itemId==='price_freeze'){
+    const stock=document.getElementById('bm-stock-'+itemId).value;
+    bmBuy(itemId,{stock});
+  } else if(itemId==='rate_freeze'){
+    const bank_id=document.getElementById('bm-bank-'+itemId).value;
+    bmBuy(itemId,{bank_id});
+  } else if(itemId==='portfolio_peek'){
+    const target_name=document.getElementById('bm-target-'+itemId).value;
+    bmBuy(itemId,{target_name});
+  }
 }
 async function bmBuy(itemId,extra){
   try{
@@ -1208,35 +1371,184 @@ async function bmBuy(itemId,extra){
   }catch(e){ toast(e.message,'err'); }
 }
 
-// ── Sparkline SVG — animated, stock-market style ──────────────────────────────
-function sparkline(cid,w,h){
+// ── Guide modal ────────────────────────────────────────────────────────────
+const GUIDE_DATA = {
+  "How This Works": { icon:'🎓', topics: {
+    "The Big Picture": `<h3>🎓 The Big Picture</h3>
+      <p>Market Mayhem runs in <strong>6 rounds</strong>. Each round is a live trading window where prices move for real and you buy and sell shares. Between rounds there's a <strong>break</strong> — no trading, but it's when you repay loans and catch your breath. At the very end, whoever has the highest <strong>net worth</strong> (cash + what your shares are worth − what you owe the banks) wins.</p>
+      <p>You start with <strong>₹0 cash</strong>. On purpose — the game wants you to visit a bank on day one and make a real decision about leverage before you've even seen a stock move.</p>`,
+    "Stock Market": `<h3>📈 Stock Market</h3>
+      <p>There are 10 companies live from the start, spanning manufacturing, tech, pharma, defence, and more, plus up to 4 more that can IPO mid-game if the host triggers it. Every company has a <strong>risk rating</strong> (Low → Very High) — that's not flavour text, it directly controls how hard that stock can swing.</p>
+      <p>Prices aren't static between rounds. Every 20 seconds the "real" fair value for each stock gets recalculated based on its volatility profile, and every 4 seconds the actual price you'd trade at wobbles around that value — small, fast, and genuinely tradable, not just cosmetic. Tap a card to expand it and trade.</p>`,
+    "Banks": `<h3>🏦 Banks</h3>
+      <p>Three lenders, three personalities. <strong>Bharat Bank</strong> is safe and cheap but capped low. <strong>VentureCapX</strong> sits in the middle. <strong>ShadowCredit</strong> lends huge amounts with no questions asked — and charges for it.</p>
+      <p>Here's the part people miss: the rate you pay isn't fixed. It's <strong>tiered by how much you currently owe that bank</strong> — borrow near a bank's limit and your rate climbs with it, re-checked every round. Pay a loan down and your rate drops back down too. Repayment only happens during breaks.</p>`,
+    "News": `<h3>📰 News</h3>
+      <p>Headlines show up tagged as <strong>Market Event</strong> (verified — it will move the price) or <strong>Unverified Rumour</strong> (might be true, might be noise, might be someone in the Black Market messing with you). The host can also drop chaos events — credit crunches, regulatory freezes on a whole sector, surprise dividends — that hit everyone at once.</p>`,
+    "Bankruptcy": `<h3>💀 Bankruptcy</h3>
+      <p>If your debt gets bad enough — specifically, once it exceeds your net worth by ₹9,00,000 or more — you can voluntarily declare bankruptcy. It wipes your holdings, loans, and open bets, and restarts you with ₹25,000 cash. The catch: you're frozen out of trading until the next round starts. It's a real reset, not a shortcut.</p>`,
+    "Predictions": `<h3>🎯 Predictions</h3>
+      <p>Separate from regular trading — you pick a stock, a direction, and a target price, and stake cash on it. Nail both the direction and the target and you get a 3x payout; get the direction right but miss the target and it's 1.5x; get it wrong and the stake's gone. One open bet per stock at a time.</p>`,
+    "Black Market": `<h3>🖤 Black Market</h3>
+      <p>A hidden shop with anonymous, higher-impact moves — insider tips, rumours you plant yourself, price freezes, rival intel, and more. Everything you do there is untraceable back to you. Find it by tapping your name in the header quickly a few times.</p>`,
+    "Winning": `<h3>🏆 Winning</h3>
+      <p>Net worth, plain and simple: cash + current value of everything you hold − everything you owe. Checked at the end of the final round. Leverage can win you the game or bury you — that tension is the whole point.</p>`,
+  }},
+  "UI Exploration": { icon:'🧭', topics: {
+    "Header & Timer": `<h3>⏱ Header & Timer</h3>
+      <p>The thin strip at the very top is collapsed by default to save space — tap it (or hover, on a mouse) to reveal your name, the round number, and the countdown. The countdown bar changes colour as time runs out: green → lime → yellow → orange → a pulsing red in the final stretch. Below that, four cards always show your cash, portfolio value, loans, and net worth at a glance.</p>`,
+    "Market Tab": `<h3>📈 Market Tab</h3>
+      <p>Every company as a card — tap one to expand it and reveal the backstory, your current holding, and buy/sell controls with a quantity stepper and a MAX/ALL shortcut. A thin coloured bar under the price shows recent buy vs. sell pressure from the room, separate from the sentiment bar (which reflects open predictions).</p>`,
+    "Price Charts": `<h3>📉 Price Charts</h3>
+      <p>By default you get a clean line chart with a dashed baseline (the round's opening price) and small high/low labels. In Settings you can switch to <strong>Candlesticks</strong> (proper open/high/low/close bodies and wicks, bucketed from the last few minutes of real ticks) or simple <strong>Bars</strong>. Green means that segment closed higher than it opened; red means lower.</p>`,
+    "Holdings Tab": `<h3>💼 Holdings Tab</h3>
+      <p>Everything you currently own, with your average buy price, current price, total value, and running profit/loss both in rupees and percent.</p>`,
+    "Bank Tab": `<h3>🏦 Bank Tab</h3>
+      <p>Each bank card shows its rate range, your current tier if you owe them anything, and one-tap borrow amounts that preview exactly what you'd owe next round at that tier's rate. Repayment options only appear during breaks. Voluntary bankruptcy lives at the bottom of this tab.</p>`,
+    "News Tab": `<h3>📰 News Tab</h3>
+      <p>A running feed of everything that's happened — verified events, rumours, chaos, and any private intel that's landed just for you. A badge on the tab counts what you haven't read yet.</p>`,
+    "Predict Tab": `<h3>🎯 Predict Tab</h3>
+      <p>Pick a stock, choose UP or DOWN, set a target price and a stake, and watch the live payout preview update as you type. Any open bets you already have show up above the picker with a live "on track / needs a move" status.</p>`,
+    "Settings": `<h3>⚙️ Settings</h3>
+      <p>Music on/off and volume (it can go past 100% if you need it louder), chart type, light/dark theme, and this guide all live here. There's also something else in here if you know where to tap.</p>`,
+  }},
+};
+let guideActiveGroup="How This Works", guideActiveTopic="The Big Picture";
+function openGuide(){
+  document.getElementById('guide-overlay').classList.add('open');
+  document.getElementById('guide-modal').classList.add('open');
+  renderGuideSidebar();
+  showGuideTopic(guideActiveGroup, guideActiveTopic);
+}
+function closeGuide(){
+  document.getElementById('guide-overlay').classList.remove('open');
+  document.getElementById('guide-modal').classList.remove('open');
+}
+function renderGuideSidebar(){
+  const sb=document.getElementById('guide-sidebar');
+  let html='';
+  for(const [group,data] of Object.entries(GUIDE_DATA)){
+    html+=`<div class="guide-group-label">${data.icon} ${group}</div>`;
+    for(const topic of Object.keys(data.topics)){
+      const active=(group===guideActiveGroup&&topic===guideActiveTopic);
+      html+=`<button class="guide-topic-btn ${active?'active':''}" onclick="showGuideTopic('${group.replace(/'/g,"\\'")}','${topic.replace(/'/g,"\\'")}')">${topic}</button>`;
+    }
+  }
+  sb.innerHTML=html;
+}
+function showGuideTopic(group,topic){
+  guideActiveGroup=group; guideActiveTopic=topic;
+  const content=GUIDE_DATA[group]?.topics?.[topic] || '<p>Coming soon.</p>';
+  document.getElementById('guide-content').innerHTML=content;
+  document.getElementById('guide-content').scrollTo(0,0);
+  renderGuideSidebar();
+}
+let chartType='line'; // 'line' | 'candle' | 'bar' — set from Settings
+function renderChart(cid,w,h){
+  if(chartType==='candle') return candlestickChart(cid,w,h);
+  if(chartType==='bar')    return barChart(cid,w,h);
+  return sparklineChart(cid,w,h);
+}
+function setChartType(t){
+  chartType=t;
+  document.querySelectorAll('.chart-type-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('ct-'+t); if(btn) btn.classList.add('active');
+  renderMarket();
+}
+function emptyChartSvg(w,h){ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block"></svg>`; }
+// Groups a flat price-history array into OHLC buckets for candle/bar charts
+function bucketOHLC(hist,numBuckets){
+  if(!hist||hist.length<2) return [];
+  const n=hist.length, size=Math.max(1,Math.ceil(n/numBuckets)), buckets=[];
+  for(let i=0;i<n;i+=size){
+    const slice=hist.slice(i,i+size);
+    if(!slice.length) continue;
+    buckets.push({open:slice[0],close:slice[slice.length-1],high:Math.max(...slice),low:Math.min(...slice)});
+  }
+  return buckets;
+}
+const fmtShortSpark=v=>v>=1000?(v/1000).toFixed(1)+'k':Math.round(v);
+function candlestickChart(cid,w,h){
+  const hist=priceHistory[cid];
+  if(!hist||hist.length<2) return emptyChartSvg(w,h);
+  const buckets=bucketOHLC(hist,16);
+  const allVals=buckets.flatMap(b=>[b.high,b.low]);
+  const rawMin=Math.min(...allVals), rawMax=Math.max(...allVals);
+  const min=rawMin*0.998, max=rawMax*1.002, range=max-min||1, pad=6;
+  const yOf=v=>h-pad-((v-min)/range*(h-pad*2));
+  const n=buckets.length, slotW=w/n, bodyW=Math.max(2,slotW*0.55);
+  let svg='';
+  buckets.forEach((b,i)=>{
+    const cx=(i+0.5)*slotW, up=b.close>=b.open, color=up?'var(--green)':'var(--red)';
+    const yHigh=yOf(b.high), yLow=yOf(b.low), yOpen=yOf(b.open), yClose=yOf(b.close);
+    const bodyTop=Math.min(yOpen,yClose), bodyH=Math.max(1,Math.abs(yClose-yOpen));
+    svg+=`<line x1="${cx.toFixed(1)}" y1="${yHigh.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yLow.toFixed(1)}" stroke="${color}" stroke-width="1"/>`;
+    svg+=`<rect x="${(cx-bodyW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" opacity="0.9"/>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
+    ${svg}
+    <text x="2" y="9" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">H ₹${fmtShortSpark(rawMax)}</text>
+    <text x="2" y="${h-3}" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">L ₹${fmtShortSpark(rawMin)}</text>
+  </svg>`;
+}
+function barChart(cid,w,h){
+  const hist=priceHistory[cid];
+  if(!hist||hist.length<2) return emptyChartSvg(w,h);
+  const buckets=bucketOHLC(hist,20);
+  const closes=buckets.map(b=>b.close);
+  const rawMin=Math.min(...closes), rawMax=Math.max(...closes);
+  const min=rawMin*0.998, max=rawMax*1.002, range=max-min||1, pad=6;
+  const yOf=v=>h-pad-((v-min)/range*(h-pad*2));
+  const n=buckets.length, slotW=w/n, barW=Math.max(2,slotW*0.6), baseY=h-pad;
+  let svg='';
+  buckets.forEach((b,i)=>{
+    const cx=(i+0.5)*slotW, up=b.close>=b.open, color=up?'var(--green)':'var(--red)';
+    const yTop=yOf(b.close);
+    svg+=`<rect x="${(cx-barW/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${(baseY-yTop).toFixed(1)}" fill="${color}" opacity="0.85" rx="1"/>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
+    ${svg}
+    <text x="2" y="9" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">H ₹${fmtShortSpark(rawMax)}</text>
+    <text x="2" y="${h-3}" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">L ₹${fmtShortSpark(rawMin)}</text>
+  </svg>`;
+}
+function sparklineChart(cid,w,h){
   const hist=priceHistory[cid];
   if(!hist||hist.length<2) return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block"></svg>`;
-  const min=Math.min(...hist)*0.998, max=Math.max(...hist)*1.002, range=max-min||1;
+  const rawMin=Math.min(...hist), rawMax=Math.max(...hist);
+  const min=rawMin*0.998, max=rawMax*1.002, range=max-min||1;
   const pad=6;
+  const yOf=v=>h-pad-((v-min)/range*(h-pad*2));
   const pts=hist.map((v,i)=>{
     const x=(i/(hist.length-1))*w;
-    const y=h-pad-((v-min)/range*(h-pad*2));
-    return [x.toFixed(1),y.toFixed(1)];
+    return [x.toFixed(1),yOf(v).toFixed(1)];
   });
   const last=hist[hist.length-1], first=hist[0];
-  const color=last>=first?'var(--green)':'var(--red)';
+  const up=last>=first, color=up?'var(--green)':'var(--red)';
   const gid=`g${cid}`;
-  const fillUp='rgba(0,230,118,0.12)', fillDn='rgba(255,77,109,0.12)';
-  const fillColor=last>=first?fillUp:fillDn;
+  const fillColor=up?'rgba(0,230,118,0.12)':'rgba(255,77,109,0.12)';
   const ptsStr=pts.map(p=>p.join(',')).join(' ');
   const lastX=pts[pts.length-1][0], lastY=pts[pts.length-1][1];
   const fill=`${pts[0][0]},${h} ${ptsStr} ${lastX},${h}`;
-  // Draw animated last dot
+  const baselineY=yOf(first).toFixed(1);
+  // Grid: 3 faint horizontal guide lines for a sense of scale
+  const gridLines=[0.25,0.5,0.75].map(f=>{
+    const gy=(pad+f*(h-pad*2)).toFixed(1);
+    return `<line x1="0" y1="${gy}" x2="${w}" y2="${gy}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
+  }).join('');
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
     <defs>
       <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
         <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient>
     </defs>
+    ${gridLines}
+    <line x1="0" y1="${baselineY}" x2="${w}" y2="${baselineY}" stroke="rgba(255,255,255,0.16)" stroke-width="1" stroke-dasharray="2,3"/>
     <polygon points="${fill}" fill="url(#${gid})"/>
     <polyline points="${ptsStr}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="2" y="9" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">H ₹${fmtShortSpark(rawMax)}</text>
+    <text x="2" y="${h-3}" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">L ₹${fmtShortSpark(rawMin)}</text>
     <circle cx="${lastX}" cy="${lastY}" r="3" fill="${color}" opacity="0.9">
       <animate attributeName="opacity" values="0.9;0.2;0.9" dur="2s" repeatCount="indefinite"/>
       <animate attributeName="r" values="3;4.5;3" dur="2s" repeatCount="indefinite"/>
@@ -1258,6 +1570,7 @@ function renderMarket(){
     const pct=prev?((chg/prev)*100).toFixed(1):'0.0';
     const dir=chg>0?'up':chg<0?'dn':'nc', arrow=chg>0?'▲':chg<0?'▼':'—';
     const isIPO=!BASE_IDS.has(cid), isFrozen=!!(regFreeze&&c.sector===regFreeze);
+    const isPriceFrozen=!!priceFrozenStocks[cid];
     const riskKey=(c.risk||'').replace(/ /g,'-');
     const sent=sentiment[cid];
     const owned=playerData.portfolio?.[cid]?.qty||0;
@@ -1268,7 +1581,7 @@ function renderMarket(){
       <div class="cc-header" onclick="toggleCard('${cid}')">
         <div class="cc-header-row">
           <div class="cc-left">
-            <div class="cc-name">${c.name}${isIPO?'<span class="ipo-badge">IPO</span>':''}${isFrozen?'<span class="freeze-badge">🚫 FROZEN</span>':''}</div>
+            <div class="cc-name">${c.name}${isIPO?'<span class="ipo-badge">IPO</span>':''}${isFrozen?'<span class="freeze-badge">🚫 FROZEN</span>':''}${isPriceFrozen?'<span class="freeze-badge" style="background:rgba(79,195,247,0.15);color:var(--blue);border-color:rgba(79,195,247,0.3)">🧊 PRICE LOCKED</span>':''}</div>
             <div class="cc-meta">${c.sector||''}${c.age?' · '+c.age+' years':''}${c.cap?' · '+c.cap:c.risk?' · '+c.risk:''}</div>
             <div class="cc-trait">${c.trait||''}</div>
           </div>
@@ -1277,7 +1590,7 @@ function renderMarket(){
               <div class="cc-chg ${dir}" id="cc-chg-${cid}">${arrow} ${pct}%</div>
               <div class="cc-price" id="cc-price-${cid}">₹${p.toLocaleString('en-IN')}</div>
             </div>
-            <div class="cc-sparkline">${sparkline(cid,200,64)}</div>
+            <div class="cc-sparkline">${renderChart(cid,200,64)}</div>
           </div>
         </div>
       </div>
@@ -1431,12 +1744,21 @@ const BANK_META={
   vcx:   {icon:'📊',cls:'bank-vcx',   color:'var(--blue)'},
   shadow:{icon:'🌑',cls:'bank-shadow',color:'var(--red)'},
 };
+function bankRateForBalance(bank,balance){
+  const tiers=bank.rate_tiers;
+  if(!tiers||!tiers.length) return bank.rate;
+  for(const [threshold,rate] of tiers){ if(balance<=threshold) return rate; }
+  return tiers[tiers.length-1][1];
+}
 function renderBanks(){
   const container=document.getElementById('bank-list'); if(!container) return;
   const inBreak=phase==='break'; let html='';
   for(const [bankId,bank] of Object.entries(banksConfig)){
     const balance=(playerData.loans||{})[bankId]||0;
-    let rate=bank.rate*100; if(creditCrunch) rate+=5;
+    const crunchAdd=creditCrunch?5:0;
+    const currentRate=bankRateForBalance(bank,balance)*100+crunchAdd;
+    const tiers=bank.rate_tiers;
+    const rateRangeTxt=tiers?`${(tiers[0][1]*100+crunchAdd).toFixed(0)}–${(tiers[tiers.length-1][1]*100+crunchAdd).toFixed(0)}%`:`${(bank.rate*100+crunchAdd).toFixed(0)}%`;
     const meta=BANK_META[bankId]||{icon:'🏦',cls:'',color:'var(--gold)'};
     const isShadow=bankId==='shadow';
     const remainingCapacity=Math.max(0,bank.limit-balance);
@@ -1447,7 +1769,8 @@ function renderBanks(){
           <div class="bank-icon-wrap">${meta.icon}</div>
           <div>
             <div class="bank-name">${bank.name}</div>
-            <span class="bank-rate-tag">${rate.toFixed(0)}% / round · Limit ${fmt(bank.limit)}</span>
+            <span class="bank-rate-tag">${rateRangeTxt} / round (tiered) · Limit ${fmt(bank.limit)}</span>
+            ${balance>0?`<div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px">Your current rate: <strong style="color:${meta.color}">${currentRate.toFixed(0)}%</strong></div>`:''}
           </div>
         </div>
         <div class="bank-owed-pill">
@@ -1458,12 +1781,14 @@ function renderBanks(){
       <div class="bank-body">
         <div class="bank-desc">${bank.desc||''}</div>`;
     if(remainingCapacity>0){
-      html+=`<div class="bank-borrow-label">Borrow Amount</div><div class="bank-borrow-grid">`;
+      html+=`<div class="bank-borrow-label">Borrow Amount — rate shown is what you'd pay on the new total</div><div class="bank-borrow-grid">`;
       for(const opt of bank.options){
         if(opt>remainingCapacity) continue;
+        const newBal=balance+opt;
+        const optRate=bankRateForBalance(bank,newBal)+((creditCrunch?0.05:0));
         html+=`<div class="borrow-card" onclick="takeLoan('${bankId}',${opt})">
           <div class="borrow-card-amt">+${fmtShort(opt)}</div>
-          <div class="borrow-card-label">repay ~${fmtShort(Math.round(opt*(1+bank.rate)))}</div>
+          <div class="borrow-card-label">owe ~${fmtShort(Math.round(newBal*(1+optRate)))} next round <span style="opacity:0.7">(${(optRate*100).toFixed(0)}%)</span></div>
         </div>`;
       }
       html+=`</div>`;
@@ -1724,10 +2049,16 @@ function addNews(msg,silent=false){
 }
 
 // ── Chaos ─────────────────────────────────────────────────────────────────────
-const chaosIcons={regulatory_freeze:'🚫',dividend:'💰',acquisition_rumour:'🤝',credit_crunch:'💸',ipo_drop:'🚀',bankrupt:'💀'};
+const chaosIcons={regulatory_freeze:'🚫',dividend:'💰',acquisition_rumour:'🤝',credit_crunch:'💸',ipo_drop:'🚀',bankrupt:'💀',price_freeze:'🧊'};
 function handleChaos(msg){
   if(msg.event==='regulatory_freeze'&&msg.sector){regFreeze=msg.sector;updatePhase();renderMarket();}
   if(msg.event==='credit_crunch'){creditCrunch=true;renderBanks();}
+  if(msg.event==='price_freeze'&&msg.stock){
+    priceFrozenStocks[msg.stock]=msg.until;
+    renderMarket();
+    const msLeft=Math.max(0,(msg.until-Date.now()/1000)*1000);
+    setTimeout(()=>{ delete priceFrozenStocks[msg.stock]; renderMarket(); }, msLeft);
+  }
   if(msg.event==='ipo_drop'&&msg.company){
     const c=msg.company;
     market[c.id]={name:c.name,sector:c.sector,risk:c.risk,price:c.price,bio:c.bio,trait:c.trait};
@@ -1855,20 +2186,49 @@ function toast(msg,type='info'){
     </div>
     <div class="settings-row">
       <div class="settings-row-label">Volume</div>
-      <input type="range" id="music-volume" min="0" max="100" value="50" oninput="setMusicVolume(this.value)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="range" id="music-volume" min="0" max="200" value="100" oninput="setMusicVolume(this.value)">
+        <span id="music-volume-readout" style="font-family:var(--mono);font-size:11px;color:var(--muted);min-width:34px;text-align:right">100%</span>
+      </div>
     </div>
+    <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px;border-bottom:1px solid var(--border);padding-bottom:16px">
+      <div class="settings-row-label">📈 Chart Type</div>
+      <div class="chart-type-row">
+        <button class="chart-type-btn active" id="ct-line" onclick="setChartType('line')">Line</button>
+        <button class="chart-type-btn" id="ct-candle" onclick="setChartType('candle')">Candles</button>
+        <button class="chart-type-btn" id="ct-bar" onclick="setChartType('bar')">Bars</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-label">🌗 Theme</div>
+      <button class="settings-toggle" id="theme-toggle" onclick="toggleTheme()">DARK</button>
+    </div>
+    <button class="guide-btn" onclick="openGuide()">📖 Guide</button>
     <div id="bm-secret-slot"></div>
   </div>
 </div>
 
 <div class="bm-overlay" id="bm-overlay" onclick="closeBlackMarket()"></div>
 <div class="bm-drawer" id="bm-drawer">
+
   <div class="settings-hdr bm-hdr">
     <span class="settings-title bm-title">🖤 Black Market</span>
     <button class="settings-close" onclick="closeBlackMarket()">✕</button>
   </div>
   <div class="settings-body" id="bm-body">
     <div class="settings-coming">Loading…</div>
+  </div>
+</div>
+
+<div class="guide-overlay" id="guide-overlay" onclick="closeGuide()"></div>
+<div class="guide-modal" id="guide-modal">
+  <div class="guide-hdr">
+    <span class="guide-title">📖 Guide</span>
+    <button class="settings-close" onclick="closeGuide()">✕</button>
+  </div>
+  <div class="guide-body">
+    <div class="guide-sidebar" id="guide-sidebar"></div>
+    <div class="guide-content" id="guide-content"></div>
   </div>
 </div>
 </body>

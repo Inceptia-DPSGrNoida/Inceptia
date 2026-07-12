@@ -43,7 +43,6 @@ ROUND_DURATION     = 1200        # 20 min — host can end early
 BREAK_DURATION     = 600         # 10 min between rounds
 BANKRUPTCY_RESTART = 25_000
 BANKRUPTCY_MIN_DEBT_GAP = 900_000   # debt must exceed net worth by ~9 lakh to qualify
-DRIFT_INTERVAL     = 90          # seconds between passive micro-drifts (reduced magnitude)
 MAX_ROUNDS         = 6
 
 # Per-player asyncio lock to prevent concurrent buy/sell race conditions
@@ -57,24 +56,44 @@ BANKS = {
         "name":    "Bharat Bank",
         "limit":   90_000,
         "options": [20_000, 40_000, 60_000, 90_000],
-        "rate":    0.09,    # 9% per round (was 5%), compounds on balance
-        "desc":    "Safe, government-backed. Low rate, low limit. The sensible choice.",
+        "rate":    0.09,    # fallback flat rate if tiers are ever missing
+        # Tiered by OUTSTANDING BALANCE at round-end: bigger balance = higher rate.
+        # (threshold, rate) pairs, evaluated in order — first threshold >= balance wins.
+        "rate_tiers": [(20_000, 0.07), (40_000, 0.09), (60_000, 0.11), (90_000, 0.13)],
+        "desc":    "Safe, government-backed. Low rate, low limit — but borrow near the cap and the rate climbs too.",
     },
     "vcx": {
         "name":    "VentureCapX",
         "limit":   1_50_000,
         "options": [50_000, 75_000, 1_00_000, 1_50_000],
-        "rate":    0.13,    # 13% per round (was 9%)
-        "desc":    "Aggressive growth lender. Higher limit, higher cost. For calculated risks.",
+        "rate":    0.13,
+        "rate_tiers": [(50_000, 0.10), (75_000, 0.13), (1_00_000, 0.16), (1_50_000, 0.19)],
+        "desc":    "Aggressive growth lender. Higher limit, higher cost — and it gets steeper the more you take.",
     },
     "shadow": {
         "name":    "ShadowCredit",
         "limit":   3_00_000,
         "options": [1_00_000, 1_50_000, 2_00_000, 3_00_000],
-        "rate":    0.20,    # 20% per round (was 16%) — compounding is brutal over 4 rounds
-        "desc":    "No questions asked. Maximum leverage. Minimum mercy. 4-round compound: brutal.",
+        "rate":    0.20,
+        "rate_tiers": [(1_00_000, 0.16), (1_50_000, 0.20), (2_00_000, 0.25), (3_00_000, 0.30)],
+        "desc":    "No questions asked. Maximum leverage. The bigger the loan, the sharper the knife.",
     },
 }
+
+def bank_rate_for_balance(bank_id: str, balance: float) -> float:
+    """Effective interest rate for a bank given the CURRENT outstanding balance.
+    Bigger balance -> higher tier -> higher rate. Re-evaluated every round, so
+    paying a loan down into a lower tier lowers next round's rate too."""
+    bank = BANKS.get(bank_id)
+    if not bank:
+        return 0.0
+    tiers = bank.get("rate_tiers")
+    if not tiers:
+        return bank.get("rate", 0.0)
+    for threshold, rate in tiers:
+        if balance <= threshold:
+            return rate
+    return tiers[-1][1]  # above the highest tier -> top rate
 
 # ═══════════════════════════════════════════════════════════════
 #  SECTORS
@@ -612,6 +631,22 @@ BM_ITEMS = {
         "id": "leak_card", "name": "Leak Card", "icon": "🃏", "cost": 25_000,
         "desc": "One-time use per game. Broadcast a strong Unverified headline that always moves price. More powerful than a rumour.",
     },
+    "price_freeze": {
+        "id": "price_freeze", "name": "Price Freeze Hack", "icon": "🧊", "cost": 18_000,
+        "desc": "Freeze one stock's price feed for 60 real seconds — nobody (including you) can move it or get a fresh quote on it.",
+    },
+    "rate_freeze": {
+        "id": "rate_freeze", "name": "Rate Freeze Coupon", "icon": "🔒", "cost": 20_000,
+        "desc": "Locks in your current interest rate with one bank for its next round-end charge, even if your balance climbs into a higher tier.",
+    },
+    "portfolio_peek": {
+        "id": "portfolio_peek", "name": "Portfolio Peek", "icon": "🕵️", "cost": 18_000,
+        "desc": "Instantly reveals a rival's cash, total loans, and full holdings list. Just this once, just to you.",
+    },
+    "early_word": {
+        "id": "early_word", "name": "Early Word", "icon": "🔮", "cost": 22_000,
+        "desc": "Break-only. See next round's opening headlines before anyone else — the real ones, not a preview.",
+    },
 }
 
 INSIDER_HINTS = [
@@ -699,7 +734,7 @@ async def write_state(state: dict):
 
 
 def _default_state() -> dict:
-    companies = {k: {**v, "prev_price": v["price"]} for k, v in BASE_COMPANIES.items()}
+    companies = {k: {**v, "prev_price": v["price"], "target_price": v["price"]} for k, v in BASE_COMPANIES.items()}
     return {
         "phase":              "lobby",
         "round":              0,
@@ -888,7 +923,8 @@ def fluctuate_prices(state: dict, news: list) -> None:
                 change = 0.60 * change + 0.40 * moved[partner]
 
         floor = PRICE_FLOORS.get(cid, 10)
-        c["price"] = max(floor, round(c["price"] * (1 + change)))
+        c["price"]        = max(floor, round(c["price"] * (1 + change)))
+        c["target_price"] = c["price"]
         moved[cid] = change
 
     # ── Sector ripple: large move drags peers in same direction ──────
@@ -911,30 +947,84 @@ def fluctuate_prices(state: dict, news: list) -> None:
                         floor,
                         round(companies[peer]["price"] * (1 + ripple)),
                     )
+                    companies[peer]["target_price"] = companies[peer]["price"]
 
 
 # ═══════════════════════════════════════════════════════════════
 #  PASSIVE DRIFT LOOP
 # ═══════════════════════════════════════════════════════════════
-async def price_drift_loop():
-    await asyncio.sleep(30)
+# ═══════════════════════════════════════════════════════════════
+#  PRICE ENGINE — two-tier: a "target" recalculated every 20s using the same
+#  volatility/news-driven factors as before, and the REAL tradable price
+#  ticking every 4s toward/around that target. The 4s number is what trades
+#  actually execute at — this isn't cosmetic, it's the authoritative price.
+# ═══════════════════════════════════════════════════════════════
+TARGET_INTERVAL = 20   # seconds — how often the underlying "fair value" moves
+TICK_INTERVAL   = 4    # seconds — how often the tradable price re-samples around it
+
+# Serializes the background price loops (and other host-triggered state writes)
+# against each other so a target recalc, a tick, a news injection, and a chaos
+# event can never clobber one another's write. Player trades/loans/bets (inside
+# the main ws_player loop) are not yet covered by this lock — a larger refactor
+# for another pass — but the much-higher-frequency system writes below are.
+STATE_LOCK = asyncio.Lock()
+
+async def price_target_loop():
+    """Every 20s: recompute each stock's underlying target price using the
+    same volatility profile as before. This is the 'big picture' move."""
+    await asyncio.sleep(15)
     while True:
-        await asyncio.sleep(DRIFT_INTERVAL)
-        state = await read_state()
-        if state.get("phase") != "trading":
-            continue
-        freeze    = state.get("regulatory_freeze")
-        companies = state["companies"]
-        for cid, c in companies.items():
-            if freeze and c.get("sector") == freeze:
+        await asyncio.sleep(TARGET_INTERVAL)
+        async with STATE_LOCK:
+            state = await read_state()
+            if state.get("phase") != "trading":
                 continue
-            lo, hi, bias = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
-            # Drift is a fraction of normal volatility — micro-movements
-            mag   = random.uniform(0.001, min(0.020, hi * 0.30))
-            direc = 1 if random.random() > bias else -1
-            floor = PRICE_FLOORS.get(cid, 10)
-            c["price"] = max(floor, round(c["price"] * (1 + direc * mag)))
-        await write_state(state)
+            freeze    = state.get("regulatory_freeze")
+            frozen_bm = state.get("price_freezes", {})
+            now       = time.time()
+            companies = state["companies"]
+            for cid, c in companies.items():
+                if freeze and c.get("sector") == freeze:
+                    continue
+                if frozen_bm.get(cid, 0) > now:
+                    continue
+                lo, hi, bias = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
+                mag   = random.uniform(lo * 0.5, hi * 0.65)
+                direc = 1 if random.random() > bias else -1
+                floor = PRICE_FLOORS.get(cid, 10)
+                base  = c.get("target_price", c["price"])
+                c["target_price"] = max(floor, round(base * (1 + direc * mag)))
+            await write_state(state)
+
+async def price_tick_loop():
+    """Every 4s: the REAL tradable price re-samples around the current target.
+    Small, fast, always-on noise — this is what a buy/sell actually executes
+    at, so it has to be real and server-authoritative, not just a visual."""
+    await asyncio.sleep(17)
+    while True:
+        await asyncio.sleep(TICK_INTERVAL)
+        async with STATE_LOCK:
+            state = await read_state()
+            if state.get("phase") != "trading":
+                continue
+            freeze    = state.get("regulatory_freeze")
+            frozen_bm = state.get("price_freezes", {})
+            now       = time.time()
+            companies = state["companies"]
+            for cid, c in companies.items():
+                if freeze and c.get("sector") == freeze:
+                    continue
+                if frozen_bm.get(cid, 0) > now:
+                    continue
+                target = c.get("target_price", c["price"])
+                lo, hi, _ = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
+                jitter = random.uniform(-lo * 0.9, lo * 0.9) or random.uniform(-0.01, 0.01)
+                floor  = PRICE_FLOORS.get(cid, 10)
+                c["prev_price"] = c["price"]
+                c["price"]      = max(floor, round(target * (1 + jitter)))
+            await write_state(state)
+        # Broadcast outside the lock — sending to N sockets shouldn't hold up
+        # other writers (news injection, chaos events, the next tick, etc.)
         players = await all_players()
         board   = leaderboard(players, state)
         await manager.broadcast_all({
@@ -1105,7 +1195,8 @@ manager = ConnectionManager()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    asyncio.create_task(price_drift_loop())
+    asyncio.create_task(price_target_loop())
+    asyncio.create_task(price_tick_loop())
     yield
 
 
@@ -1292,11 +1383,12 @@ async def api_reset(pw: str):
     """Full game reset — password required."""
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("DELETE FROM players")
-        await db.execute("DELETE FROM codes")
-        await _write_state(db, _default_state())
-        await db.commit()
+    async with STATE_LOCK:
+        async with aiosqlite.connect(DB_PATH) as db:
+            await db.execute("DELETE FROM players")
+            await db.execute("DELETE FROM codes")
+            await _write_state(db, _default_state())
+            await db.commit()
     await manager.broadcast_all({"type": "reset"})
     await manager.broadcast_hosts({"type": "reset"})
     return {"ok": True}
@@ -1309,35 +1401,42 @@ async def api_reset(pw: str):
 async def start_round(pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    state = await read_state()
-    if state["phase"] not in ("lobby", "break"):
-        raise HTTPException(400, "Can't start round now")
-    state["round"] += 1
-    state["phase"]          = "trading"
-    state["round_end_time"] = time.time() + ROUND_DURATION
-    state["break_end_time"] = None
-    # Reset per-round chaos effects
-    state["regulatory_freeze"] = None
-    state["acquisition_pair"]  = None
-    state["credit_crunch"]     = False
-    # Clean up expired merge bids from previous rounds
-    state["merge_bids"] = {}
-    # Unfreeze all players
-    players = await all_players()
-    for p in players:
-        if p["frozen"]:
-            p["frozen"] = False
-            await save_player(p)
-    # Pick and apply news
-    news_count = 2 if state["round"] == 1 else 3
-    news = pick_news(state, news_count)
-    state["news"].extend(news)
-    fluctuate_prices(state, news)
-    # Record price history snapshot
-    ph = state.setdefault("price_history", {})
-    for cid, c in state["companies"].items():
-        ph.setdefault(cid, []).append(c["price"])
-    await write_state(state)
+    async with STATE_LOCK:
+        state = await read_state()
+        if state["phase"] not in ("lobby", "break"):
+            raise HTTPException(400, "Can't start round now")
+        state["round"] += 1
+        state["phase"]          = "trading"
+        state["round_end_time"] = time.time() + ROUND_DURATION
+        state["break_end_time"] = None
+        # Reset per-round chaos effects
+        state["regulatory_freeze"] = None
+        state["acquisition_pair"]  = None
+        state["credit_crunch"]     = False
+        # Clean up expired merge bids from previous rounds
+        state["merge_bids"] = {}
+        # Unfreeze all players
+        players = await all_players()
+        for p in players:
+            if p["frozen"]:
+                p["frozen"] = False
+                await save_player(p)
+        # Pick and apply news — use the pre-generated batch from the break (so an
+        # Early Word purchase during that break matches what actually happens),
+        # falling back to a fresh pick if none was pre-generated (e.g. Round 1).
+        pending = state.pop("pending_news", None)
+        if pending:
+            news = pending
+        else:
+            news_count = 2 if state["round"] == 1 else 3
+            news = pick_news(state, news_count)
+        state["news"].extend(news)
+        fluctuate_prices(state, news)
+        # Record price history snapshot
+        ph = state.setdefault("price_history", {})
+        for cid, c in state["companies"].items():
+            ph.setdefault(cid, []).append(c["price"])
+        await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_all({
@@ -1363,44 +1462,57 @@ async def start_round(pw: str):
 async def end_round(pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    state = await read_state()
-    if state["phase"] != "trading":
-        raise HTTPException(400, "Not in trading phase")
-    state["phase"]          = "break"
-    state["round_end_time"] = None
-    # Round 3 -> 4 break is extended to 20 min — reserved for a bigger event/twist later on.
-    this_break_duration     = 1200 if state["round"] == 3 else BREAK_DURATION
-    state["break_end_time"] = time.time() + this_break_duration
-    state["break_duration"] = this_break_duration
-    state["regulatory_freeze"] = None
-    state["acquisition_pair"]  = None
-    state["merge_bids"]        = {}
-    # Apply per-bank compounding interest
-    players = await all_players()
-    for p in players:
-        loans   = p.get("loans", {})
-        changed = False
-        for bank_id, bal in list(loans.items()):
-            if bal > 0 and bank_id in BANKS:
-                rate = BANKS[bank_id]["rate"]
-                if state.get("credit_crunch"):
-                    rate += 0.05
-                loans[bank_id] = round(bal * (1 + rate))
+    async with STATE_LOCK:
+        state = await read_state()
+        if state["phase"] != "trading":
+            raise HTTPException(400, "Not in trading phase")
+        state["phase"]          = "break"
+        state["round_end_time"] = None
+        # Round 3 -> 4 break is extended to 20 min — reserved for a bigger event/twist later on.
+        this_break_duration     = 1200 if state["round"] == 3 else BREAK_DURATION
+        state["break_end_time"] = time.time() + this_break_duration
+        state["break_duration"] = this_break_duration
+        state["regulatory_freeze"] = None
+        state["acquisition_pair"]  = None
+        state["merge_bids"]        = {}
+        # Apply per-bank compounding interest
+        players = await all_players()
+        for p in players:
+            loans   = p.get("loans", {})
+            locks   = p.get("rate_locks") or {}
+            changed = False
+            for bank_id, bal in list(loans.items()):
+                if bal > 0 and bank_id in BANKS:
+                    if bank_id in locks:
+                        rate = locks.pop(bank_id)  # one-shot — consumed here
+                    else:
+                        rate = bank_rate_for_balance(bank_id, bal)
+                    if state.get("credit_crunch"):
+                        rate += 0.05
+                    loans[bank_id] = round(bal * (1 + rate))
+                    changed = True
+            if locks != (p.get("rate_locks") or {}):
+                p["rate_locks"] = locks
                 changed = True
-        if changed:
-            p["loans"] = loans
-            await save_player(p)
-            pv = player_view(p, state)
-            await manager.send_player(p["code"], {
-                "type":   "player_update",
-                "player": pv,
-                "msg":    "Interest applied to your loans at round end.",
-            })
-    state["credit_crunch"] = False
-    # Resolve prediction bets
-    players = await all_players()
-    await resolve_predictions(state, players)
-    await write_state(state)
+            if changed:
+                p["loans"] = loans
+                await save_player(p)
+                pv = player_view(p, state)
+                await manager.send_player(p["code"], {
+                    "type":   "player_update",
+                    "player": pv,
+                    "msg":    "Interest applied to your loans at round end.",
+                })
+        state["credit_crunch"] = False
+        # Pre-generate next round's news now, so an Early Word purchase during this
+        # break reveals the SAME headlines that will actually run at start_round.
+        next_round_num       = state["round"] + 1
+        next_news_count       = 2 if next_round_num == 1 else 3
+        state["pending_news"] = pick_news(state, next_news_count)
+        # Resolve prediction bets
+        players = await all_players()
+        await resolve_predictions(state, players)
+        await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_all({
@@ -1424,9 +1536,10 @@ async def end_round(pw: str):
 async def end_game(pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    state          = await read_state()
-    state["phase"] = "ended"
-    await write_state(state)
+    async with STATE_LOCK:
+        state          = await read_state()
+        state["phase"] = "ended"
+        await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_all({"type": "game_ended", "board": board})
@@ -1471,43 +1584,47 @@ async def adjust_cash(data: dict, pw: str):
 async def inject_news(data: dict, pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    state       = await read_state()
-    is_verified = data.get("verified", True)
-    is_real     = is_verified  # verified always moves; unverified may or may not
-    strength    = float(data.get("strength", 0.10))
-    affects     = data["affects"]
-    direction   = data.get("direction", 1)
-    text        = (data.get("text") or "").strip()
-    if not text:
-        # Host left the text field blank — auto-pick a matching preset headline.
-        dir_key = "up" if direction > 0 else "down"
-        options = NEWS_PRESETS.get(affects, {}).get(dir_key, [])
-        if options:
-            text = random.choice(options)
-        else:
-            cname = state["companies"].get(affects, {}).get("name", affects)
-            text  = (f"Market update: {cname} sees notable "
-                     f"{'gains' if direction > 0 else 'losses'} amid shifting investor sentiment.")
-    n = {
-        "type_tag":  "verified" if is_verified else "unverified",
-        "label":     "Market Event" if is_verified else "Unverified Rumour",
-        "text":      text,
-        "affects":   affects,
-        "direction": direction,
-        "strength":  strength,
-        "real":      is_real,
-    }
-    state["news"].append(n)
-    c = state["companies"].get(affects)
-    if c and state["phase"] == "trading":
-        c["prev_price"] = c["price"]
-        if is_verified:
-            move = strength
-        else:
-            move = strength if random.random() < 0.4 else random.uniform(0.005, 0.02)
-        floor         = PRICE_FLOORS.get(affects, 10)
-        c["price"]    = max(floor, round(c["price"] * (1 + n["direction"] * move)))
-    await write_state(state)
+    async with STATE_LOCK:
+        state       = await read_state()
+        is_verified = data.get("verified", True)
+        is_real     = is_verified  # verified always moves; unverified may or may not
+        strength    = float(data.get("strength", 0.10))
+        affects     = data["affects"]
+        direction   = data.get("direction", 1)
+        text        = (data.get("text") or "").strip()
+        if not text:
+            # Host left the text field blank — auto-pick a matching preset headline.
+            dir_key = "up" if direction > 0 else "down"
+            options = NEWS_PRESETS.get(affects, {}).get(dir_key, [])
+            if options:
+                text = random.choice(options)
+            else:
+                cname = state["companies"].get(affects, {}).get("name", affects)
+                text  = (f"Market update: {cname} sees notable "
+                         f"{'gains' if direction > 0 else 'losses'} amid shifting investor sentiment.")
+        n = {
+            "type_tag":  "verified" if is_verified else "unverified",
+            "label":     "Market Event" if is_verified else "Unverified Rumour",
+            "text":      text,
+            "affects":   affects,
+            "direction": direction,
+            "strength":  strength,
+            "real":      is_real,
+        }
+        state["news"].append(n)
+        c = state["companies"].get(affects)
+        if c and state["phase"] == "trading":
+            c["prev_price"] = c["price"]
+            if is_verified:
+                move = strength
+            else:
+                move = strength if random.random() < 0.4 else random.uniform(0.005, 0.02)
+            floor         = PRICE_FLOORS.get(affects, 10)
+            new_price     = max(floor, round(c["price"] * (1 + n["direction"] * move)))
+            c["price"]        = new_price
+            c["target_price"] = new_price  # move the "fair value" too, so the next 4s tick
+                                            # samples around the news price instead of erasing it
+        await write_state(state)
     await manager.broadcast_all({"type": "news", **n})
     players = await all_players()
     board   = leaderboard(players, state)
@@ -1524,14 +1641,16 @@ async def inject_news(data: dict, pw: str):
 async def manual_price(data: dict, pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    state = await read_state()
-    cid   = data["stock"]
-    price = int(data["price"])
-    if cid not in state["companies"]:
-        raise HTTPException(400, "Unknown stock")
-    state["companies"][cid]["prev_price"] = state["companies"][cid]["price"]
-    state["companies"][cid]["price"]      = max(1, price)
-    await write_state(state)
+    async with STATE_LOCK:
+        state = await read_state()
+        cid   = data["stock"]
+        price = int(data["price"])
+        if cid not in state["companies"]:
+            raise HTTPException(400, "Unknown stock")
+        state["companies"][cid]["prev_price"]   = state["companies"][cid]["price"]
+        state["companies"][cid]["price"]        = max(1, price)
+        state["companies"][cid]["target_price"] = max(1, price)
+        await write_state(state)
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_all({
@@ -1588,12 +1707,13 @@ async def chaos_regulatory_freeze(data: dict, pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
     sector   = data["sector"]
-    state    = await read_state()
-    affected = [cid for cid, c in state["companies"].items() if c.get("sector") == sector]
-    if not affected:
-        raise HTTPException(400, f"No companies in sector '{sector}'")
-    state["regulatory_freeze"] = sector
-    await write_state(state)
+    async with STATE_LOCK:
+        state    = await read_state()
+        affected = [cid for cid, c in state["companies"].items() if c.get("sector") == sector]
+        if not affected:
+            raise HTTPException(400, f"No companies in sector '{sector}'")
+        state["regulatory_freeze"] = sector
+        await write_state(state)
     msg = f"🚫 REGULATORY FREEZE — All trading in the {sector} sector is halted for this round!"
     await manager.broadcast_all({
         "type":           "chaos",
@@ -1651,13 +1771,14 @@ async def chaos_acquisition(data: dict, pw: str):
     """Correlate two companies' price movements for this round."""
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    state = await read_state()
     cid1  = data["stock1"]
     cid2  = data["stock2"]
-    if cid1 not in state["companies"] or cid2 not in state["companies"]:
-        raise HTTPException(400, "Unknown stocks")
-    state["acquisition_pair"] = [cid1, cid2]
-    await write_state(state)
+    async with STATE_LOCK:
+        state = await read_state()
+        if cid1 not in state["companies"] or cid2 not in state["companies"]:
+            raise HTTPException(400, "Unknown stocks")
+        state["acquisition_pair"] = [cid1, cid2]
+        await write_state(state)
     n1  = state["companies"][cid1]["name"]
     n2  = state["companies"][cid2]["name"]
     msg = f"🤝 ACQUISITION RUMOUR — {n1} and {n2} reportedly in merger talks! Their prices will move in tandem. (Unverified)"
@@ -1678,14 +1799,17 @@ async def chaos_credit_crunch(pw: str):
     """Raise all bank rates by +5% for this round's interest calculation."""
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    state = await read_state()
-    state["credit_crunch"] = True
-    await write_state(state)
-    bumped = {bid: round(b["rate"] * 100 + 5) for bid, b in BANKS.items()}
+    async with STATE_LOCK:
+        state = await read_state()
+        state["credit_crunch"] = True
+        await write_state(state)
+    def _range(bid):
+        tiers = BANKS[bid]["rate_tiers"]
+        return f"{round(tiers[0][1]*100+5)}–{round(tiers[-1][1]*100+5)}%"
     msg = (
         "💸 CREDIT CRUNCH — All bank interest rates +5% this round! "
-        f"Bharat→{bumped['bharat']}%, VentureCapX→{bumped['vcx']}%, ShadowCredit→{bumped['shadow']}%. "
-        "Heavy borrowers beware."
+        f"Bharat→{_range('bharat')}, VentureCapX→{_range('vcx')}, ShadowCredit→{_range('shadow')} "
+        "(exact rate still depends on your balance tier). Heavy borrowers beware."
     )
     await manager.broadcast_all({"type": "chaos", "event": "credit_crunch", "msg": msg})
     players = await all_players()
@@ -1701,15 +1825,16 @@ async def chaos_ipo_drop(ipo_id: str, pw: str):
         raise HTTPException(403, "Wrong password")
     if ipo_id not in IPO_COMPANIES:
         raise HTTPException(400, f"Unknown IPO: {ipo_id}")
-    state = await read_state()
-    if ipo_id in state.get("ipo_listed", []):
-        raise HTTPException(400, f"{ipo_id} is already listed")
-    ipo = IPO_COMPANIES[ipo_id]
-    state["companies"][ipo_id]   = {**ipo, "prev_price": ipo["price"]}
-    state["ipo_listed"]          = state.get("ipo_listed", []) + [ipo_id]
-    PRICE_FLOORS[ipo_id]         = round(ipo["price"] * 0.20)  # set floor dynamically
-    state.setdefault("price_history", {})[ipo_id] = [ipo["price"]]
-    await write_state(state)
+    async with STATE_LOCK:
+        state = await read_state()
+        if ipo_id in state.get("ipo_listed", []):
+            raise HTTPException(400, f"{ipo_id} is already listed")
+        ipo = IPO_COMPANIES[ipo_id]
+        state["companies"][ipo_id]   = {**ipo, "prev_price": ipo["price"], "target_price": ipo["price"]}
+        state["ipo_listed"]          = state.get("ipo_listed", []) + [ipo_id]
+        PRICE_FLOORS[ipo_id]         = round(ipo["price"] * 0.20)  # set floor dynamically
+        state.setdefault("price_history", {})[ipo_id] = [ipo["price"]]
+        await write_state(state)
     msg = f"🚀 IPO DROP — {ipo['name']} lists on the exchange! {ipo['trait']} IPO price: ₹{ipo['price']:,}"
     await manager.broadcast_all({
         "type":    "chaos",
@@ -1828,13 +1953,17 @@ async def bm_buy(data: dict):
                 "real":      is_real,
                 "text":      text,
             }
-            state["news"].append(n)
-            c = state["companies"].get(stock)
-            if c and is_real and state["phase"] == "trading":
-                c["prev_price"] = c["price"]
-                floor           = PRICE_FLOORS.get(stock, 10)
-                c["price"]      = max(floor, round(c["price"] * (1 + direction * strength)))
-            await write_state(state)
+            async with STATE_LOCK:
+                fresh_state = await read_state()
+                fresh_state["news"].append(n)
+                c = fresh_state["companies"].get(stock)
+                if c and is_real and fresh_state["phase"] == "trading":
+                    c["prev_price"] = c["price"]
+                    floor           = PRICE_FLOORS.get(stock, 10)
+                    c["price"]        = max(floor, round(c["price"] * (1 + direction * strength)))
+                    c["target_price"] = c["price"]
+                await write_state(fresh_state)
+                state = fresh_state
             await manager.broadcast_all({"type": "news", **n})
             players_all = await all_players()
             board_now   = leaderboard(players_all, state)
@@ -1849,6 +1978,80 @@ async def bm_buy(data: dict):
                 "msg":  f"{icon} {'Leak Card deployed' if is_leak else 'Rumour spread'} on {state['companies'][stock]['name']}. Anonymous.",
             })
             await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board_now})
+
+        # ── Price Freeze Hack ────────────────────────────────────────
+        elif item_id == "price_freeze":
+            stock = data.get("stock")
+            if not stock or stock not in state["companies"]:
+                raise HTTPException(400, "Pick a valid stock.")
+            until = time.time() + 60
+            log_entry.update({"stock": stock})
+            async with STATE_LOCK:
+                fresh_state = await read_state()
+                fresh_state.setdefault("price_freezes", {})[stock] = until
+                await write_state(fresh_state)
+                state = fresh_state
+            cname = state["companies"][stock]["name"]
+            # Market-wide but anonymous — everyone feels it, nobody knows who did it.
+            await manager.broadcast_all({
+                "type": "chaos", "event": "price_freeze",
+                "msg":  f"🧊 PRICE FREEZE — {cname}'s price feed is locked for 60 seconds. Unusual activity detected.",
+                "stock": stock, "until": until,
+            })
+            await manager.send_player(code, {"type": "info", "msg": f"🧊 {cname} frozen for 60s. Anonymous."})
+            players_all = await all_players()
+            board_now   = leaderboard(players_all, state)
+            await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board_now})
+
+        # ── Rate Freeze Coupon ───────────────────────────────────────
+        elif item_id == "rate_freeze":
+            bank_id = data.get("bank_id")
+            if bank_id not in BANKS:
+                raise HTTPException(400, "Pick a valid bank.")
+            balance = (p.get("loans") or {}).get(bank_id, 0)
+            if balance <= 0:
+                raise HTTPException(400, f"You don't have an outstanding loan with {BANKS[bank_id]['name']}.")
+            locked_rate = bank_rate_for_balance(bank_id, balance)
+            p["rate_locks"] = {**(p.get("rate_locks") or {}), bank_id: locked_rate}
+            log_entry.update({"bank_id": bank_id, "locked_rate": locked_rate})
+            await manager.send_player(code, {
+                "type": "info",
+                "msg":  f"🔒 {BANKS[bank_id]['name']} rate locked at {locked_rate*100:.0f}% for its next round-end charge.",
+            })
+
+        # ── Portfolio Peek ────────────────────────────────────────────
+        elif item_id == "portfolio_peek":
+            target_name = (data.get("target_name") or "").strip()
+            if not target_name:
+                raise HTTPException(400, "Pick a rival to peek at.")
+            all_p  = await all_players()
+            target = next((tp for tp in all_p if tp.get("name") == target_name and tp["code"] != code), None)
+            if not target:
+                raise HTTPException(400, "Couldn't find that player.")
+            tv = player_view(target, state)
+            holdings_txt = ", ".join(
+                f"{h['qty']}× {state['companies'].get(cid,{}).get('name',cid)}"
+                for cid, h in tv.get("portfolio", {}).items() if h.get("qty")
+            ) or "no holdings"
+            log_entry.update({"target": target_name})
+            await manager.send_player(code, {
+                "type": "info",
+                "msg":  (f"🕵️ {target_name} — Cash: ₹{int(tv['cash']):,} · "
+                         f"Loans: ₹{int(tv['total_loan']):,} · Holdings: {holdings_txt}"),
+            })
+
+        # ── Early Word ────────────────────────────────────────────────
+        elif item_id == "early_word":
+            if state["phase"] != "break":
+                raise HTTPException(400, "Early Word only works during a break, ahead of the next round.")
+            upcoming = state.get("pending_news", [])
+            if not upcoming:
+                raise HTTPException(400, "Nothing queued up yet — try again in a moment.")
+            headlines = "  |  ".join(n["text"] for n in upcoming)
+            await manager.send_player(code, {
+                "type": "info",
+                "msg":  f"🔮 Next round's headlines: {headlines}",
+            })
 
         p["bm_log"] = p.get("bm_log", []) + [log_entry]
         await save_player(p)
@@ -1949,10 +2152,13 @@ async def ws_player(websocket: WebSocket, code: str):
                 await save_player(player)
                 pv = player_view(player, state)
                 await websocket.send_text(json.dumps({
-                    "type":   "joined",
-                    "name":   name,
-                    "player": pv,
-                    "banks":  BANKS,
+                    "type":           "joined",
+                    "name":           name,
+                    "player":         pv,
+                    "banks":          BANKS,
+                    "round_end_time": state.get("round_end_time"),
+                    "break_end_time": state.get("break_end_time"),
+                    "break_duration": state.get("break_duration", BREAK_DURATION),
                 }))
                 players = await all_players()
                 board   = leaderboard(players, state)
@@ -2049,11 +2255,12 @@ async def ws_player(websocket: WebSocket, code: str):
                     player["cash"]               += amount
                     player.setdefault("loans", {})[bank_id] = player["loans"].get(bank_id, 0) + amount
                     await save_player(player)
-                pv   = player_view(player, state)
-                rate = bank["rate"] + (0.05 if state.get("credit_crunch") else 0)
+                pv       = player_view(player, state)
+                new_bal  = player["loans"][bank_id]
+                rate     = bank_rate_for_balance(bank_id, new_bal) + (0.05 if state.get("credit_crunch") else 0)
                 await websocket.send_text(json.dumps({
                     "type":   "trade_ok",
-                    "msg":    f"₹{amount:,} from {bank['name']}. Balance: ₹{int(player['loans'][bank_id]):,}. Rate: {rate*100:.0f}%/round.",
+                    "msg":    f"₹{amount:,} from {bank['name']}. Balance: ₹{int(new_bal):,}. Current rate: {rate*100:.0f}%/round.",
                     "player": pv,
                 }))
 
@@ -2194,16 +2401,21 @@ async def ws_player(websocket: WebSocket, code: str):
                 if player["cash"] < each:
                     await websocket.send_text(json.dumps({"type": "error", "msg": f"You need ₹{each:,} for this merger."})); continue
                 bid_id = uuid.uuid4().hex[:8]
-                state["merge_bids"][bid_id] = {
-                    "from_code":    code,
-                    "from_name":    player["name"],
-                    "partner_code": partner_code,
-                    "stock":        stock,
-                    "qty":          qty,
-                    "each":         each,
-                    "ts":           time.time(),
-                }
-                await write_state(state)
+                async with STATE_LOCK:
+                    # Re-read right before mutating — `state` above may be a
+                    # few awaits stale by now, and this write touches shared
+                    # game state that the price loops also write every 4-20s.
+                    fresh_state = await read_state()
+                    fresh_state["merge_bids"][bid_id] = {
+                        "from_code":    code,
+                        "from_name":    player["name"],
+                        "partner_code": partner_code,
+                        "stock":        stock,
+                        "qty":          qty,
+                        "each":         each,
+                        "ts":           time.time(),
+                    }
+                    await write_state(fresh_state)
                 await manager.send_player(partner_code, {
                     "type":    "merge_request",
                     "bid_id":  bid_id,
@@ -2224,8 +2436,10 @@ async def ws_player(websocket: WebSocket, code: str):
                 if not bid:
                     await websocket.send_text(json.dumps({"type": "error", "msg": "Merger bid expired or not found."})); continue
                 if not accept:
-                    del state["merge_bids"][bid_id]
-                    await write_state(state)
+                    async with STATE_LOCK:
+                        fresh_state = await read_state()
+                        fresh_state.get("merge_bids", {}).pop(bid_id, None)
+                        await write_state(fresh_state)
                     await manager.send_player(bid["from_code"], {
                         "type": "info",
                         "msg":  f"{player['name']} declined the merger.",
@@ -2265,8 +2479,11 @@ async def ws_player(websocket: WebSocket, code: str):
                     await save_player(p_init)
                     await save_player(p_resp)
 
-                del state["merge_bids"][bid_id]
-                await write_state(state)
+                async with STATE_LOCK:
+                    fresh_state = await read_state()
+                    fresh_state.get("merge_bids", {}).pop(bid_id, None)
+                    await write_state(fresh_state)
+                    state = fresh_state
                 cname = state["companies"][stock]["name"]
                 await manager.send_player(bid["from_code"], {
                     "type":   "player_update",
