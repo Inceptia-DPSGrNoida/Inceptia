@@ -89,6 +89,18 @@ label:first-child{margin-top:0;}
 
 /* ── Player-disconnect alert (side popup) ── */
 .disc-alert-wrap{position:fixed;top:80px;right:20px;z-index:260;display:flex;flex-direction:column;gap:10px;max-width:280px;}
+
+/* ── Pending (staged) actions panel — undo/schedule window ── */
+.pending-actions-wrap{position:fixed;bottom:20px;left:20px;z-index:260;display:none;flex-direction:column;gap:8px;max-width:320px;background:rgba(20,16,8,0.96);border:1px solid rgba(245,166,35,0.35);border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.pending-actions-wrap.show{display:flex;}
+.pending-actions-wrap::before{content:'⏳ Pending Actions';display:block;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.pending-action-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid var(--border);}
+.pa-label{flex:1;font-family:var(--mono);font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pa-timer{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0;}
+.pa-cancel{flex-shrink:0;padding:5px 9px;border-radius:6px;background:rgba(229,83,75,0.15);border:1px solid rgba(229,83,75,0.4);color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;}
+.pa-cancel:hover{background:rgba(229,83,75,0.28);}
+.stage-delay-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+.stage-delay-row select{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-family:var(--mono);font-size:12px;}
 .disc-alert{background:rgba(30,10,12,0.96);border:1px solid rgba(229,83,75,0.5);border-left:4px solid var(--red);border-radius:10px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,0.45);animation:disc-in .25s ease;}
 @keyframes disc-in{from{opacity:0;transform:translateX(24px);}to{opacity:1;transform:translateX(0);}}
 .disc-alert-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
@@ -149,6 +161,8 @@ label:first-child{margin-top:0;}
           <button class="btn btn-ghost" id="btn-end"   onclick="endRound()"  style="flex:1" disabled>⏸ End Round</button>
         </div>
         <button class="btn btn-blue btn-full" style="margin-top:8px" id="btn-end-game" onclick="endGame()" disabled>🏁 End Game &amp; Reveal</button>
+        <button class="btn btn-gold btn-full" style="margin-top:8px" id="btn-recap" onclick="openRecap()" disabled title="Unlocks once the game has ended">📊 End-Game Recap</button>
+        <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="openBigScreen()">🖥️ Open Big-Screen Leaderboard</button>
         <button class="btn btn-ghost btn-sm btn-full" style="margin-top:10px;color:var(--red);border-color:rgba(229,83,75,.3)" onclick="confirmReset()">⚠ Reset Entire Game</button>
       </div>
 
@@ -257,7 +271,17 @@ label:first-child{margin-top:0;}
         <!-- Chaos Events — wired to actual API endpoints -->
         <div class="tab-panel" id="tab-chaos" style="padding:16px">
           <div class="sec-hdr">Chaos Events</div>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:14px">All events broadcast to all players in real time.</p>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Every event below is queued, not instant — cancel it from the Pending panel (bottom-right) before it fires.</p>
+          <div class="stage-delay-row">
+            <label for="stage-delay">Fire in:</label>
+            <select id="stage-delay">
+              <option value="15" selected>15s (undo window)</option>
+              <option value="30">30s</option>
+              <option value="60">1 min</option>
+              <option value="120">2 min</option>
+              <option value="300">5 min (scheduled)</option>
+            </select>
+          </div>
           <div class="chaos-grid">
             <div class="chaos-btn" onclick="openChaosModal('circuit')">
               <div class="cb-icon">🚫</div>
@@ -440,8 +464,19 @@ label:first-child{margin-top:0;}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-recap">
+  <div class="modal-box" style="max-width:560px;max-height:80vh;overflow-y:auto;text-align:left">
+    <div class="modal-title" style="color:var(--gold)">📊 End-Game Recap</div>
+    <div id="recap-content" style="font-size:13px;color:var(--text);line-height:1.7"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-recap')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toast-wrap"></div>
 <div class="disc-alert-wrap" id="disc-alert-wrap"></div>
+<div class="pending-actions-wrap" id="pending-actions-wrap"></div>
 
 <script>
 let pw='', state=null, board=[], ws=null, nameToCode={};
@@ -544,6 +579,8 @@ function renderPhase() {
   banner.className = 'phase-banner ' + cls;
   banner.textContent = txt;
   const s = document.getElementById('btn-start'), e = document.getElementById('btn-end'), eg = document.getElementById('btn-end-game');
+  const rc = document.getElementById('btn-recap');
+  if (rc) rc.disabled = (state.phase !== 'ended');
   if (state.phase === 'lobby') {
     s.textContent='▶ Start Round 1'; s.disabled=false; e.disabled=true; eg.disabled=true;
   } else if (state.phase === 'trading') {
@@ -666,6 +703,37 @@ async function resetGame() {
 }
 function confirmReset() { document.getElementById('modal-reset').classList.add('open'); }
 
+// ── End-game recap ──────────────────────────────────────────────────────────
+async function openRecap(){
+  try{
+    const r = await fetch(`/api/host/recap?pw=${encodeURIComponent(pw)}`);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Could not load recap.');
+    renderRecap(data);
+    document.getElementById('modal-recap').classList.add('open');
+  } catch(e) { toast(e.message,'err'); }
+}
+function renderRecap(d){
+  const c = document.getElementById('recap-content');
+  let html = '';
+  if (d.richest) html += `<p>🏆 <strong>${d.richest.name}</strong> wins with a net worth of ${fmt(d.richest.net_worth)}.</p>`;
+  if (d.poorest && d.richest && d.poorest.name !== d.richest.name) html += `<p>📉 Roughest game: <strong>${d.poorest.name}</strong>, finishing at ${fmt(d.poorest.net_worth)}.</p>`;
+  if (d.bankrupt_players && d.bankrupt_players.length) html += `<p>💀 Bankruptcies: ${d.bankrupt_players.map(b=>`${b.name} (${b.count}×)`).join(', ')}</p>`;
+  if (d.real_count || d.fake_count) html += `<p>📰 Of the ${d.real_count+d.fake_count} rumours dropped, <strong>${d.real_count} were real</strong> and <strong>${d.fake_count} were fake</strong>.</p>`;
+  if (d.best_round_swing) html += `<p>⚡ Biggest single-round swing: <strong>${d.best_round_swing.name}</strong> (+${fmt(d.best_round_swing.delta)} in one round)</p>`;
+  if (d.most_active_overall) html += `<p>🔁 Most active trader: <strong>${d.most_active_overall.name}</strong> (${d.most_active_overall.trades} trades in one round)</p>`;
+  if (d.total_income_tax || d.total_wealth_tax) html += `<p>🧾 Total tax collected across the game: ${fmt(d.total_income_tax+d.total_wealth_tax)} (income ${fmt(d.total_income_tax)} + wealth ${fmt(d.total_wealth_tax)})</p>`;
+  if (d.rumours && d.rumours.length){
+    html += `<div style="margin-top:16px"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Rumour Reveal</div>`;
+    html += d.rumours.map(r=>`<div style="padding:8px 0;border-top:1px solid var(--border);font-size:12px"><span style="color:${r.real?'var(--green)':'var(--red)'};font-weight:700">${r.real?'REAL':'FAKE'}</span> — ${r.text}</div>`).join('');
+    html += `</div>`;
+  }
+  c.innerHTML = html || '<p style="color:var(--muted)">Not enough data for a recap yet.</p>';
+}
+function openBigScreen(){
+  window.open(`/board?pw=${encodeURIComponent(pw)}`, '_blank');
+}
+
 // ── Codes ─────────────────────────────────────────────────────────────────────
 async function genCodes() {
   const n = parseInt(document.getElementById('code-count').value)||10;
@@ -695,6 +763,58 @@ function prefillPrice() {
   const stock = document.getElementById('manual-stock').value;
   if (state && state.companies[stock]) document.getElementById('manual-price').value = state.companies[stock].price;
 }
+// ── Staged actions: every chaos/news trigger below queues instead of firing
+// immediately. Default delay doubles as an "undo window" (cancel before it
+// fires); pick a longer delay from the selector to actually schedule ahead.
+let pendingActions=[];
+function getStageDelay(){
+  const sel=document.getElementById('stage-delay');
+  return sel ? parseInt(sel.value)||15 : 15;
+}
+function stageAction(label, runFn){
+  const delaySec = getStageDelay();
+  const id = 'pa_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const fireAt = Date.now()+delaySec*1000;
+  const entry = {id,label,fireAt,run:runFn};
+  entry.timerHandle = setTimeout(()=>fireStagedAction(id), delaySec*1000);
+  pendingActions.push(entry);
+  renderPendingActions();
+  toast(`Queued: ${label} — firing in ${delaySec}s`,'info');
+}
+async function fireStagedAction(id){
+  const idx=pendingActions.findIndex(a=>a.id===id);
+  if(idx<0) return;
+  const entry=pendingActions[idx];
+  pendingActions.splice(idx,1);
+  renderPendingActions();
+  try{ await entry.run(); toast(`Fired: ${entry.label}`,'ok'); }
+  catch(e){ toast(e.message,'err'); }
+}
+function cancelPendingAction(id){
+  const idx=pendingActions.findIndex(a=>a.id===id);
+  if(idx<0) return;
+  clearTimeout(pendingActions[idx].timerHandle);
+  const label=pendingActions[idx].label;
+  pendingActions.splice(idx,1);
+  renderPendingActions();
+  toast(`Cancelled: ${label}`,'info');
+}
+function renderPendingActions(){
+  const wrap=document.getElementById('pending-actions-wrap');
+  if(!wrap) return;
+  if(!pendingActions.length){ wrap.classList.remove('show'); wrap.innerHTML=''; return; }
+  wrap.classList.add('show');
+  wrap.innerHTML=pendingActions.map(a=>{
+    const remain=Math.max(0,Math.ceil((a.fireAt-Date.now())/1000));
+    return `<div class="pending-action-row">
+      <span class="pa-label">${a.label}</span>
+      <span class="pa-timer">${remain}s</span>
+      <button class="pa-cancel" onclick="cancelPendingAction('${a.id}')">Cancel</button>
+    </div>`;
+  }).join('');
+}
+setInterval(()=>{ if(pendingActions.length) renderPendingActions(); },1000);
+
 async function manualPrice() {
   const stock = document.getElementById('manual-stock').value;
   const price = parseInt(document.getElementById('manual-price').value);
@@ -708,32 +828,23 @@ async function injectNews() {
   const text = document.getElementById('news-text').value.trim();
   const type = document.getElementById('news-type').value;
   const verified = (type === 'event');
-  try {
-    const res = await apiPost('/api/host/inject_news', {
-      verified,
-      text,   // may be blank — backend auto-picks a matching preset headline
-      affects:   document.getElementById('news-stock').value,
-      direction: parseInt(document.getElementById('news-dir').value),
-      strength:  parseFloat(document.getElementById('news-strength').value)||0.10,
-    });
-    document.getElementById('news-text').value='';
+  const affects   = document.getElementById('news-stock').value;
+  const direction = parseInt(document.getElementById('news-dir').value);
+  const strength  = parseFloat(document.getElementById('news-strength').value)||0.10;
+  document.getElementById('news-text').value='';
+  stageAction(`News — ${affects} (${verified?'Event':'Rumour'})`, async()=>{
+    const res = await apiPost('/api/host/inject_news', {verified,text,affects,direction,strength});
     toast(text ? 'News injected!' : `Auto-picked: "${res.text}"`, 'ok');
-  } catch(e) { toast(e.message,'err'); }
+  });
 }
 async function injectFakeReport(isFake) {
   const text = document.getElementById('fake-report-text').value.trim();
   if (!text) return toast('Enter report text.','err');
-  try {
-    await apiPost('/api/host/inject_news', {
-      verified: false,
-      text,
-      affects:   document.getElementById('news-stock').value,
-      direction: isFake ? -1 : 1,
-      strength:  0.08,
-    });
-    document.getElementById('fake-report-text').value='';
-    toast('Report dropped to all players.','ok');
-  } catch(e) { toast(e.message,'err'); }
+  const affects = document.getElementById('news-stock').value;
+  document.getElementById('fake-report-text').value='';
+  stageAction(`Report — ${affects} (${isFake?'Fake':'Real'})`, async()=>{
+    await apiPost('/api/host/inject_news', {verified:false,text,affects,direction:isFake?-1:1,strength:0.08});
+  });
 }
 
 // ── Secret intel ──────────────────────────────────────────────────────────────
@@ -750,8 +861,7 @@ async function triggerChaosSimple(event) {
   if (!confirm(`Trigger ${event.replace(/_/g,' ')}?`)) return;
   const map = { credit_crunch: '/api/chaos/credit_crunch' };
   if (!map[event]) return;
-  try { await apiPost(map[event]); toast(`${event} triggered!`,'ok'); }
-  catch(e) { toast(e.message,'err'); }
+  stageAction(event.replace(/_/g,' '), async()=>{ await apiPost(map[event]); });
 }
 function openChaosModal(type) {
   const m={circuit:'modal-circuit',dividend:'modal-dividend',acquisition:'modal-acquisition',ipo:'modal-ipo',freeze_player:'modal-freeze-player'};
@@ -760,36 +870,34 @@ function openChaosModal(type) {
 async function triggerRegFreeze() {
   const sector = document.getElementById('circuit-sector').value;
   closeModal('modal-circuit');
-  try { await apiPost('/api/chaos/regulatory_freeze',{sector}); toast(`${sector} frozen!`,'ok'); }
-  catch(e) { toast(e.message,'err'); }
+  stageAction(`Regulatory Freeze — ${sector}`, async()=>{ await apiPost('/api/chaos/regulatory_freeze',{sector}); });
 }
 async function triggerDividend() {
   const stock     = document.getElementById('div-stock').value;
   const per_share = parseInt(document.getElementById('div-amount').value)||20;
   closeModal('modal-dividend');
-  try { const d=await apiPost('/api/chaos/dividend',{stock,per_share}); toast(`Dividend paid! Total out: ${fmt(d.total_paid)}`,'ok'); }
-  catch(e) { toast(e.message,'err'); }
+  stageAction(`Dividend — ${stock} ₹${per_share}/share`, async()=>{
+    const d=await apiPost('/api/chaos/dividend',{stock,per_share});
+    toast(`Dividend paid! Total out: ${fmt(d.total_paid)}`,'ok');
+  });
 }
 async function triggerAcquisition() {
   const stock1 = document.getElementById('acq-stock1').value;
   const stock2 = document.getElementById('acq-stock2').value;
   closeModal('modal-acquisition');
   if (stock1===stock2) return toast('Pick two different stocks.','err');
-  try { await apiPost('/api/chaos/acquisition_rumour',{stock1,stock2}); toast('Acquisition rumour released!','ok'); }
-  catch(e) { toast(e.message,'err'); }
+  stageAction(`Acquisition Rumour — ${stock1} × ${stock2}`, async()=>{ await apiPost('/api/chaos/acquisition_rumour',{stock1,stock2}); });
 }
 async function triggerIPO() {
   const ipo_id = document.getElementById('ipo-id').value;
   closeModal('modal-ipo');
-  try { await apiPost(`/api/chaos/ipo_drop/${ipo_id}`); toast('IPO dropped!','ok'); }
-  catch(e) { toast(e.message,'err'); }
+  stageAction(`IPO Drop — ${ipo_id}`, async()=>{ await apiPost(`/api/chaos/ipo_drop/${ipo_id}`); });
 }
 async function triggerFreezePlayer() {
   const code = document.getElementById('freeze-player-code').value;
   closeModal('modal-freeze-player');
   if (!code) return toast('No player selected.','err');
-  try { await apiPost('/api/chaos/portfolio_freeze',{code}); toast('Portfolio frozen!','ok'); }
-  catch(e) { toast(e.message,'err'); }
+  stageAction(`Portfolio Freeze — ${code}`, async()=>{ await apiPost('/api/chaos/portfolio_freeze',{code}); });
 }
 
 // ── Players & Loans ───────────────────────────────────────────────────────────

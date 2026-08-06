@@ -355,6 +355,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .shadow-demand-btn:hover{background:rgba(255,77,109,0.18);}
 
 /* ── BANKRUPTCY ── */
+.insurance-section{margin-top:24px;padding:22px;background:rgba(79,195,247,0.04);border:1px solid rgba(79,195,247,0.18);border-radius:16px;}
+.insurance-title{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:1px;color:var(--blue);margin-bottom:8px;}
+.insurance-desc{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:16px;line-height:1.6;font-family:var(--mono);}
+.insurance-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;}
+.insurance-row-name{flex:1;font-size:13px;color:var(--text);font-weight:600;}
+.insurance-row-sub{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.insurance-buy-btn{padding:8px 14px;border-radius:8px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.35);color:var(--blue);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.insurance-buy-btn:hover{background:rgba(79,195,247,0.22);}
+.insurance-active-tag{padding:6px 10px;border-radius:6px;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:var(--green);font-family:var(--mono);font-size:10px;font-weight:700;white-space:nowrap;}
 .bankruptcy-section{margin-top:24px;padding:22px;background:rgba(255,77,109,0.04);border:1px solid rgba(255,77,109,0.18);border-radius:16px;}
 .bankruptcy-title{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:1px;color:var(--red);margin-bottom:8px;}
 .bankruptcy-desc{font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:18px;line-height:1.6;font-family:var(--mono);}
@@ -450,6 +459,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
 /* ── NEWS ── */
 .news-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
+.news-react-row{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+.news-react-btn{display:flex;align-items:center;gap:4px;padding:5px 9px;border-radius:99px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-size:13px;cursor:pointer;transition:background .15s,border-color .15s;}
+.news-react-btn:hover{background:rgba(255,255,255,0.09);}
+.news-react-btn.has-count{background:rgba(245,166,35,0.1);border-color:rgba(245,166,35,0.3);color:var(--gold);}
+.nrb-count{font-family:var(--mono);font-size:10px;font-weight:700;min-width:8px;}
 .news-label-tag{display:inline-block;font-size:9px;font-weight:700;padding:4px 9px;border-radius:6px;margin-bottom:9px;letter-spacing:0.5px;text-transform:uppercase;font-family:var(--mono);}
 .tag-verified  {background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.22);}
 .tag-unverified{background:rgba(255,183,77,0.1);color:var(--orange);border:1px solid rgba(255,183,77,0.22);}
@@ -483,6 +497,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .btn-accept{flex:1;padding:12px;background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.35);color:var(--green);border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;}
 .btn-reject{flex:1;padding:12px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);color:var(--red);border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;}
 .chaos-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:36px;text-align:center;}
+.merged-away-overlay{display:none;position:fixed;inset:0;background:rgba(10,5,15,0.97);z-index:210;flex-direction:column;align-items:center;justify-content:center;padding:36px;text-align:center;}
+.merged-away-overlay.show{display:flex;}
+.merged-away-icon{font-size:60px;margin-bottom:16px;}
+.merged-away-title{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:14px;}
+.merged-away-text{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.7;max-width:380px;margin-bottom:10px;}
+.merged-away-hint{font-size:12px;color:var(--muted);max-width:340px;margin-bottom:28px;font-family:var(--mono);}
+.merged-away-dismiss{padding:13px 30px;background:rgba(206,147,216,0.15);border:1px solid rgba(206,147,216,0.4);color:var(--purple);border-radius:10px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .chaos-overlay.show{display:flex;}
 .chaos-icon{font-size:72px;margin-bottom:18px;}
 .chaos-title{font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#fff;margin-bottom:14px;}
@@ -714,6 +735,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
         <input class="merge-input"   id="merge-qty" type="number" placeholder="Total shares to buy" min="1">
         <button class="btn-merge" onclick="initiateMerge()">Propose Merger</button>
       </div>
+      <div class="merge-section team-merge-section" id="team-merge-section" style="display:none">
+        <h3 style="color:var(--purple)">🤝 Team Merger — Permanent</h3>
+        <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px;font-family:var(--mono)">
+          Combines your ENTIRE portfolio (cash, holdings, loans, shorts) with another player's into one account, for the rest of the game.
+          If they accept, your session becomes a spectator — trading happens from their device from then on. Not reversible.
+        </p>
+        <input class="merge-input" id="team-merge-partner" placeholder="Partner's 6-digit code" maxlength="6">
+        <button class="btn-merge" style="background:rgba(206,147,216,0.1);border-color:rgba(206,147,216,0.3);color:var(--purple)" onclick="proposeTeamMerge()">Propose Team Merger</button>
+      </div>
     </div>
 
     <div class="panel panel-tint-portfolio" id="panel-portfolio"><div id="portfolio-list"></div></div>
@@ -722,6 +752,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <div class="section-hdr">Your Loans</div>
       <div id="repay-top-note" style="display:none;margin-bottom:14px;padding:12px 16px;background:rgba(255,183,77,0.07);border:1px solid rgba(255,183,77,0.2);border-radius:10px;font-size:12px;color:var(--orange);font-family:var(--mono)">⏸ Repayment is only available during break periods between rounds.</div>
       <div id="bank-list"></div>
+      <div class="insurance-section" id="insurance-section"></div>
       <div class="bankruptcy-section">
         <div class="bankruptcy-title">⚠️ Voluntary Bankruptcy</div>
         <div class="bankruptcy-desc">
@@ -764,16 +795,43 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <button class="btn-reject" onclick="respondMerge(false)">Reject</button>
   </div>
 </div>
+<div class="merge-popup" id="team-merge-popup" style="border-color:rgba(206,147,216,0.5)">
+  <div class="merge-popup-title" style="color:var(--purple)">🤝 Team Merger Proposal!</div>
+  <div class="merge-popup-body" id="team-merge-popup-body"></div>
+  <div class="merge-popup-btns">
+    <button class="btn-accept" onclick="respondTeamMerge(true)">Accept — Merge In</button>
+    <button class="btn-reject" onclick="respondTeamMerge(false)">Reject</button>
+  </div>
+</div>
+<div class="merged-away-overlay" id="merged-away-overlay">
+  <div class="merged-away-icon">🤝</div>
+  <div class="merged-away-title">Merged Into a Team</div>
+  <div class="merged-away-text" id="merged-away-text"></div>
+  <div class="merged-away-hint">You can still browse the market and news — trading now happens from your teammate's device.</div>
+  <button class="merged-away-dismiss" onclick="dismissMergedAwayOverlay()">Got it, let me browse</button>
+</div>
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────────
 let ws=null, myCode='', myName='';
+// Rapid-click guard: blocks a burst of clicks on trade-ish buttons from firing
+// multiple WS messages before the first one's response even comes back.
+let _lastActionAt=0;
+function sendAction(payload, cooldownMs=450){
+  const now=Date.now();
+  if(now-_lastActionAt<cooldownMs){ toast('Slow down a sec — that click was too fast to register.','info'); return false; }
+  _lastActionAt=now;
+  if(!ws||ws.readyState!==1) return false;
+  ws.send(JSON.stringify(payload));
+  return true;
+}
 let phase='lobby', currentRound=0;
 let market={}, playerData={cash:0,loans:{},total_loan:0,frozen:false,net_worth:0,portfolio:{},bets:{}};
 let boardData=[], prevPrices={}, priceHistory={}, newsCount=0, activeTab='market';
-let joinStep1Done=false, wasKicked=false, pendingMerge=null, expandedCard=null, bankruptFrozen=false;
+let joinStep1Done=false, wasKicked=false, pendingMerge=null, pendingTeamMerge=null, expandedCard=null, bankruptFrozen=false;
 let banksConfig={}, sentiment={}, regFreeze=null, creditCrunch=false, priceFrozenStocks={};
+let isMergedAway=false, mergedIntoCode=null;
 let predDirection=null, predStock=null;
 let timerInterval=null, timerEndTime=null, timerTotal=1200;
 // trade pressure: {cid: {buys: N, sells: N}} — tracks this round's player actions
@@ -948,9 +1006,13 @@ function connectWS(){
 function handleMsg(msg){
   switch(msg.type){
     case 'error':
-      showJoinErr(msg.msg);
-      document.getElementById('join-btn').disabled=false;
-      document.getElementById('join-btn').textContent='Enter Market →';
+      if(document.getElementById('app').style.display==='flex'){
+        toast(msg.msg,'err');
+      } else {
+        showJoinErr(msg.msg);
+        document.getElementById('join-btn').disabled=false;
+        document.getElementById('join-btn').textContent='Enter Market →';
+      }
       break;
     case 'init':
       phase=msg.phase; currentRound=msg.round||0; market=msg.market||{};
@@ -958,6 +1020,7 @@ function handleMsg(msg){
       regFreeze=msg.reg_freeze||null; creditCrunch=msg.credit_crunch||false;
       if(msg.price_history) priceHistory=msg.price_history;
       if(msg.player) playerData=msg.player;
+      isMergedAway=!!msg.merged_into; mergedIntoCode=msg.merged_into||null;
       // Restore news history
       if(msg.news&&msg.news.length){
         msg.news.forEach(n=>addNews(n,true));
@@ -966,6 +1029,7 @@ function handleMsg(msg){
       if(!msg.joined) ws.send(JSON.stringify({action:'set_name',name:myName}));
       else {
         myName=msg.name; showApp();
+        if(isMergedAway) showMergedAwayScreen();
         // If already mid-round or mid-break, resume the right timer
         if(phase==='trading'&&msg.round_end_time) startTimer(msg.round_end_time,1200);
         else if(phase==='break'&&msg.break_end_time) startBreakTimer(msg.break_end_time,msg.break_duration||600);
@@ -1026,6 +1090,8 @@ function handleMsg(msg){
       switchTab('board'); showChaos('🏁','Game Over!','Final leaderboard is live. Check your ranking!'); break;
     case 'reset': location.reload(); break;
     case 'info':  toast(msg.msg,'info'); break;
+    case 'round_summary': showRoundSummary(msg.summary); break;
+    case 'news_reaction': updateNewsReactionUI(msg.news_id, msg.counts); break;
     case 'bankrupt':
       bankruptFrozen=true;
       playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks();
@@ -1035,6 +1101,14 @@ function handleMsg(msg){
       pendingMerge=msg;
       document.getElementById('merge-popup-body').innerHTML=`<strong>${msg.from}</strong> wants to jointly buy <strong>${msg.qty}× ${market[msg.stock]?.name||msg.stock}</strong>. You each pay <strong>${fmt(msg.each)}</strong>.`;
       document.getElementById('merge-popup').classList.add('show'); break;
+    case 'team_merge_request':
+      pendingTeamMerge=msg;
+      document.getElementById('team-merge-popup-body').innerHTML=`<strong>${msg.from_name}</strong> wants to permanently merge your ENTIRE account (cash, holdings, loans, shorts) into theirs. If you accept, your session becomes a spectator for the rest of the game — trading happens from their device from then on. This can't be undone.`;
+      document.getElementById('team-merge-popup').classList.add('show'); break;
+    case 'team_merge_done':
+      isMergedAway=true;
+      toast(msg.msg,'info');
+      showMergedAwayScreen(); break;
     case 'kicked':
       wasKicked=true;
       document.getElementById('app').style.display='none';
@@ -1125,6 +1199,7 @@ function updatePhase(){
   phEl.textContent=phaseTxt;
   const phMini=document.getElementById('top-phase-mini'); if(phMini) phMini.textContent=phaseTxt;
   document.getElementById('merge-section').style.display=phase==='trading'?'block':'none';
+  const tms=document.getElementById('team-merge-section'); if(tms) tms.style.display=(phase==='trading'&&!isMergedAway)?'block':'none';
   const inTrading=phase==='trading';
   document.getElementById('tab-board').style.display=inTrading?'none':'';
   document.getElementById('main-nav').style.gridTemplateColumns=inTrading?'repeat(5,1fr)':'repeat(6,1fr)';
@@ -1456,10 +1531,14 @@ function setChartType(t){
   renderMarket();
 }
 function emptyChartSvg(w,h){ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block"></svg>`; }
-// Groups a flat price-history array into OHLC buckets for candle/bar charts
-function bucketOHLC(hist,numBuckets){
+// Groups a flat price-history array into OHLC buckets for candle/bar charts.
+// Bucket count adapts to how much real history exists yet — early in a round
+// (few ticks so far) this avoids degenerate 1-tick "candles" with no visible
+// body, which is what a fixed count of 16 used to produce.
+function bucketOHLC(hist,maxBuckets){
   if(!hist||hist.length<2) return [];
-  const n=hist.length, size=Math.max(1,Math.ceil(n/numBuckets)), buckets=[];
+  const targetBuckets=Math.min(maxBuckets,Math.max(4,Math.floor(hist.length/3)));
+  const n=hist.length, size=Math.max(2,Math.ceil(n/targetBuckets)), buckets=[];
   for(let i=0;i<n;i+=size){
     const slice=hist.slice(i,i+size);
     if(!slice.length) continue;
@@ -1470,41 +1549,48 @@ function bucketOHLC(hist,numBuckets){
 const fmtShortSpark=v=>v>=1000?(v/1000).toFixed(1)+'k':Math.round(v);
 function candlestickChart(cid,w,h){
   const hist=priceHistory[cid];
-  if(!hist||hist.length<2) return emptyChartSvg(w,h);
-  const buckets=bucketOHLC(hist,16);
+  if(!hist||hist.length<6) return sparklineChart(cid,w,h); // not enough history yet for real candles — fall back to line
+  const buckets=bucketOHLC(hist,12);
+  if(buckets.length<3) return sparklineChart(cid,w,h);
   const allVals=buckets.flatMap(b=>[b.high,b.low]);
   const rawMin=Math.min(...allVals), rawMax=Math.max(...allVals);
-  const min=rawMin*0.998, max=rawMax*1.002, range=max-min||1, pad=6;
+  const min=rawMin*0.996, max=rawMax*1.004, range=max-min||1, pad=7;
   const yOf=v=>h-pad-((v-min)/range*(h-pad*2));
-  const n=buckets.length, slotW=w/n, bodyW=Math.max(2,slotW*0.55);
+  const n=buckets.length, slotW=w/n, bodyW=Math.max(4,slotW*0.62);
+  const minBodyPx=Math.max(1.5,h*0.025); // doji/near-flat candles still show a visible sliver, not nothing
   let svg='';
   buckets.forEach((b,i)=>{
-    const cx=(i+0.5)*slotW, up=b.close>=b.open, color=up?'var(--green)':'var(--red)';
+    const cx=(i+0.5)*slotW, up=b.close>=b.open, flat=b.close===b.open;
+    const color=flat?'var(--muted)':(up?'var(--green)':'var(--red)');
     const yHigh=yOf(b.high), yLow=yOf(b.low), yOpen=yOf(b.open), yClose=yOf(b.close);
-    const bodyTop=Math.min(yOpen,yClose), bodyH=Math.max(1,Math.abs(yClose-yOpen));
-    svg+=`<line x1="${cx.toFixed(1)}" y1="${yHigh.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yLow.toFixed(1)}" stroke="${color}" stroke-width="1"/>`;
-    svg+=`<rect x="${(cx-bodyW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" opacity="0.9"/>`;
+    let bodyTop=Math.min(yOpen,yClose), bodyH=Math.abs(yClose-yOpen);
+    if(bodyH<minBodyPx){ const mid=(yOpen+yClose)/2; bodyTop=mid-minBodyPx/2; bodyH=minBodyPx; }
+    svg+=`<line x1="${cx.toFixed(1)}" y1="${yHigh.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yLow.toFixed(1)}" stroke="${color}" stroke-width="1.6" opacity="0.85"/>`;
+    svg+=`<rect x="${(cx-bodyW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${bodyH.toFixed(1)}" rx="1" fill="${color}" opacity="${flat?0.55:0.95}"/>`;
   });
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
     ${svg}
-    <text x="2" y="9" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">H ₹${fmtShortSpark(rawMax)}</text>
+    <text x="2" y="10" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">H ₹${fmtShortSpark(rawMax)}</text>
     <text x="2" y="${h-3}" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">L ₹${fmtShortSpark(rawMin)}</text>
   </svg>`;
 }
 function barChart(cid,w,h){
   const hist=priceHistory[cid];
-  if(!hist||hist.length<2) return emptyChartSvg(w,h);
-  const buckets=bucketOHLC(hist,20);
+  if(!hist||hist.length<6) return sparklineChart(cid,w,h);
+  const buckets=bucketOHLC(hist,16);
+  if(buckets.length<3) return sparklineChart(cid,w,h);
   const closes=buckets.map(b=>b.close);
   const rawMin=Math.min(...closes), rawMax=Math.max(...closes);
-  const min=rawMin*0.998, max=rawMax*1.002, range=max-min||1, pad=6;
+  const min=rawMin*0.996, max=rawMax*1.004, range=max-min||1, pad=7;
   const yOf=v=>h-pad-((v-min)/range*(h-pad*2));
-  const n=buckets.length, slotW=w/n, barW=Math.max(2,slotW*0.6), baseY=h-pad;
+  const n=buckets.length, slotW=w/n, barW=Math.max(3,slotW*0.64), baseY=h-pad;
+  const minBarPx=Math.max(1.5,h*0.02);
   let svg='';
   buckets.forEach((b,i)=>{
     const cx=(i+0.5)*slotW, up=b.close>=b.open, color=up?'var(--green)':'var(--red)';
-    const yTop=yOf(b.close);
-    svg+=`<rect x="${(cx-barW/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${(baseY-yTop).toFixed(1)}" fill="${color}" opacity="0.85" rx="1"/>`;
+    let yTop=yOf(b.close);
+    if(baseY-yTop<minBarPx) yTop=baseY-minBarPx;
+    svg+=`<rect x="${(cx-barW/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${(baseY-yTop).toFixed(1)}" fill="${color}" opacity="0.88" rx="1.5"/>`;
   });
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
     ${svg}
@@ -1610,7 +1696,7 @@ function renderMarket(){
               <button class="qty-btn" onclick="adjQty('b','${cid}',-1)">−</button>
               <input class="qty-field" id="bq-${cid}" type="number" value="1" min="1" oninput="updCost('b','${cid}')">
               <button class="qty-btn" onclick="adjQty('b','${cid}',1)">+</button>
-              <button class="exec-btn exec-buy" onclick="execTrade('buy','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen?'disabled':''}>BUY</button>
+              <button class="exec-btn exec-buy" onclick="execTrade('buy','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen||isMergedAway?'disabled':''}>BUY</button>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div class="qty-cost" id="bc-${cid}">Cost: ${fmt(p)}</div>
@@ -1623,7 +1709,7 @@ function renderMarket(){
               <button class="qty-btn" onclick="adjQty('s','${cid}',-1)">−</button>
               <input class="qty-field" id="sq-${cid}" type="number" value="1" min="1" oninput="updCost('s','${cid}')">
               <button class="qty-btn" onclick="adjQty('s','${cid}',1)">+</button>
-              <button class="exec-btn exec-sell" onclick="execTrade('sell','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen||owned===0?'disabled':''}>SELL</button>
+              <button class="exec-btn exec-sell" onclick="execTrade('sell','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen||owned===0||isMergedAway?'disabled':''}>SELL</button>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div class="qty-cost" id="sc-${cid}">Value: ${fmt(p)}</div>
@@ -1631,6 +1717,32 @@ function renderMarket(){
             </div>
           </div>
         </div>
+        ${(!c.is_fund && !c.is_etf) ? (()=>{
+          const shortPos = playerData.shorts?.[cid];
+          const hasShort = shortPos && shortPos.qty>0;
+          return `<div class="trade-side short-side" style="margin-top:10px">
+            <div class="trade-side-label" style="color:var(--purple)">Short${hasShort?` — open: ${shortPos.qty} @ ₹${shortPos.entry_price.toLocaleString('en-IN')}`:''}</div>
+            <div class="trade-inline">
+              <button class="qty-btn" onclick="adjQty('sh','${cid}',-1)">−</button>
+              <input class="qty-field" id="shq-${cid}" type="number" value="1" min="1" oninput="updateShortMargin('${cid}')">
+              <button class="qty-btn" onclick="adjQty('sh','${cid}',1)">+</button>
+              <button class="exec-btn" style="background:var(--purple);color:#fff" onclick="execShort('${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen?'disabled':''}>SHORT</button>
+              ${hasShort?`<button class="exec-btn" style="background:rgba(206,147,216,0.15);color:var(--purple);border:1px solid rgba(206,147,216,0.4)" onclick="execCoverShort('${cid}')" ${phase!=='trading'?'disabled':''}>COVER</button>`:''}
+            </div>
+            <div class="qty-cost" style="margin-top:4px">Margin needed: ${fmt(p*(parseInt(document.getElementById('shq-'+cid)?.value)||1)*0.4)} (40%)</div>
+          </div>`;
+        })() : ''}
+        ${owned>0 ? (()=>{
+          const stopTrigger = playerData.stop_losses?.[cid];
+          return `<div class="trade-side stop-side" style="margin-top:10px">
+            <div class="trade-side-label" style="color:var(--orange)">Stop-Loss${stopTrigger?` — set at ₹${Math.round(stopTrigger).toLocaleString('en-IN')}`:''}</div>
+            <div class="trade-inline">
+              <input class="qty-field" style="width:100px" id="stopq-${cid}" type="number" placeholder="trigger ₹" value="${stopTrigger?Math.round(stopTrigger):''}">
+              <button class="exec-btn" style="background:rgba(255,183,77,0.15);color:var(--orange);border:1px solid rgba(255,183,77,0.4)" onclick="execSetStop('${cid}')">SET</button>
+              ${stopTrigger?`<button class="exec-btn" style="background:rgba(255,77,109,0.1);color:var(--red)" onclick="execCancelStop('${cid}')">CANCEL</button>`:''}
+            </div>
+          </div>`;
+        })() : ''}
       </div>
     </div>`;
   }
@@ -1660,10 +1772,17 @@ function toggleCard(cid){
   }
 }
 function adjQty(side,cid,delta){
-  const id=side==='b'?`bq-${cid}`:`sq-${cid}`;
+  const id=side==='b'?`bq-${cid}`:side==='sh'?`shq-${cid}`:`sq-${cid}`;
   const el=document.getElementById(id); if(!el) return;
   el.value=Math.max(1,(parseInt(el.value)||1)+delta);
-  updCost(side,cid);
+  if(side==='sh') updateShortMargin(cid);
+  else updCost(side,cid);
+}
+function updateShortMargin(cid){
+  const p=market[cid]?.price||0;
+  const q=parseInt(document.getElementById(`shq-${cid}`)?.value)||1;
+  const row=document.getElementById('card-'+cid);
+  if(row){ const el=row.querySelector('.short-side .qty-cost'); if(el) el.textContent=`Margin needed: ${fmt(p*q*0.4)} (40%)`; }
 }
 function updCost(side,cid){
   const p=market[cid]?.price||0;
@@ -1693,47 +1812,103 @@ function execTrade(action,cid){
   const qty=parseInt(qEl?.value)||0;
   if(qty<1) return toast('Enter a valid quantity.','err');
   if(action==='sell'&&qty>(playerData.portfolio?.[cid]?.qty||0)) return toast(`You only own ${playerData.portfolio?.[cid]?.qty||0} shares.`,'err');
+  if(!sendAction({action,stock:cid,qty})) return; // dropped by rapid-click guard
   // Track local pressure
   if(!tradePressure[cid]) tradePressure[cid]={buys:0,sells:0};
   if(action==='buy') tradePressure[cid].buys+=qty;
   else tradePressure[cid].sells+=qty;
-  ws.send(JSON.stringify({action,stock:cid,qty}));
+}
+function execShort(cid){
+  if(!ws) return;
+  if(phase!=='trading') return toast('Trading is closed.','err');
+  if(playerData.frozen) return toast('Your portfolio is frozen this round.','err');
+  const qty=parseInt(document.getElementById(`shq-${cid}`)?.value)||0;
+  if(qty<1) return toast('Enter a valid quantity.','err');
+  sendAction({action:'short_sell',stock:cid,qty});
+}
+function execCoverShort(cid){
+  if(!ws) return;
+  sendAction({action:'cover_short',stock:cid});
+}
+function execSetStop(cid){
+  if(!ws) return;
+  const trigger=parseFloat(document.getElementById(`stopq-${cid}`)?.value);
+  if(!trigger||trigger<=0) return toast('Enter a valid trigger price.','err');
+  const cur=market[cid]?.price||0;
+  if(trigger>=cur) return toast(`Trigger should be below the current price (₹${cur.toLocaleString('en-IN')}).`,'err');
+  sendAction({action:'set_stop_loss',stock:cid,trigger});
+}
+function execCancelStop(cid){
+  if(!ws) return;
+  sendAction({action:'cancel_stop_loss',stock:cid});
 }
 
 // ── Portfolio ─────────────────────────────────────────────────────────────────
 function renderPortfolio(){
   const list=document.getElementById('portfolio-list');
   const holdings=Object.entries(playerData.portfolio||{}).filter(([,holding])=>holding.qty>0);
-  if(!holdings.length){list.innerHTML='<div class="empty"><div class="empty-icon">💼</div><div class="empty-text">No holdings yet.</div></div>';return;}
-  let html='<div class="section-hdr">Holdings</div>';
-  for(const [cid,holding] of holdings){
-    const name=market[cid]?.name||cid, cls=holding.pnl>=0?'up':'dn', sign=holding.pnl>=0?'+':'';
-    html+=`<div class="port-card">
-      <div class="port-top">
-        <div>
-          <div class="port-name">${name}</div>
-          <div class="port-qty">${holding.qty} shares · Avg ₹${Math.round(holding.avg).toLocaleString('en-IN')}</div>
+  const shorts=Object.entries(playerData.shorts||{}).filter(([,s])=>s.qty>0);
+  if(!holdings.length && !shorts.length){list.innerHTML='<div class="empty"><div class="empty-icon">💼</div><div class="empty-text">No holdings yet.</div></div>';return;}
+  let html='';
+  if(holdings.length){
+    html+='<div class="section-hdr">Holdings</div>';
+    for(const [cid,holding] of holdings){
+      const name=market[cid]?.name||cid, cls=holding.pnl>=0?'up':'dn', sign=holding.pnl>=0?'+':'';
+      html+=`<div class="port-card">
+        <div class="port-top">
+          <div>
+            <div class="port-name">${name}</div>
+            <div class="port-qty">${holding.qty} shares · Avg ₹${Math.round(holding.avg).toLocaleString('en-IN')}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="port-name ${cls}" style="font-size:22px">${sign}${fmt(holding.pnl)}</div>
+            <div class="port-qty">P&amp;L</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div class="port-name ${cls}" style="font-size:22px">${sign}${fmt(holding.pnl)}</div>
-          <div class="port-qty">P&amp;L</div>
+        <div class="port-stats">
+          <div style="flex:1;padding-right:16px;border-right:1px solid var(--border)">
+            <div class="ps-label">Current Price</div>
+            <div class="ps-val">${fmt(holding.price)}</div>
+          </div>
+          <div style="flex:1;padding:0 16px;border-right:1px solid var(--border)">
+            <div class="ps-label">Total Value</div>
+            <div class="ps-val" style="color:var(--blue)">${fmt(holding.value)}</div>
+          </div>
+          <div style="flex:1;padding-left:16px">
+            <div class="ps-label">Return</div>
+            <div class="ps-val ${cls}">${sign}${holding.avg>0?(((holding.price-holding.avg)/holding.avg)*100).toFixed(1):0}%</div>
+          </div>
         </div>
-      </div>
-      <div class="port-stats">
-        <div style="flex:1;padding-right:16px;border-right:1px solid var(--border)">
-          <div class="ps-label">Current Price</div>
-          <div class="ps-val">${fmt(holding.price)}</div>
+      </div>`;
+    }
+  }
+  if(shorts.length){
+    html+='<div class="section-hdr" style="margin-top:20px">Open Shorts</div>';
+    for(const [cid,s] of shorts){
+      const name=market[cid]?.name||cid, cls=s.pnl>=0?'up':'dn', sign=s.pnl>=0?'+':'';
+      html+=`<div class="port-card" style="border-color:rgba(206,147,216,0.3)">
+        <div class="port-top">
+          <div>
+            <div class="port-name">${name} <span style="font-size:10px;color:var(--purple);font-family:var(--mono);padding:2px 7px;border-radius:5px;background:rgba(206,147,216,0.12);border:1px solid rgba(206,147,216,0.3)">SHORT</span></div>
+            <div class="port-qty">${s.qty} shares · Entry ₹${s.entry_price.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="port-name ${cls}" style="font-size:22px">${sign}${fmt(s.pnl)}</div>
+            <div class="port-qty">Unrealized P&amp;L</div>
+          </div>
         </div>
-        <div style="flex:1;padding:0 16px;border-right:1px solid var(--border)">
-          <div class="ps-label">Total Value</div>
-          <div class="ps-val" style="color:var(--blue)">${fmt(holding.value)}</div>
+        <div class="port-stats">
+          <div style="flex:1;padding-right:16px;border-right:1px solid var(--border)">
+            <div class="ps-label">Current Price</div>
+            <div class="ps-val">${fmt(s.price)}</div>
+          </div>
+          <div style="flex:1;padding-left:16px">
+            <div class="ps-label">Cost to Cover</div>
+            <div class="ps-val" style="color:var(--purple)">${fmt(s.cost_to_cover)}</div>
+          </div>
         </div>
-        <div style="flex:1;padding-left:16px">
-          <div class="ps-label">Return</div>
-          <div class="ps-val ${cls}">${sign}${holding.avg>0?(((holding.price-holding.avg)/holding.avg)*100).toFixed(1):0}%</div>
-        </div>
-      </div>
-    </div>`;
+      </div>`;
+    }
   }
   list.innerHTML=html;
 }
@@ -1814,8 +1989,45 @@ function renderBanks(){
   }
   container.innerHTML=html||'<div style="color:var(--muted);font-size:13px;font-family:var(--mono)">No banks configured.</div>';
   renderBankruptcyEligibility();
+  renderInsurance();
+}
+function renderInsurance(){
+  const el=document.getElementById('insurance-section'); if(!el) return;
+  const holdings=Object.entries(playerData.portfolio||{}).filter(([,h])=>h.qty>0);
+  const active=playerData.insurance||{};
+  let html=`<div class="insurance-title">🛡️ Insurance</div>
+    <div class="insurance-desc">Insure a position you hold. Costs ${(INSURANCE_PREMIUM_PCT*100).toFixed(0)}% of its value upfront.
+    If the price is still below your cost basis at round end (and you're still holding), you get back ${(INSURANCE_COVERAGE_PCT*100).toFixed(0)}%
+    of the loss. Policies always expire at round end, win or not.</div>`;
+  if(!holdings.length){
+    html+='<div style="color:var(--muted);font-size:12px;font-family:var(--mono)">You need to hold something before you can insure it.</div>';
+  } else {
+    for(const [cid,h] of holdings){
+      const name=market[cid]?.name||cid;
+      const pol=active[cid];
+      if(pol){
+        html+=`<div class="insurance-row">
+          <div class="insurance-row-name">${name}<div class="insurance-row-sub">Locked ₹${Math.round(pol.avg_cost_locked).toLocaleString('en-IN')} · ${pol.qty} shares · premium paid ₹${pol.premium_paid.toLocaleString('en-IN')}</div></div>
+          <span class="insurance-active-tag">ACTIVE</span>
+        </div>`;
+      } else {
+        const premium=Math.round(h.qty*h.avg*INSURANCE_PREMIUM_PCT);
+        html+=`<div class="insurance-row">
+          <div class="insurance-row-name">${name}<div class="insurance-row-sub">${h.qty} shares @ avg ₹${Math.round(h.avg).toLocaleString('en-IN')} — premium ₹${premium.toLocaleString('en-IN')}</div></div>
+          <button class="insurance-buy-btn" onclick="buyInsurance('${cid}')" ${phase!=='trading'?'disabled':''}>Insure</button>
+        </div>`;
+      }
+    }
+  }
+  el.innerHTML=html;
+}
+function buyInsurance(cid){
+  if(!ws) return;
+  if(phase!=='trading') return toast('Trading is closed.','err');
+  sendAction({action:'buy_insurance',stock:cid});
 }
 const BANKRUPTCY_MIN_DEBT_GAP=900000;
+const INSURANCE_PREMIUM_PCT=0.08, INSURANCE_COVERAGE_PCT=0.60; // must match main.py
 function renderBankruptcyEligibility(){
   const note=document.getElementById('bankruptcy-eligibility'), btn=document.getElementById('bankruptcy-btn');
   if(!note||!btn) return;
@@ -1834,31 +2046,31 @@ function fmtShort(n){
   if(n>=1000)   return '₹'+(n/1000).toFixed(0)+'K';
   return '₹'+n;
 }
-function takeLoan(bid,amt){if(ws)ws.send(JSON.stringify({action:'take_loan',bank_id:bid,amount:amt}));}
+function takeLoan(bid,amt){sendAction({action:'take_loan',bank_id:bid,amount:amt});}
 function shadowDemandRepayment(){
   const balance=(playerData.loans||{})['shadow']||0;
   if(!balance) return;
   const demanded=Math.ceil(balance*0.5);
   if(playerData.cash<demanded) return toast(`💀 ShadowCredit demands ${fmt(demanded)} but you only have ${fmt(playerData.cash)}!`,'err');
   if(!confirm(`ShadowCredit demands ${fmt(demanded)} right now (50% of your balance). Pay?`)) return;
-  ws.send(JSON.stringify({action:'repay_loan',bank_id:'shadow',amount:demanded}));
+  sendAction({action:'repay_loan',bank_id:'shadow',amount:demanded});
 }
 function repayLoan(bid){
   if(phase!=='break') return toast('Repayment only available during break periods.','err');
   const inp=document.getElementById('repay-'+bid), amt=parseInt(inp?.value);
   if(!amt||amt<1) return toast('Enter a repayment amount.','err');
-  ws.send(JSON.stringify({action:'repay_loan',bank_id:bid,amount:amt}));
+  sendAction({action:'repay_loan',bank_id:bid,amount:amt});
   if(inp) inp.value='';
 }
 function repayLoanFull(bid){
   if(phase!=='break') return toast('Repayment only available during break periods.','err');
   const bal=(playerData.loans||{})[bid]||0; if(!bal) return;
-  ws.send(JSON.stringify({action:'repay_loan',bank_id:bid,amount:bal}));
+  sendAction({action:'repay_loan',bank_id:bid,amount:bal});
 }
 function declareBankruptcy(){
   if(!ws) return;
   if(!confirm('Declare bankruptcy? All holdings, loans, and bets wiped. Restart with ₹25,000.')) return;
-  ws.send(JSON.stringify({action:'declare_bankruptcy'}));
+  sendAction({action:'declare_bankruptcy'});
 }
 
 // ── Predictions ───────────────────────────────────────────────────────────────
@@ -2030,12 +2242,13 @@ function submitBet(){
   const currPrice = market[predStock]?.price||0;
   if(predDirection==='up' && target<=currPrice) return toast(`Target must be above current price ₹${currPrice.toLocaleString('en-IN')}.`,'err');
   if(predDirection==='down' && target>=currPrice) return toast(`Target must be below current price ₹${currPrice.toLocaleString('en-IN')}.`,'err');
-  ws.send(JSON.stringify({action:'place_bet',stock:predStock,direction:predDirection,target,amount}));
+  sendAction({action:'place_bet',stock:predStock,direction:predDirection,target,amount});
   // Only clear state after successful send — server confirms via trade_ok
   // (actual clear happens in the trade_ok handler below)
 }
 
 // ── News ──────────────────────────────────────────────────────────────────────
+const NEWS_REACTIONS=['🔥','📈','📉','😱','💀','🤔'];
 function addNews(msg,silent=false){
   const list=document.getElementById('news-list'), empty=list.querySelector('.empty');
   if(empty) list.innerHTML='';
@@ -2043,9 +2256,18 @@ function addNews(msg,silent=false){
   const tagCls=msg.private?'tag-private':({verified:'tag-verified',unverified:'tag-unverified',chaos:'tag-chaos'}[cat]||'tag-verified');
   const label=msg.private?'🔒 Secret Intel':(msg.label||cat||'News');
   const div=document.createElement('div'); div.className='news-card';
-  div.innerHTML=`<span class="news-label-tag ${tagCls}">${label}</span><div class="news-text">${msg.text}</div><div class="news-ts">${new Date().toLocaleTimeString()}</div>`;
+  const reactHtml = (msg.id && !msg.private) ? `
+    <div class="news-react-row" id="react-${msg.id}">
+      ${NEWS_REACTIONS.map(e=>`<button class="news-react-btn" data-emoji="${e}" onclick="reactNews('${msg.id}','${e}')">${e}<span class="nrb-count"></span></button>`).join('')}
+    </div>` : '';
+  div.innerHTML=`<span class="news-label-tag ${tagCls}">${label}</span><div class="news-text">${msg.text}</div><div class="news-ts">${new Date().toLocaleTimeString()}</div>${reactHtml}`;
   list.prepend(div);
+  if(msg.reactions) updateNewsReactionUI(msg.id, Object.fromEntries(Object.entries(msg.reactions).map(([e,who])=>[e,who.length])));
   if(!silent&&activeTab!=='news'){newsCount++;const b=document.getElementById('news-badge');b.textContent=newsCount;b.style.display='inline-block';}
+}
+function reactNews(newsId,emoji){
+  if(!ws) return;
+  ws.send(JSON.stringify({action:'react_news',news_id:newsId,emoji}));
 }
 
 // ── Chaos ─────────────────────────────────────────────────────────────────────
@@ -2078,6 +2300,36 @@ function showChaos(icon,title,text){
   document.getElementById('chaos-overlay').classList.add('show');
 }
 function dismissChaos(){document.getElementById('chaos-overlay').classList.remove('show');}
+function showRoundSummary(summary){
+  if(!summary) return;
+  const parts=[];
+  if(summary.winner && summary.winner.delta>0) parts.push(`📈 Biggest gain: <strong>${summary.winner.name}</strong> (+${fmt(summary.winner.delta)})`);
+  if(summary.loser && summary.loser.delta<0) parts.push(`📉 Biggest drop: <strong>${summary.loser.name}</strong> (${fmt(summary.loser.delta)})`);
+  if(summary.most_active && summary.most_active.trades>0) parts.push(`⚡ Most active: <strong>${summary.most_active.name}</strong> (${summary.most_active.trades} trades)`);
+  if(summary.taxes && summary.taxes.length){
+    const lines=summary.taxes.map(t=>{
+      const bits=[];
+      if(t.income_tax) bits.push(`income ₹${t.income_tax.toLocaleString('en-IN')}`);
+      if(t.wealth_tax) bits.push(`wealth ₹${t.wealth_tax.toLocaleString('en-IN')}`);
+      return `${t.name} — ${bits.join(' + ')}`;
+    });
+    parts.push(`🧾 Taxes charged:<br>${lines.join('<br>')}`);
+  }
+  if(!parts.length) return;
+  document.getElementById('chaos-icon').textContent='📊';
+  document.getElementById('chaos-title').textContent=`ROUND ${summary.round} SUMMARY`;
+  document.getElementById('chaos-msg').innerHTML=parts.join('<br><br>');
+  document.getElementById('chaos-overlay').classList.add('show');
+}
+function updateNewsReactionUI(newsId,counts){
+  const wrap=document.getElementById('react-'+newsId);
+  if(!wrap) return;
+  wrap.querySelectorAll('.news-react-btn').forEach(btn=>{
+    const emoji=btn.dataset.emoji, n=counts[emoji]||0;
+    btn.querySelector('.nrb-count').textContent=n>0?n:'';
+    btn.classList.toggle('has-count',n>0);
+  });
+}
 
 // ── Board ─────────────────────────────────────────────────────────────────────
 function renderBoard(){
@@ -2103,6 +2355,25 @@ function respondMerge(accept){
   if(!pendingMerge||!ws) return;
   ws.send(JSON.stringify({action:'merge_respond',bid_id:pendingMerge.bid_id,accept}));
   document.getElementById('merge-popup').classList.remove('show'); pendingMerge=null;
+}
+function proposeTeamMerge(){
+  const partner=document.getElementById('team-merge-partner').value.trim().toUpperCase();
+  if(!partner) return toast('Enter the partner\'s code.','err');
+  if(!confirm(`Propose a PERMANENT team merger with ${partner}? If they accept, your two accounts combine for the rest of the game.`)) return;
+  ws.send(JSON.stringify({action:'team_merge_propose',partner_code:partner}));
+}
+function respondTeamMerge(accept){
+  if(!pendingTeamMerge||!ws) return;
+  ws.send(JSON.stringify({action:'team_merge_respond',req_id:pendingTeamMerge.req_id,accept}));
+  document.getElementById('team-merge-popup').classList.remove('show'); pendingTeamMerge=null;
+}
+function showMergedAwayScreen(){
+  document.getElementById('merged-away-text').textContent =
+    `Your account has merged into a teammate's — you're now viewing the market read-only.`;
+  document.getElementById('merged-away-overlay').classList.add('show');
+}
+function dismissMergedAwayOverlay(){
+  document.getElementById('merged-away-overlay').classList.remove('show');
 }
 
 // ── Tab order for directional sliding ────────────────────────────────────────

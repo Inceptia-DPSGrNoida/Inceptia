@@ -16,6 +16,7 @@ Env vars (Railway dashboard):
 """
 
 import asyncio
+import re
 import json
 import os
 import random
@@ -42,6 +43,13 @@ STARTING_CASH      = 0
 ROUND_DURATION     = 1200        # 20 min — host can end early
 BREAK_DURATION     = 600         # 10 min between rounds
 BANKRUPTCY_RESTART = 25_000
+SHORT_MARGIN_PCT   = 0.40   # cash held as collateral when opening a short = 40% of position value
+INCOME_TAX_RATE    = 0.15   # on realized gains each round (only if positive)
+WEALTH_TAX_RATE    = 0.03   # on the round-end leader's net worth
+INSURANCE_PREMIUM_PCT  = 0.08   # cost to insure a position = 8% of its value at purchase
+INSURANCE_COVERAGE_PCT = 0.60   # covers 60% of the loss below your locked cost, if you still hold it at round end
+NEWS_REACTION_EMOJIS = {"🔥", "📈", "📉", "😱", "💀", "🤔"}
+AMBIENT_NEWS_INTERVAL = 120  # seconds between automatic mid-round news drops (2 min)
 BANKRUPTCY_MIN_DEBT_GAP = 900_000   # debt must exceed net worth by ~9 lakh to qualify
 MAX_ROUNDS         = 6
 
@@ -79,6 +87,22 @@ BANKS = {
         "desc":    "No questions asked. Maximum leverage. The bigger the loan, the sharper the knife.",
     },
 }
+
+def safe_int(v, default=0) -> int:
+    """Never raises — malformed/missing client input just falls back to default."""
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
+
+def safe_float(v, default=0.0) -> float:
+    try:
+        f = float(v)
+        if f != f or f in (float("inf"), float("-inf")):  # NaN / Infinity guard
+            return default
+        return f
+    except (TypeError, ValueError):
+        return default
 
 def bank_rate_for_balance(bank_id: str, balance: float) -> float:
     """Effective interest rate for a bank given the CURRENT outstanding balance.
@@ -130,6 +154,13 @@ COMPANY_VOL = {
     "greenleaf": (0.015, 0.055, 0.46),   # Subsidy-dependent
     "armorinc":  (0.006, 0.025, 0.48),   # Stable defence
     "bytecorp":  (0.055, 0.140, 0.44),   # Pure speculative — extreme vol
+    # ── Safe-route investments: tiny moves, biased toward steady positive drift ──
+    "debtfund":     (0.001, 0.004, 0.35),  # Near-flat. This is the "parking cash" option.
+    "balancedfund": (0.003, 0.012, 0.42),  # A little more motion, still calm.
+    # ── Sector ETFs: volatility here is unused (price tracks the sector index instead) ──
+    "techetf":     (0.0, 0.0, 0.5),
+    "consumeretf": (0.0, 0.0, 0.5),
+    "indusetf":    (0.0, 0.0, 0.5),
 }
 
 # Price floors per company (20% of IPO price — prevents absurd crashes)
@@ -138,6 +169,8 @@ PRICE_FLOORS = {
     "mediq":     55,   "skylink":  178, "swifthaul": 68, "crownmart": 44,
     "shieldgen": 98,   "indranet": 86,  "novapay":  40,  "greenleaf": 30,
     "armorinc":  76,   "bytecorp": 130,
+    "debtfund": 90, "balancedfund": 110,
+    "techetf": 100, "consumeretf": 100, "indusetf": 100,
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -333,6 +366,74 @@ IPO_COMPANIES = {
             "or it's nothing. No in-between."
         ),
         "trait": "The future. Or a ₹0 stock. No in-between.",
+    },
+}
+
+# ═══════════════════════════════════════════════════════════════
+#  SAFE-ROUTE INVESTMENTS — mutual funds (steady, low-volatility) and sector
+#  ETFs (price tracks a basket of real companies instead of walking randomly).
+#  Both are added into state["companies"] just like everything else, so all
+#  existing trading/portfolio/chart infrastructure works on them for free.
+# ═══════════════════════════════════════════════════════════════
+FUNDS = {
+    "debtfund": {
+        "name": "Bharat Debt Fund", "sector": "Mutual Fund", "risk": "Very Low", "price": 100,
+        "is_fund": True,
+        "bio": (
+            "A plain, boring debt fund holding government bonds and top-rated corporate paper. "
+            "It will not make you rich. It will also not ruin you. Fund managers describe its "
+            "strategy as 'try very hard to do nothing interesting.' The kind of thing your risk-averse "
+            "uncle would actually approve of. If you just want somewhere to park cash between bets "
+            "without watching it evaporate, this is it."
+        ),
+        "trait": "The parking lot for your cash.",
+    },
+    "balancedfund": {
+        "name": "Balanced Growth Fund", "sector": "Mutual Fund", "risk": "Low", "price": 150,
+        "is_fund": True,
+        "bio": (
+            "A diversified fund split across large, stable companies and a small slice of higher-growth "
+            "names. Not thrilling, but it actually tries to grow instead of just sitting there. The pitch: "
+            "steadier than picking individual stocks, with enough real growth that it isn't just a savings "
+            "account with extra steps. The compromise option for people who want to feel like they're "
+            "still playing the game without the stomach-drop swings."
+        ),
+        "trait": "Diversified. Deliberately unexciting.",
+    },
+}
+
+SECTOR_ETFS = {
+    "techetf": {
+        "name": "Tech Sector ETF", "sector": "ETF", "risk": "Medium", "price": 500,
+        "is_etf": True, "tracks_sectors": ["Technology"],
+        "bio": (
+            "Tracks a basket of every listed Technology-sector company on the exchange — currently "
+            "SkyLink Tech, IndraNet, and ByteCorp AI once it lists. You don't pick a winner here, you buy "
+            "the whole sector's momentum. Smooths out any single company's disaster, but also means you "
+            "don't get the full upside if just one of them moons."
+        ),
+        "trait": "The whole sector, one ticker.",
+    },
+    "consumeretf": {
+        "name": "Consumer Goods ETF", "sector": "ETF", "risk": "Low", "price": 300,
+        "is_etf": True, "tracks_sectors": ["FMCG"],
+        "bio": (
+            "Tracks the FMCG basket — FreshCo and CrownMart. People buy groceries and snacks in good "
+            "times and bad, which is exactly why this basket barely reacts to anything. A calmer way to "
+            "get exposure to the consumer story without betting on one brand's ad campaign landing."
+        ),
+        "trait": "Groceries never go out of style.",
+    },
+    "indusetf": {
+        "name": "Industrial & Infra ETF", "sector": "ETF", "risk": "Medium", "price": 400,
+        "is_etf": True, "tracks_sectors": ["Manufacturing", "Renewable Energy", "Logistics"],
+        "bio": (
+            "Tracks the industrial backbone basket — Zora Industries, Voltex Energy, and SwiftHaul "
+            "Logistics. Manufacturing, power, and freight rise and fall together more often than not, "
+            "so this basket moves like a slow, heavy freight train: not fast, but with real momentum "
+            "once it gets going."
+        ),
+        "trait": "Steel, power, and trucks — bundled.",
     },
 }
 
@@ -680,7 +781,13 @@ INSIDER_HINTS = [
 #  DATABASE
 # ═══════════════════════════════════════════════════════════════
 async def init_db():
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
+        # WAL lets readers and a writer work concurrently instead of the whole
+        # file locking on every write; busy_timeout makes any remaining brief
+        # contention retry automatically instead of raising immediately. Both
+        # matter a lot more now that price ticks fire every 4s under load.
+        await db.execute("PRAGMA journal_mode=WAL;")
+        await db.execute("PRAGMA busy_timeout=5000;")
         await db.execute("""
             CREATE TABLE IF NOT EXISTS game (
                 key   TEXT PRIMARY KEY,
@@ -720,7 +827,7 @@ async def _write_state(db, state: dict):
 
 
 async def read_state() -> dict:
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         row = await (await db.execute("SELECT value FROM game WHERE key='state'")).fetchone()
         if row:
             return json.loads(row[0])
@@ -728,13 +835,17 @@ async def read_state() -> dict:
 
 
 async def write_state(state: dict):
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         await _write_state(db, state)
         await db.commit()
 
 
 def _default_state() -> dict:
     companies = {k: {**v, "prev_price": v["price"], "target_price": v["price"]} for k, v in BASE_COMPANIES.items()}
+    companies.update({k: {**v, "prev_price": v["price"], "target_price": v["price"]} for k, v in FUNDS.items()})
+    companies.update({k: {**v, "prev_price": v["price"], "target_price": v["price"]} for k, v in SECTOR_ETFS.items()})
+    for etf_id, etf_cfg in SECTOR_ETFS.items():
+        companies[etf_id]["_baseline_avg"] = _etf_sector_avg(companies, etf_cfg["tracks_sectors"])
     return {
         "phase":              "lobby",
         "round":              0,
@@ -758,20 +869,20 @@ def _default_state() -> dict:
 #  PLAYER HELPERS
 # ═══════════════════════════════════════════════════════════════
 async def all_codes():
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         rows = await (await db.execute("SELECT code FROM codes")).fetchall()
     return {r[0] for r in rows}
 
 
 async def all_players():
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         db.row_factory = aiosqlite.Row
         rows = await (await db.execute("SELECT * FROM players")).fetchall()
     return [_row_to_player(r) for r in rows]
 
 
 async def get_player(code: str) -> Optional[dict]:
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         db.row_factory = aiosqlite.Row
         row = await (await db.execute("SELECT * FROM players WHERE code=?", (code,))).fetchone()
         if not row:
@@ -794,7 +905,7 @@ def _row_to_player(row) -> dict:
 
 
 async def save_player(p: dict):
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         await db.execute(
             """INSERT OR REPLACE INTO players
                (code,name,cash,holdings,loans,frozen,avg_cost,bets,bm_log)
@@ -832,24 +943,45 @@ def player_view(p: dict, state: dict) -> dict:
                 "value": val,
                 "pnl":   round(val - qty * avg),
             }
+    # Short positions: you already banked the sale proceeds in cash when you
+    # opened these, so what's left is a LIABILITY — the cost to buy the shares
+    # back at today's price. That liability comes straight off net worth.
+    shorts = {}
+    short_liability = 0
+    for cid, sp in (p.get("shorts") or {}).items():
+        if sp.get("qty", 0) > 0 and cid in companies:
+            price   = companies[cid]["price"]
+            qty     = sp["qty"]
+            entry   = sp["entry_price"]
+            cost_to_cover = qty * price
+            short_liability += cost_to_cover
+            shorts[cid] = {
+                "qty": qty, "entry_price": round(entry), "price": price,
+                "cost_to_cover": round(cost_to_cover),
+                "pnl": round((entry - price) * qty),  # positive = price fell, you're winning
+            }
     port_value  = sum(h["value"] for h in portfolio.values())
     total_loans = player_loans_total(p)
-    net_worth   = p["cash"] + port_value - total_loans
+    net_worth   = p["cash"] + port_value - total_loans - short_liability
     return {
-        "cash":       round(p["cash"]),
-        "loans":      p.get("loans", {}),
-        "total_loan": round(total_loans),
-        "frozen":     p["frozen"],
-        "net_worth":  round(net_worth),
-        "portfolio":  portfolio,
-        "bets":       p.get("bets", {}),
+        "cash":         round(p["cash"]),
+        "loans":        p.get("loans", {}),
+        "total_loan":   round(total_loans),
+        "frozen":       p["frozen"],
+        "net_worth":    round(net_worth),
+        "portfolio":    portfolio,
+        "bets":         p.get("bets", {}),
+        "shorts":       shorts,
+        "short_liability": round(short_liability),
+        "stop_losses":  p.get("stop_losses", {}),
+        "insurance":    p.get("insurance", {}),
     }
 
 
 def leaderboard(players: list, state: dict) -> list:
     rows = []
     for p in players:
-        if not p["name"]:
+        if not p["name"] or p.get("merged_into"):
             continue
         pv = player_view(p, state)
         rows.append({"name": p["name"], "net_worth": pv["net_worth"]})
@@ -969,32 +1101,57 @@ TICK_INTERVAL   = 4    # seconds — how often the tradable price re-samples aro
 # for another pass — but the much-higher-frequency system writes below are.
 STATE_LOCK = asyncio.Lock()
 
+def _etf_sector_avg(companies: dict, sectors: list) -> float:
+    """Average current price of every listed, non-fund, non-ETF company in the given sectors."""
+    prices = [c["price"] for c in companies.values()
+              if c.get("sector") in sectors and not c.get("is_etf") and not c.get("is_fund")]
+    return (sum(prices) / len(prices)) if prices else 1.0
+
+def _update_etf_prices(companies: dict) -> None:
+    """ETFs don't random-walk — their price tracks a basket of real companies."""
+    for etf_id, etf_cfg in SECTOR_ETFS.items():
+        c = companies.get(etf_id)
+        if not c:
+            continue
+        baseline = c.get("_baseline_avg") or 1.0
+        current_avg = _etf_sector_avg(companies, etf_cfg["tracks_sectors"])
+        floor = PRICE_FLOORS.get(etf_id, 10)
+        new_price = max(floor, round(etf_cfg["price"] * (current_avg / baseline)))
+        c["prev_price"]   = c["price"]
+        c["price"]        = new_price
+        c["target_price"] = new_price
+
 async def price_target_loop():
     """Every 20s: recompute each stock's underlying target price using the
     same volatility profile as before. This is the 'big picture' move."""
     await asyncio.sleep(15)
     while True:
         await asyncio.sleep(TARGET_INTERVAL)
-        async with STATE_LOCK:
-            state = await read_state()
-            if state.get("phase") != "trading":
-                continue
-            freeze    = state.get("regulatory_freeze")
-            frozen_bm = state.get("price_freezes", {})
-            now       = time.time()
-            companies = state["companies"]
-            for cid, c in companies.items():
-                if freeze and c.get("sector") == freeze:
+        try:
+            async with STATE_LOCK:
+                state = await read_state()
+                if state.get("phase") != "trading":
                     continue
-                if frozen_bm.get(cid, 0) > now:
-                    continue
-                lo, hi, bias = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
-                mag   = random.uniform(lo * 0.5, hi * 0.65)
-                direc = 1 if random.random() > bias else -1
-                floor = PRICE_FLOORS.get(cid, 10)
-                base  = c.get("target_price", c["price"])
-                c["target_price"] = max(floor, round(base * (1 + direc * mag)))
-            await write_state(state)
+                freeze    = state.get("regulatory_freeze")
+                frozen_bm = state.get("price_freezes", {})
+                now       = time.time()
+                companies = state["companies"]
+                for cid, c in companies.items():
+                    if c.get("is_etf"):
+                        continue  # ETFs are derived, not randomly walked
+                    if freeze and c.get("sector") == freeze:
+                        continue
+                    if frozen_bm.get(cid, 0) > now:
+                        continue
+                    lo, hi, bias = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
+                    mag   = random.uniform(lo * 0.5, hi * 0.65)
+                    direc = 1 if random.random() > bias else -1
+                    floor = PRICE_FLOORS.get(cid, 10)
+                    base  = c.get("target_price", c["price"])
+                    c["target_price"] = max(floor, round(base * (1 + direc * mag)))
+                await write_state(state)
+        except Exception as e:
+            print(f"[price_target_loop] iteration failed, will retry next cycle: {e}")
 
 async def price_tick_loop():
     """Every 4s: the REAL tradable price re-samples around the current target.
@@ -1003,35 +1160,76 @@ async def price_tick_loop():
     await asyncio.sleep(17)
     while True:
         await asyncio.sleep(TICK_INTERVAL)
-        async with STATE_LOCK:
-            state = await read_state()
-            if state.get("phase") != "trading":
-                continue
-            freeze    = state.get("regulatory_freeze")
-            frozen_bm = state.get("price_freezes", {})
-            now       = time.time()
-            companies = state["companies"]
-            for cid, c in companies.items():
-                if freeze and c.get("sector") == freeze:
+        try:
+            async with STATE_LOCK:
+                state = await read_state()
+                if state.get("phase") != "trading":
                     continue
-                if frozen_bm.get(cid, 0) > now:
+                freeze    = state.get("regulatory_freeze")
+                frozen_bm = state.get("price_freezes", {})
+                now       = time.time()
+                companies = state["companies"]
+                for cid, c in companies.items():
+                    if c.get("is_etf"):
+                        continue  # handled by _update_etf_prices below
+                    if freeze and c.get("sector") == freeze:
+                        continue
+                    if frozen_bm.get(cid, 0) > now:
+                        continue
+                    target = c.get("target_price", c["price"])
+                    lo, hi, _ = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
+                    jitter = random.uniform(-lo * 0.9, lo * 0.9) or random.uniform(-0.01, 0.01)
+                    floor  = PRICE_FLOORS.get(cid, 10)
+                    c["prev_price"] = c["price"]
+                    c["price"]      = max(floor, round(target * (1 + jitter)))
+                _update_etf_prices(companies)
+                await write_state(state)
+            # Broadcast outside the lock — sending to N sockets shouldn't hold up
+            # other writers (news injection, chaos events, the next tick, etc.)
+            players = await all_players()
+            # Check every player's stop-loss orders against the prices that just landed.
+            # Fires as a plain market sell — no protection against slippage, same as
+            # if they'd hit sell manually the instant it crossed the trigger.
+            notify_list = []
+            for p in players:
+                stops = p.get("stop_losses") or {}
+                if not stops:
                     continue
-                target = c.get("target_price", c["price"])
-                lo, hi, _ = COMPANY_VOL.get(cid, (0.005, 0.03, 0.46))
-                jitter = random.uniform(-lo * 0.9, lo * 0.9) or random.uniform(-0.01, 0.01)
-                floor  = PRICE_FLOORS.get(cid, 10)
-                c["prev_price"] = c["price"]
-                c["price"]      = max(floor, round(target * (1 + jitter)))
-            await write_state(state)
-        # Broadcast outside the lock — sending to N sockets shouldn't hold up
-        # other writers (news injection, chaos events, the next tick, etc.)
-        players = await all_players()
-        board   = leaderboard(players, state)
-        await manager.broadcast_all({
-            "type":   "prices_bulk",
-            "prices": {k: v["price"] for k, v in companies.items()},
-            "board":  board,
-        })
+                fired = []
+                for cid, trigger in list(stops.items()):
+                    c     = companies.get(cid)
+                    owned = p.get("holdings", {}).get(cid, 0)
+                    if not c or owned < 1:
+                        stops.pop(cid, None)  # no longer held — stale order, drop it
+                        continue
+                    if c["price"] <= trigger:
+                        price = c["price"]
+                        p["cash"]              += price * owned
+                        p["holdings"][cid]       = 0
+                        p["trades_this_round"]   = p.get("trades_this_round", 0) + 1
+                        realized                 = (price - p.get("avg_cost", {}).get(cid, price)) * owned
+                        p["realized_pnl_round"]  = p.get("realized_pnl_round", 0) + realized
+                        stops.pop(cid, None)
+                        fired.append((c["name"], owned, price))
+                if fired:
+                    p["stop_losses"] = stops
+                    await save_player(p)
+                    lines = "; ".join(f"{q}× {n} @ ₹{pr:,}" for n, q, pr in fired)
+                    notify_list.append((p["code"], f"🛑 Stop-loss triggered: {lines}"))
+            board = leaderboard(players, state)
+            await manager.broadcast_all({
+                "type":   "prices_bulk",
+                "prices": {k: v["price"] for k, v in companies.items()},
+                "board":  board,
+            })
+            for code_, msg_ in notify_list:
+                fresh_p = await get_player(code_)
+                if fresh_p:
+                    await manager.send_player(code_, {
+                        "type": "player_update", "player": player_view(fresh_p, state), "msg": msg_,
+                    })
+        except Exception as e:
+            print(f"[price_tick_loop] iteration failed, will retry next cycle: {e}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1051,9 +1249,58 @@ def pick_news(state: dict, count: int = 3) -> list:
         pool.append(n)
     if not pool:
         return []
-    chosen = random.sample(pool, min(count, len(pool)))
-    state["news_used"] = list(used) + [n["text"] for n in chosen]
+    chosen_raw = random.sample(pool, min(count, len(pool)))
+    chosen = []
+    for n in chosen_raw:
+        item = dict(n)  # copy — NEVER mutate the shared NEWS_POOL entries directly
+        item["id"]        = uuid.uuid4().hex[:8]
+        item["reactions"] = {}
+        chosen.append(item)
+    state["news_used"] = list(used) + [n["text"] for n in chosen_raw]
     return chosen
+
+
+async def ambient_news_loop():
+    """Every ~2 min during trading, drop one extra headline — on top of the
+    2-3 that already land at round start — so news doesn't go quiet for the
+    whole 20-minute round. Reuses the same NEWS_POOL/price-impact logic as
+    the round-start picker, just one headline at a time."""
+    await asyncio.sleep(45)
+    while True:
+        await asyncio.sleep(AMBIENT_NEWS_INTERVAL)
+        try:
+            async with STATE_LOCK:
+                state = await read_state()
+                if state.get("phase") != "trading":
+                    continue
+                picked = pick_news(state, 1)
+                if not picked:
+                    continue
+                n = picked[0]
+                state["news"].append(n)
+                c = state["companies"].get(n["affects"])
+                if c and not c.get("is_fund") and not c.get("is_etf"):
+                    is_verified = n.get("type_tag") == "verified"
+                    move = n.get("strength", 0.08) if is_verified else (
+                        n.get("strength", 0.08) if random.random() < 0.4 else random.uniform(0.005, 0.02)
+                    )
+                    floor = PRICE_FLOORS.get(n["affects"], 10)
+                    c["prev_price"] = c["price"]
+                    new_price = max(floor, round(c["price"] * (1 + n.get("direction", 1) * move)))
+                    c["price"]        = new_price
+                    c["target_price"] = new_price
+                await write_state(state)
+            await manager.broadcast_all({"type": "news", **n})
+            players = await all_players()
+            board   = leaderboard(players, state)
+            await manager.broadcast_all({
+                "type":   "prices_bulk",
+                "prices": {k: v["price"] for k, v in state["companies"].items()},
+                "board":  board,
+            })
+            await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
+        except Exception as e:
+            print(f"[ambient_news_loop] iteration failed, will retry next cycle: {e}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1197,6 +1444,7 @@ async def lifespan(app: FastAPI):
     await init_db()
     asyncio.create_task(price_target_loop())
     asyncio.create_task(price_tick_loop())
+    asyncio.create_task(ambient_news_loop())
     yield
 
 
@@ -1231,6 +1479,12 @@ async def serve_bm():
     return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>bm.html not found</h1>")
 
 
+@app.get("/board", response_class=HTMLResponse)
+async def serve_board():
+    p = BASE_DIR / "board.html"
+    return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>board.html not found</h1>")
+
+
 # ═══════════════════════════════════════════════════════════════
 #  REST: CODE MANAGEMENT
 # ═══════════════════════════════════════════════════════════════
@@ -1238,7 +1492,7 @@ async def serve_bm():
 async def generate_codes(count: int = 10):
     # Generate slightly more than needed to account for rare collisions
     candidates = [uuid.uuid4().hex[:6].upper() for _ in range(max(count, 20))]
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         # Get existing codes to avoid duplicates in this batch
         existing = {r[0] for r in await (await db.execute("SELECT code FROM codes")).fetchall()}
         new_codes = [c for c in candidates if c not in existing][:count]
@@ -1270,7 +1524,7 @@ async def delete_code(code: str):
             await ws.send_text(json.dumps({"type": "kicked", "msg": "Your access code was removed by the host."}))
         except Exception:
             pass
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         await db.execute("DELETE FROM codes WHERE code=?", (code,))
         await db.execute("DELETE FROM players WHERE code=?", (code,))
         await db.commit()
@@ -1356,7 +1610,7 @@ async def api_predictions_overview():
 async def kick_player(code: str, pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
         row  = await (await db.execute("SELECT name FROM players WHERE code=?", (code,))).fetchone()
         name = row[0] if row else code
         await db.execute("DELETE FROM players WHERE code=?", (code,))
@@ -1384,7 +1638,7 @@ async def api_reset(pw: str):
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
     async with STATE_LOCK:
-        async with aiosqlite.connect(DB_PATH) as db:
+        async with aiosqlite.connect(DB_PATH, timeout=5.0) as db:
             await db.execute("DELETE FROM players")
             await db.execute("DELETE FROM codes")
             await _write_state(db, _default_state())
@@ -1415,11 +1669,19 @@ async def start_round(pw: str):
         state["credit_crunch"]     = False
         # Clean up expired merge bids from previous rounds
         state["merge_bids"] = {}
-        # Unfreeze all players
+        # Unfreeze all players, snapshot round-start net worth, reset per-round counters
         players = await all_players()
         for p in players:
+            changed = False
             if p["frozen"]:
                 p["frozen"] = False
+                changed = True
+            if p["name"]:
+                p["net_worth_at_round_start"] = player_view(p, state)["net_worth"]
+                p["trades_this_round"]        = 0
+                p["realized_pnl_round"]       = 0
+                changed = True
+            if changed:
                 await save_player(p)
         # Pick and apply news — use the pre-generated batch from the break (so an
         # Early Word purchase during that break matches what actually happens),
@@ -1504,6 +1766,79 @@ async def end_round(pw: str):
                     "msg":    "Interest applied to your loans at round end.",
                 })
         state["credit_crunch"] = False
+
+        # ── Taxes: income tax on this round's realized gains (everyone with a
+        # profit), wealth tax on whoever's currently in 1st place. Automatic,
+        # every round — no host button needed. ──────────────────────────────
+        board_pre_tax = leaderboard(players, state)
+        leader_names  = {board_pre_tax[0]["name"]} if board_pre_tax else set()
+        tax_summary   = []
+        for p in players:
+            if not p["name"]:
+                continue
+            income_tax = 0
+            realized   = p.get("realized_pnl_round", 0)
+            if realized > 0:
+                income_tax = round(realized * INCOME_TAX_RATE)
+            wealth_tax = 0
+            if p["name"] in leader_names:
+                wealth_tax = round(player_view(p, state)["net_worth"] * WEALTH_TAX_RATE)
+            if income_tax or wealth_tax:
+                p["cash"] -= (income_tax + wealth_tax)
+                await save_player(p)
+                tax_summary.append({"name": p["name"], "income_tax": income_tax, "wealth_tax": wealth_tax})
+                parts = []
+                if income_tax: parts.append(f"Income tax ₹{income_tax:,} (on ₹{round(realized):,} realized gains)")
+                if wealth_tax: parts.append(f"Wealth tax ₹{wealth_tax:,} (you're #1)")
+                await manager.send_player(p["code"], {
+                    "type": "player_update", "player": player_view(p, state),
+                    "msg":  "🧾 " + " + ".join(parts),
+                })
+
+        # ── Insurance: pay out policies that are still valid and underwater ──
+        for p in players:
+            ins = p.get("insurance") or {}
+            if not ins:
+                continue
+            payouts = []
+            for cid, pol in list(ins.items()):
+                held  = p.get("holdings", {}).get(cid, 0)
+                c     = state["companies"].get(cid)
+                covered_qty = min(pol["qty"], held)
+                if c and covered_qty > 0 and c["price"] < pol["avg_cost_locked"]:
+                    loss_per_share = pol["avg_cost_locked"] - c["price"]
+                    payout = round(loss_per_share * covered_qty * INSURANCE_COVERAGE_PCT)
+                    if payout > 0:
+                        p["cash"] += payout
+                        payouts.append({"stock": cid, "name": c["name"], "payout": payout})
+                del ins[cid]  # policies always expire at round end, win or not
+            p["insurance"] = ins
+            if payouts:
+                await save_player(p)
+                lines = "; ".join(f"₹{pay['payout']:,} on {pay['name']}" for pay in payouts)
+                await manager.send_player(p["code"], {
+                    "type": "player_update", "player": player_view(p, state),
+                    "msg":  f"🛡️ Insurance payout: {lines}",
+                })
+
+        # ── Round summary: biggest winner/loser, most active trader ─────────
+        summary_rows = []
+        for p in players:
+            if not p["name"]:
+                continue
+            start_nw = p.get("net_worth_at_round_start", 0)
+            end_nw   = player_view(p, state)["net_worth"]
+            summary_rows.append({"name": p["name"], "delta": round(end_nw - start_nw),
+                                  "trades": p.get("trades_this_round", 0)})
+        round_summary = {
+            "round":       state["round"],
+            "winner":      max(summary_rows, key=lambda r: r["delta"],  default=None),
+            "loser":       min(summary_rows, key=lambda r: r["delta"],  default=None),
+            "most_active": max(summary_rows, key=lambda r: r["trades"], default=None),
+            "taxes":       tax_summary,
+        }
+        state["last_round_summary"] = round_summary
+        state.setdefault("round_summaries", []).append(round_summary)
         # Pre-generate next round's news now, so an Early Word purchase during this
         # break reveals the SAME headlines that will actually run at start_round.
         next_round_num       = state["round"] + 1
@@ -1523,6 +1858,7 @@ async def end_round(pw: str):
         "break_end_time": state["break_end_time"],
         "break_duration": state["break_duration"],
     })
+    await manager.broadcast_all({"type": "round_summary", "summary": round_summary})
     await manager.broadcast_hosts({
         "type":  "state_update",
         "state": state,
@@ -1550,6 +1886,62 @@ async def end_game(pw: str):
         "player_count": len([p for p in players if p["name"]]),
     })
     return {"ok": True}
+
+
+@app.get("/api/host/recap")
+async def host_recap(pw: str):
+    if pw != HOST_PASSWORD:
+        raise HTTPException(403, "Wrong password")
+    state = await read_state()
+    if state["phase"] != "ended":
+        raise HTTPException(400, "The game hasn't ended yet.")
+    players = await all_players()
+    board   = leaderboard(players, state)
+
+    richest = board[0] if board else None
+    poorest = board[-1] if board else None
+
+    bankrupt_players = [
+        {"name": p["name"], "count": p.get("bankruptcy_count", 0)}
+        for p in players if p.get("bankruptcy_count")
+    ]
+    bankrupt_players.sort(key=lambda r: -r["count"])
+
+    rumours = [
+        {"text": n["text"], "real": bool(n.get("real")), "affects": n.get("affects")}
+        for n in state.get("news", []) if n.get("type_tag") == "unverified" and n.get("real") is not None
+    ]
+    real_count  = sum(1 for r in rumours if r["real"])
+    fake_count  = sum(1 for r in rumours if not r["real"])
+
+    summaries = state.get("round_summaries", [])
+    total_income_tax = sum(t["income_tax"] for s in summaries for t in s.get("taxes", []))
+    total_wealth_tax  = sum(t["wealth_tax"] for s in summaries for t in s.get("taxes", []))
+
+    # Biggest single-round swing across the whole game (best "winner" delta seen in any round)
+    best_round = max(
+        (s["winner"] for s in summaries if s.get("winner")),
+        key=lambda w: w["delta"], default=None,
+    )
+    most_active_overall = max(
+        (s["most_active"] for s in summaries if s.get("most_active")),
+        key=lambda m: m["trades"], default=None,
+    )
+
+    return {
+        "board":              board,
+        "richest":            richest,
+        "poorest":            poorest,
+        "bankrupt_players":   bankrupt_players,
+        "rumours":            rumours,
+        "real_count":         real_count,
+        "fake_count":         fake_count,
+        "total_income_tax":   round(total_income_tax),
+        "total_wealth_tax":   round(total_wealth_tax),
+        "best_round_swing":   best_round,
+        "most_active_overall": most_active_overall,
+        "round_summaries":    summaries,
+    }
 
 
 @app.post("/api/host/adjust_cash")
@@ -1588,10 +1980,10 @@ async def inject_news(data: dict, pw: str):
         state       = await read_state()
         is_verified = data.get("verified", True)
         is_real     = is_verified  # verified always moves; unverified may or may not
-        strength    = float(data.get("strength", 0.10))
+        strength    = safe_float(data.get("strength"), 0.10)
         affects     = data["affects"]
         direction   = data.get("direction", 1)
-        text        = (data.get("text") or "").strip()
+        text        = re.sub(r"[<>]", "", (data.get("text") or "").strip())
         if not text:
             # Host left the text field blank — auto-pick a matching preset headline.
             dir_key = "up" if direction > 0 else "down"
@@ -1603,6 +1995,7 @@ async def inject_news(data: dict, pw: str):
                 text  = (f"Market update: {cname} sees notable "
                          f"{'gains' if direction > 0 else 'losses'} amid shifting investor sentiment.")
         n = {
+            "id":        uuid.uuid4().hex[:8],
             "type_tag":  "verified" if is_verified else "unverified",
             "label":     "Market Event" if is_verified else "Unverified Rumour",
             "text":      text,
@@ -1610,6 +2003,7 @@ async def inject_news(data: dict, pw: str):
             "direction": direction,
             "strength":  strength,
             "real":      is_real,
+            "reactions": {},
         }
         state["news"].append(n)
         c = state["companies"].get(affects)
@@ -1666,11 +2060,14 @@ async def secret_intel(data: dict, pw: str):
     """Send a private news tip to one player only."""
     if pw != HOST_PASSWORD:
         raise HTTPException(403, "Wrong password")
-    code = data["code"]
+    code = data.get("code", "")
+    text = re.sub(r"[<>]", "", (data.get("text") or "").strip())
+    if not text:
+        raise HTTPException(400, "Enter intel text.")
     n = {
         "type_tag": "unverified",
         "label":    "Secret Intel",
-        "text":     data["text"],
+        "text":     text,
         "private":  True,
     }
     await manager.send_player(code, {"type": "news", **n})
@@ -1782,12 +2179,16 @@ async def chaos_acquisition(data: dict, pw: str):
     n1  = state["companies"][cid1]["name"]
     n2  = state["companies"][cid2]["name"]
     msg = f"🤝 ACQUISITION RUMOUR — {n1} and {n2} reportedly in merger talks! Their prices will move in tandem. (Unverified)"
+    news_item = {
+        "id": uuid.uuid4().hex[:8], "type_tag": "unverified", "label": "Unverified Rumour",
+        "affects": cid1, "direction": 1, "real": False, "text": msg, "reactions": {},
+    }
+    async with STATE_LOCK:
+        state = await read_state()
+        state["news"].append(news_item)
+        await write_state(state)
     await manager.broadcast_all({"type": "chaos", "event": "acquisition_rumour", "msg": msg})
-    await manager.broadcast_all({
-        "type": "news", "label": "Unverified Rumour", "type_tag": "unverified",
-        "affects": cid1, "direction": 1, "real": False,
-        "text": msg,
-    })
+    await manager.broadcast_all({"type": "news", **news_item})
     players = await all_players()
     board   = leaderboard(players, state)
     await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board})
@@ -1834,6 +2235,18 @@ async def chaos_ipo_drop(ipo_id: str, pw: str):
         state["ipo_listed"]          = state.get("ipo_listed", []) + [ipo_id]
         PRICE_FLOORS[ipo_id]         = round(ipo["price"] * 0.20)  # set floor dynamically
         state.setdefault("price_history", {})[ipo_id] = [ipo["price"]]
+        # If this new company falls in a sector an ETF tracks, rebalance that
+        # ETF's baseline so its price doesn't jump the instant the IPO lists —
+        # the ratio (and therefore the ETF's current price) stays continuous.
+        for etf_id, etf_cfg in SECTOR_ETFS.items():
+            if ipo.get("sector") in etf_cfg["tracks_sectors"] and etf_id in state["companies"]:
+                old_avg = _etf_sector_avg(
+                    {k: v for k, v in state["companies"].items() if k != ipo_id}, etf_cfg["tracks_sectors"]
+                )
+                new_avg = _etf_sector_avg(state["companies"], etf_cfg["tracks_sectors"])
+                old_baseline = state["companies"][etf_id].get("_baseline_avg") or 1.0
+                if old_avg > 0:
+                    state["companies"][etf_id]["_baseline_avg"] = old_baseline * (new_avg / old_avg)
         await write_state(state)
     msg = f"🚀 IPO DROP — {ipo['name']} lists on the exchange! {ipo['trait']} IPO price: ₹{ipo['price']:,}"
     await manager.broadcast_all({
@@ -1895,7 +2308,7 @@ async def bm_buy(data: dict):
     Purchase a black market item.
     Body: { code, item_id, stock?, direction?, text? }
     """
-    code    = data.get("code", "").upper()
+    code    = (data.get("code") or "").upper()
     item_id = data.get("item_id")
 
     async with _player_locks[code]:
@@ -1934,8 +2347,8 @@ async def bm_buy(data: dict):
         # ── Spread Rumour ────────────────────────────────────────────
         elif item_id in ("spread_rumour", "leak_card"):
             stock     = data.get("stock")
-            direction = int(data.get("direction", 1))
-            text      = data.get("text", "").strip()[:200]
+            direction = safe_int(data.get("direction"), 1)
+            text      = re.sub(r"[<>]", "", (data.get("text") or "").strip())[:200]
             if not stock or stock not in state["companies"]:
                 raise HTTPException(400, "Pick a valid stock.")
             if not text:
@@ -1945,6 +2358,7 @@ async def bm_buy(data: dict):
             strength = random.uniform(0.10, 0.18) if is_leak else random.uniform(0.06, 0.12)
             is_real  = True if is_leak else (random.random() < 0.5)
             n = {
+                "id":        uuid.uuid4().hex[:8],
                 "type_tag":  "unverified",
                 "label":     "Unverified Rumour",
                 "affects":   stock,
@@ -1952,6 +2366,7 @@ async def bm_buy(data: dict):
                 "strength":  strength,
                 "real":      is_real,
                 "text":      text,
+                "reactions": {},
             }
             async with STATE_LOCK:
                 fresh_state = await read_state()
@@ -2120,387 +2535,698 @@ async def ws_player(websocket: WebSocket, code: str):
         "credit_crunch": state.get("credit_crunch", False),
         "price_history": state.get("price_history", {}),
         "news":          state.get("news", []),
+        "merged_into":   player.get("merged_into") if player else None,
         **({"name": player["name"], "player": player_view(player, state)} if already_joined else {}),
     }))
 
     try:
         async for raw in websocket.iter_text():
-            msg    = json.loads(raw)
+            try:
+                msg = json.loads(raw)
+                if not isinstance(msg, dict):
+                    raise ValueError("payload must be a JSON object")
+            except Exception:
+                await websocket.send_text(json.dumps({"type": "error", "msg": "Malformed message — ignored."}))
+                continue
             action = msg.get("action")
-            # Always re-read state and player for freshness
-            state  = await read_state()
-            player = await get_player(code)
+            try:
+                # Always re-read state and player for freshness
+                state  = await read_state()
+                player = await get_player(code)
 
-            # ── Set name ──────────────────────────────────────────────
-            if action == "set_name":
-                name = msg.get("name", "").strip()[:30]
-                if not name:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Name can't be empty."}))
-                    continue
-                players = await all_players()
-                if any(p["name"] == name and p["code"] != code for p in players):
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Name taken. Pick another."}))
-                    continue
-                if player:
-                    player["name"] = name
-                else:
-                    player = {
-                        "code": code, "name": name, "cash": STARTING_CASH,
-                        "holdings": {}, "loans": {}, "frozen": False,
-                        "avg_cost": {}, "bets": {}, "bm_log": [],
-                    }
-                await save_player(player)
-                pv = player_view(player, state)
-                await websocket.send_text(json.dumps({
-                    "type":           "joined",
-                    "name":           name,
-                    "player":         pv,
-                    "banks":          BANKS,
-                    "round_end_time": state.get("round_end_time"),
-                    "break_end_time": state.get("break_end_time"),
-                    "break_duration": state.get("break_duration", BREAK_DURATION),
-                }))
-                players = await all_players()
-                board   = leaderboard(players, state)
-                await manager.broadcast_all({"type": "leaderboard", "board": board})
-                await manager.broadcast_hosts({"type": "player_online", "code": code, "name": name})
-
-            # ── Buy ───────────────────────────────────────────────────
-            elif action == "buy":
-                if state["phase"] != "trading":
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
-                if not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                if player["frozen"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Your portfolio is frozen this round."})); continue
-                stock = msg.get("stock")
-                qty   = int(msg.get("qty", 0))
-                if stock not in state["companies"] or qty < 1:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid stock or quantity."})); continue
-                freeze = state.get("regulatory_freeze")
-                if freeze and state["companies"][stock].get("sector") == freeze:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"⛔ {state['companies'][stock]['sector']} sector is under Regulatory Freeze."})); continue
-                # Use per-player lock to prevent race conditions
-                async with _player_locks[code]:
-                    player = await get_player(code)   # re-read inside lock
-                    state  = await read_state()
-                    price  = state["companies"][stock]["price"]
-                    cost   = price * qty
-                    if player["cash"] < cost:
-                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{cost:,}. You have ₹{int(player['cash']):,}."})); continue
-                    old_qty = player["holdings"].get(stock, 0)
-                    old_avg = player["avg_cost"].get(stock, price)
-                    player["avg_cost"][stock] = ((old_avg * old_qty + price * qty) / (old_qty + qty)) if old_qty else price
-                    player["holdings"][stock]  = old_qty + qty
-                    player["cash"]            -= cost
-                    await save_player(player)
-                pv = player_view(player, state)
-                await websocket.send_text(json.dumps({
-                    "type":   "trade_ok",
-                    "msg":    f"Bought {qty}× {state['companies'][stock]['name']} @ ₹{price:,}",
-                    "player": pv,
-                }))
-                board = leaderboard(await all_players(), state)
-                await manager.broadcast_all({"type": "leaderboard", "board": board})
-
-            # ── Sell ──────────────────────────────────────────────────
-            elif action == "sell":
-                if state["phase"] != "trading":
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
-                if not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                if player["frozen"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Your portfolio is frozen this round."})); continue
-                stock = msg.get("stock")
-                qty   = int(msg.get("qty", 0))
-                freeze = state.get("regulatory_freeze")
-                if freeze and state["companies"].get(stock, {}).get("sector") == freeze:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "⛔ Regulatory Freeze — no trading in this sector."})); continue
-                async with _player_locks[code]:
-                    player = await get_player(code)
-                    state  = await read_state()
-                    owned  = player["holdings"].get(stock, 0)
-                    if qty < 1 or qty > owned:
-                        await websocket.send_text(json.dumps({"type": "error", "msg": f"You only own {owned} shares."})); continue
-                    price = state["companies"][stock]["price"]
-                    player["cash"]             += price * qty
-                    player["holdings"][stock]   = owned - qty
-                    await save_player(player)
-                pv = player_view(player, state)
-                await websocket.send_text(json.dumps({
-                    "type":   "trade_ok",
-                    "msg":    f"Sold {qty}× {state['companies'][stock]['name']} @ ₹{price:,}",
-                    "player": pv,
-                }))
-                board = leaderboard(await all_players(), state)
-                await manager.broadcast_all({"type": "leaderboard", "board": board})
-
-            # ── Take loan ─────────────────────────────────────────────
-            elif action == "take_loan":
-                if not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                bank_id = msg.get("bank_id")
-                amount  = int(msg.get("amount", 0))
-                if bank_id not in BANKS:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid bank."})); continue
-                bank        = BANKS[bank_id]
-                current_bal = player.get("loans", {}).get(bank_id, 0)
-                if current_bal + amount > bank["limit"]:
-                    remain = max(0, bank["limit"] - current_bal)
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Exceeds {bank['name']} limit. Max additional: ₹{remain:,}."})); continue
-                if amount <= 0:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Amount must be positive."})); continue
-                async with _player_locks[code]:
-                    player = await get_player(code)
-                    player["cash"]               += amount
-                    player.setdefault("loans", {})[bank_id] = player["loans"].get(bank_id, 0) + amount
-                    await save_player(player)
-                pv       = player_view(player, state)
-                new_bal  = player["loans"][bank_id]
-                rate     = bank_rate_for_balance(bank_id, new_bal) + (0.05 if state.get("credit_crunch") else 0)
-                await websocket.send_text(json.dumps({
-                    "type":   "trade_ok",
-                    "msg":    f"₹{amount:,} from {bank['name']}. Balance: ₹{int(new_bal):,}. Current rate: {rate*100:.0f}%/round.",
-                    "player": pv,
-                }))
-
-            # ── Repay loan ────────────────────────────────────────────
-            elif action == "repay_loan":
-                if not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                if state["phase"] != "break":
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Loans can only be repaid during the break."})); continue
-                bank_id   = msg.get("bank_id")
-                repay_amt = int(msg.get("amount", 0))
-                if bank_id not in BANKS:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid bank."})); continue
-                async with _player_locks[code]:
-                    player    = await get_player(code)
-                    bal       = player.get("loans", {}).get(bank_id, 0)
-                    if bal <= 0:
-                        await websocket.send_text(json.dumps({"type": "error", "msg": f"No balance at {BANKS[bank_id]['name']}."})); continue
-                    repay_amt = min(repay_amt, int(bal))
-                    if player["cash"] < repay_amt:
-                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Not enough cash. You have ₹{int(player['cash']):,}."})); continue
-                    player["cash"] -= repay_amt
-                    remaining       = max(0, bal - repay_amt)
-                    if remaining == 0:
-                        player["loans"].pop(bank_id, None)
-                    else:
-                        player["loans"][bank_id] = remaining
-                    await save_player(player)
-                pv        = player_view(player, state)
-                bank_name = BANKS[bank_id]["name"]
-                await websocket.send_text(json.dumps({
-                    "type":   "trade_ok",
-                    "msg":    f"Repaid ₹{repay_amt:,} to {bank_name}. {'Fully cleared! ✅' if remaining == 0 else f'₹{int(remaining):,} still owed.'}",
-                    "player": pv,
-                }))
-
-            # ── Voluntary bankruptcy ──────────────────────────────────
-            elif action == "declare_bankruptcy":
-                if not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                pre_check = player_view(player, state)
-                debt_gap  = pre_check["total_loan"] - pre_check["net_worth"]
-                if debt_gap < BANKRUPTCY_MIN_DEBT_GAP:
-                    shortfall = BANKRUPTCY_MIN_DEBT_GAP - debt_gap
+                if player and player.get("merged_into") and action not in ("react_news", "team_merge_respond"):
+                    survivor = await get_player(player["merged_into"])
                     await websocket.send_text(json.dumps({
                         "type": "error",
-                        "msg":  (f"Bankruptcy isn't available yet. Your debt needs to exceed your net worth "
-                                 f"by ₹{BANKRUPTCY_MIN_DEBT_GAP:,}+ (you're ₹{int(shortfall):,} short)."),
-                    })); continue
-                async with _player_locks[code]:
-                    player = await get_player(code)
-                    player["cash"]     = BANKRUPTCY_RESTART
-                    player["holdings"] = {}
-                    player["loans"]    = {}
-                    player["bets"]     = {}   # bets cleared; stakes already deducted — treat as lost
-                    player["avg_cost"] = {}
-                    player["frozen"]   = True   # frozen for the rest of this round as a bankruptcy penalty
+                        "msg":  f"Your account merged into {survivor['name'] if survivor else 'your teammate'}'s team — trade from their device instead.",
+                    }))
+                    continue
+
+                # ── Set name ──────────────────────────────────────────────
+                if action == "set_name":
+                    raw_name = (msg.get("name") or "").strip()[:30]
+                    # Names get interpolated into innerHTML in a few places across
+                    # team/host/board — strip angle brackets so nobody can plant a
+                    # <script>/<img onerror> tag as their display name.
+                    name = re.sub(r"[<>]", "", raw_name).strip()
+                    if not name:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Name can't be empty."}))
+                        continue
+                    players = await all_players()
+                    if any(p["name"] == name and p["code"] != code for p in players):
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Name taken. Pick another."}))
+                        continue
+                    if player:
+                        player["name"] = name
+                    else:
+                        player = {
+                            "code": code, "name": name, "cash": STARTING_CASH,
+                            "holdings": {}, "loans": {}, "frozen": False,
+                            "avg_cost": {}, "bets": {}, "bm_log": [],
+                        }
                     await save_player(player)
-                pv = player_view(player, state)
-                await websocket.send_text(json.dumps({
-                    "type":   "bankrupt",
-                    "msg":    (f"💀 Bankruptcy declared. Wiped clean. Restarting with ₹{BANKRUPTCY_RESTART:,}. "
-                               "🔒 Trading is frozen for the rest of this round as a penalty — it unlocks "
-                               "automatically when the next round starts."),
-                    "player": pv,
-                }))
-                players = await all_players()
-                board   = leaderboard(players, state)
-                await manager.broadcast_all({
-                    "type":  "chaos",
-                    "event": "bankrupt",
-                    "msg":   f"💀 {player['name']} declared voluntary bankruptcy and restarted with ₹{BANKRUPTCY_RESTART:,}!",
-                    "board": board,
-                })
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type":           "joined",
+                        "name":           name,
+                        "player":         pv,
+                        "banks":          BANKS,
+                        "round_end_time": state.get("round_end_time"),
+                        "break_end_time": state.get("break_end_time"),
+                        "break_duration": state.get("break_duration", BREAK_DURATION),
+                    }))
+                    players = await all_players()
+                    board   = leaderboard(players, state)
+                    await manager.broadcast_all({"type": "leaderboard", "board": board})
+                    await manager.broadcast_hosts({"type": "player_online", "code": code, "name": name})
 
-            # ── Place prediction bet ──────────────────────────────────
-            elif action == "place_bet":
-                if state["phase"] != "trading":
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Bets can only be placed during trading rounds."})); continue
-                if not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
-                stock     = msg.get("stock")
-                direction = msg.get("direction")
-                target    = float(msg.get("target", 0))
-                amount    = int(msg.get("amount", 0))
-                if stock not in state["companies"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid stock."})); continue
-                if direction not in ("up", "down"):
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Direction must be 'up' or 'down'."})); continue
-                curr_price = state["companies"][stock]["price"]
-                if direction == "up"   and target <= curr_price:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be above current price ₹{curr_price:,}."})); continue
-                if direction == "down" and target >= curr_price:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be below current price ₹{curr_price:,}."})); continue
-                if amount < 1000:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Minimum bet is ₹1,000."})); continue
-                async with _player_locks[code]:
-                    player = await get_player(code)
-                    if amount > player["cash"]:
-                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Max bet ₹{int(player['cash']):,}."})); continue
-                    if stock in (player.get("bets") or {}):
-                        await websocket.send_text(json.dumps({"type": "error", "msg": "Already have an open bet on this stock."})); continue
-                    player["cash"] -= amount
-                    player.setdefault("bets", {})[stock] = {
-                        "direction": direction,
-                        "target":    target,
-                        "amount":    amount,
-                        "locked_at": curr_price,
-                    }
-                    await save_player(player)
-                pv = player_view(player, state)
-                cname = state["companies"][stock]["name"]
-                sentiment = compute_sentiment(await all_players(), state["companies"])
-                await manager.broadcast_all({"type": "sentiment_update", "sentiment": sentiment})
-                await websocket.send_text(json.dumps({
-                    "type":   "trade_ok",
-                    "msg":    f"Bet ₹{amount:,} on {cname} going {direction.upper()} to ₹{int(target):,}.",
-                    "player": pv,
-                }))
+                # ── Buy ───────────────────────────────────────────────────
+                elif action == "buy":
+                    if state["phase"] != "trading":
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    if player["frozen"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Your portfolio is frozen this round."})); continue
+                    stock = msg.get("stock")
+                    qty   = safe_int(msg.get("qty"), 0)
+                    if stock not in state["companies"] or qty < 1:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid stock or quantity."})); continue
+                    freeze = state.get("regulatory_freeze")
+                    if freeze and state["companies"][stock].get("sector") == freeze:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"⛔ {state['companies'][stock]['sector']} sector is under Regulatory Freeze."})); continue
+                    # Use per-player lock to prevent race conditions
+                    async with _player_locks[code]:
+                        player = await get_player(code)   # re-read inside lock
+                        state  = await read_state()
+                        price  = state["companies"][stock]["price"]
+                        cost   = price * qty
+                        if player["cash"] < cost:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{cost:,}. You have ₹{int(player['cash']):,}."})); continue
+                        old_qty = player["holdings"].get(stock, 0)
+                        old_avg = player["avg_cost"].get(stock, price)
+                        player["avg_cost"][stock] = ((old_avg * old_qty + price * qty) / (old_qty + qty)) if old_qty else price
+                        player["holdings"][stock]  = old_qty + qty
+                        player["cash"]            -= cost
+                        player["trades_this_round"] = player.get("trades_this_round", 0) + 1
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok",
+                        "msg":    f"Bought {qty}× {state['companies'][stock]['name']} @ ₹{price:,}",
+                        "player": pv,
+                    }))
+                    board = leaderboard(await all_players(), state)
+                    await manager.broadcast_all({"type": "leaderboard", "board": board})
 
-            # ── Merger: initiate ──────────────────────────────────────
-            elif action == "merge_initiate":
-                if state["phase"] != "trading" or not player:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Can only merge during trading."})); continue
-                partner_code = msg.get("partner_code", "").upper()
-                stock        = msg.get("stock")
-                qty          = int(msg.get("qty", 0))
-                if stock not in state["companies"] or qty < 1:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid merger request."})); continue
-                if partner_code == code:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Can't merge with yourself."})); continue
-                partner = await get_player(partner_code)
-                if not partner or not partner["name"]:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Partner not found."})); continue
-                price  = state["companies"][stock]["price"]
-                each   = round(price * qty / 2)   # each pays half
-                # Validate both sides can afford it
-                if player["cash"] < each:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"You need ₹{each:,} for this merger."})); continue
-                bid_id = uuid.uuid4().hex[:8]
-                async with STATE_LOCK:
-                    # Re-read right before mutating — `state` above may be a
-                    # few awaits stale by now, and this write touches shared
-                    # game state that the price loops also write every 4-20s.
-                    fresh_state = await read_state()
-                    fresh_state["merge_bids"][bid_id] = {
-                        "from_code":    code,
-                        "from_name":    player["name"],
-                        "partner_code": partner_code,
-                        "stock":        stock,
-                        "qty":          qty,
-                        "each":         each,
-                        "ts":           time.time(),
-                    }
-                    await write_state(fresh_state)
-                await manager.send_player(partner_code, {
-                    "type":    "merge_request",
-                    "bid_id":  bid_id,
-                    "from":    player["name"],
-                    "stock":   stock,
-                    "stock_name": state["companies"][stock]["name"],
-                    "qty":     qty,
-                    "each":    each,
-                })
-                await websocket.send_text(json.dumps({"type": "info", "msg": f"Merger request sent to {partner['name']}."}))
+                # ── Sell ──────────────────────────────────────────────────
+                elif action == "sell":
+                    if state["phase"] != "trading":
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    if player["frozen"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Your portfolio is frozen this round."})); continue
+                    stock = msg.get("stock")
+                    qty   = safe_int(msg.get("qty"), 0)
+                    freeze = state.get("regulatory_freeze")
+                    if freeze and state["companies"].get(stock, {}).get("sector") == freeze:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "⛔ Regulatory Freeze — no trading in this sector."})); continue
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        state  = await read_state()
+                        owned  = player["holdings"].get(stock, 0)
+                        if qty < 1 or qty > owned:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"You only own {owned} shares."})); continue
+                        price = state["companies"][stock]["price"]
+                        avg_cost = player.get("avg_cost", {}).get(stock, price)
+                        realized = (price - avg_cost) * qty
+                        player["cash"]             += price * qty
+                        player["holdings"][stock]   = owned - qty
+                        player["trades_this_round"]  = player.get("trades_this_round", 0) + 1
+                        player["realized_pnl_round"] = player.get("realized_pnl_round", 0) + realized
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok",
+                        "msg":    f"Sold {qty}× {state['companies'][stock]['name']} @ ₹{price:,}",
+                        "player": pv,
+                    }))
+                    board = leaderboard(await all_players(), state)
+                    await manager.broadcast_all({"type": "leaderboard", "board": board})
 
-            # ── Merger: respond ───────────────────────────────────────
-            elif action == "merge_respond":
-                bid_id = msg.get("bid_id")
-                accept = msg.get("accept", False)
-                state  = await read_state()
-                bid    = state.get("merge_bids", {}).get(bid_id)
-                if not bid:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "Merger bid expired or not found."})); continue
-                if not accept:
+                # ── Short Sell ────────────────────────────────────────────
+                elif action == "short_sell":
+                    if state["phase"] != "trading":
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    if player["frozen"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Your portfolio is frozen this round."})); continue
+                    stock = msg.get("stock")
+                    qty   = safe_int(msg.get("qty"), 0)
+                    if stock not in state["companies"] or qty < 1:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid stock or quantity."})); continue
+                    if state["companies"][stock].get("is_fund") or state["companies"][stock].get("is_etf"):
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Funds and ETFs can't be shorted."})); continue
+                    freeze = state.get("regulatory_freeze")
+                    if freeze and state["companies"][stock].get("sector") == freeze:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "⛔ Regulatory Freeze — no trading in this sector."})); continue
+                    async with _player_locks[code]:
+                        player   = await get_player(code)
+                        state    = await read_state()
+                        price    = state["companies"][stock]["price"]
+                        proceeds = price * qty
+                        margin   = round(proceeds * SHORT_MARGIN_PCT)
+                        if player["cash"] < margin:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{margin:,} margin ({int(SHORT_MARGIN_PCT*100)}% of position) to open this short. You have ₹{int(player['cash']):,}."})); continue
+                        shorts   = player.get("shorts", {})
+                        existing = shorts.get(stock)
+                        if existing:
+                            new_qty   = existing["qty"] + qty
+                            new_entry = (existing["entry_price"] * existing["qty"] + price * qty) / new_qty
+                            shorts[stock] = {"qty": new_qty, "entry_price": new_entry}
+                        else:
+                            shorts[stock] = {"qty": qty, "entry_price": price}
+                        player["shorts"]             = shorts
+                        player["cash"]              += proceeds
+                        player["trades_this_round"]  = player.get("trades_this_round", 0) + 1
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok",
+                        "msg":    f"🔻 Shorted {qty}× {state['companies'][stock]['name']} @ ₹{price:,}. Proceeds banked — you owe the shares back.",
+                        "player": pv,
+                    }))
+                    board = leaderboard(await all_players(), state)
+                    await manager.broadcast_all({"type": "leaderboard", "board": board})
+
+                # ── Cover Short ───────────────────────────────────────────
+                elif action == "cover_short":
+                    if state["phase"] != "trading":
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    stock = msg.get("stock")
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        state  = await read_state()
+                        shorts = player.get("shorts", {})
+                        pos    = shorts.get(stock)
+                        if not pos or pos.get("qty", 0) < 1:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": "No open short on that stock."})); continue
+                        price         = state["companies"][stock]["price"]
+                        qty           = pos["qty"]
+                        cost_to_cover = price * qty
+                        if player["cash"] < cost_to_cover:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{int(cost_to_cover):,} to cover — you have ₹{int(player['cash']):,}. Sell something first."})); continue
+                        realized = (pos["entry_price"] - price) * qty
+                        player["cash"]               -= cost_to_cover
+                        player["realized_pnl_round"]  = player.get("realized_pnl_round", 0) + realized
+                        del shorts[stock]
+                        player["shorts"]              = shorts
+                        player["trades_this_round"]   = player.get("trades_this_round", 0) + 1
+                        await save_player(player)
+                    pv   = player_view(player, state)
+                    sign = "+" if realized >= 0 else ""
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok",
+                        "msg":    f"Covered {qty}× {state['companies'][stock]['name']} @ ₹{price:,}. P&L: {sign}₹{int(realized):,}",
+                        "player": pv,
+                    }))
+                    board = leaderboard(await all_players(), state)
+                    await manager.broadcast_all({"type": "leaderboard", "board": board})
+
+                # ── Set / Cancel Stop-Loss ──────────────────────────────────
+                elif action == "set_stop_loss":
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    stock   = msg.get("stock")
+                    trigger = safe_float(msg.get("trigger"), 0)
+                    if stock not in player.get("holdings", {}) or player["holdings"][stock] < 1:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "You don't hold any shares of that stock."})); continue
+                    if trigger <= 0:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Enter a valid trigger price."})); continue
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        stops  = player.get("stop_losses", {})
+                        stops[stock] = trigger
+                        player["stop_losses"] = stops
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type":   "player_update", "player": pv,
+                        "msg":    f"🛑 Stop-loss set on {state['companies'][stock]['name']} at ₹{trigger:,.0f}.",
+                    }))
+
+                elif action == "cancel_stop_loss":
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    stock = msg.get("stock")
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        stops  = player.get("stop_losses", {})
+                        stops.pop(stock, None)
+                        player["stop_losses"] = stops
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type": "player_update", "player": pv, "msg": "Stop-loss cancelled.",
+                    }))
+
+                # ── Insurance — insure one held position for the rest of this round ──
+                elif action == "buy_insurance":
+                    if state["phase"] != "trading":
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Trading is closed."})); continue
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    stock = msg.get("stock")
+                    if stock in (player.get("insurance") or {}):
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "You already have an active policy on that stock."})); continue
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        state  = await read_state()
+                        owned  = player.get("holdings", {}).get(stock, 0)
+                        if owned < 1:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": "You don't hold any shares of that stock."})); continue
+                        avg_cost = player.get("avg_cost", {}).get(stock, state["companies"][stock]["price"])
+                        premium  = round(owned * avg_cost * INSURANCE_PREMIUM_PCT)
+                        if player["cash"] < premium:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"Need ₹{premium:,} for the premium — you have ₹{int(player['cash']):,}."})); continue
+                        player["cash"] -= premium
+                        ins = player.get("insurance", {})
+                        ins[stock] = {"qty": owned, "avg_cost_locked": avg_cost, "premium_paid": premium, "round_taken": state["round"]}
+                        player["insurance"] = ins
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok", "player": pv,
+                        "msg":    f"🛡️ Insured {owned}× {state['companies'][stock]['name']} at ₹{avg_cost:,.0f} cost basis. Premium: ₹{premium:,}. Covers {int(INSURANCE_COVERAGE_PCT*100)}% of losses below that if you're still holding at round end.",
+                    }))
+
+                # ── React to a news item (Discord-style, toggle on/off) ──────
+                elif action == "react_news":
+                    if not player:
+                        continue
+                    news_id = msg.get("news_id")
+                    emoji   = msg.get("emoji")
+                    if not news_id or emoji not in NEWS_REACTION_EMOJIS:
+                        continue
+                    async with STATE_LOCK:
+                        fresh_state = await read_state()
+                        item = next((n for n in fresh_state.get("news", []) if n.get("id") == news_id), None)
+                        if item is not None:
+                            reactions = item.setdefault("reactions", {})
+                            who = reactions.setdefault(emoji, [])
+                            if player["name"] in who:
+                                who.remove(player["name"])
+                            else:
+                                who.append(player["name"])
+                            if not who:
+                                reactions.pop(emoji, None)
+                            await write_state(fresh_state)
+                            counts = {e: len(v) for e, v in item.get("reactions", {}).items()}
+                        else:
+                            counts = None
+                    if counts is not None:
+                        await manager.broadcast_all({"type": "news_reaction", "news_id": news_id, "counts": counts})
+
+                # ── Take loan ─────────────────────────────────────────────
+                elif action == "take_loan":
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    bank_id = msg.get("bank_id")
+                    amount  = safe_int(msg.get("amount"), 0)
+                    if bank_id not in BANKS:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid bank."})); continue
+                    bank        = BANKS[bank_id]
+                    current_bal = player.get("loans", {}).get(bank_id, 0)
+                    if current_bal + amount > bank["limit"]:
+                        remain = max(0, bank["limit"] - current_bal)
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Exceeds {bank['name']} limit. Max additional: ₹{remain:,}."})); continue
+                    if amount <= 0:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Amount must be positive."})); continue
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        player["cash"]               += amount
+                        player.setdefault("loans", {})[bank_id] = player["loans"].get(bank_id, 0) + amount
+                        await save_player(player)
+                    pv       = player_view(player, state)
+                    new_bal  = player["loans"][bank_id]
+                    rate     = bank_rate_for_balance(bank_id, new_bal) + (0.05 if state.get("credit_crunch") else 0)
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok",
+                        "msg":    f"₹{amount:,} from {bank['name']}. Balance: ₹{int(new_bal):,}. Current rate: {rate*100:.0f}%/round.",
+                        "player": pv,
+                    }))
+
+                # ── Repay loan ────────────────────────────────────────────
+                elif action == "repay_loan":
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    if state["phase"] != "break":
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Loans can only be repaid during the break."})); continue
+                    bank_id   = msg.get("bank_id")
+                    repay_amt = safe_int(msg.get("amount"), 0)
+                    if bank_id not in BANKS:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid bank."})); continue
+                    if repay_amt <= 0:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Amount must be positive."})); continue
+                    async with _player_locks[code]:
+                        player    = await get_player(code)
+                        bal       = player.get("loans", {}).get(bank_id, 0)
+                        if bal <= 0:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"No balance at {BANKS[bank_id]['name']}."})); continue
+                        repay_amt = min(repay_amt, int(bal))
+                        if player["cash"] < repay_amt:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"Not enough cash. You have ₹{int(player['cash']):,}."})); continue
+                        player["cash"] -= repay_amt
+                        remaining       = max(0, bal - repay_amt)
+                        if remaining == 0:
+                            player["loans"].pop(bank_id, None)
+                        else:
+                            player["loans"][bank_id] = remaining
+                        await save_player(player)
+                    pv        = player_view(player, state)
+                    bank_name = BANKS[bank_id]["name"]
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok",
+                        "msg":    f"Repaid ₹{repay_amt:,} to {bank_name}. {'Fully cleared! ✅' if remaining == 0 else f'₹{int(remaining):,} still owed.'}",
+                        "player": pv,
+                    }))
+
+                # ── Voluntary bankruptcy ──────────────────────────────────
+                elif action == "declare_bankruptcy":
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    pre_check = player_view(player, state)
+                    debt_gap  = pre_check["total_loan"] - pre_check["net_worth"]
+                    if debt_gap < BANKRUPTCY_MIN_DEBT_GAP:
+                        shortfall = BANKRUPTCY_MIN_DEBT_GAP - debt_gap
+                        await websocket.send_text(json.dumps({
+                            "type": "error",
+                            "msg":  (f"Bankruptcy isn't available yet. Your debt needs to exceed your net worth "
+                                     f"by ₹{BANKRUPTCY_MIN_DEBT_GAP:,}+ (you're ₹{int(shortfall):,} short)."),
+                        })); continue
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        player["cash"]        = BANKRUPTCY_RESTART
+                        player["holdings"]    = {}
+                        player["loans"]       = {}
+                        player["bets"]        = {}   # bets cleared; stakes already deducted — treat as lost
+                        player["avg_cost"]    = {}
+                        player["shorts"]      = {}   # open shorts wiped too — you no longer owe those shares
+                        player["stop_losses"] = {}
+                        player["frozen"]      = True   # frozen for the rest of this round as a bankruptcy penalty
+                        player["bankruptcy_count"] = player.get("bankruptcy_count", 0) + 1
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    await websocket.send_text(json.dumps({
+                        "type":   "bankrupt",
+                        "msg":    (f"💀 Bankruptcy declared. Wiped clean. Restarting with ₹{BANKRUPTCY_RESTART:,}. "
+                                   "🔒 Trading is frozen for the rest of this round as a penalty — it unlocks "
+                                   "automatically when the next round starts."),
+                        "player": pv,
+                    }))
+                    players = await all_players()
+                    board   = leaderboard(players, state)
+                    await manager.broadcast_all({
+                        "type":  "chaos",
+                        "event": "bankrupt",
+                        "msg":   f"💀 {player['name']} declared voluntary bankruptcy and restarted with ₹{BANKRUPTCY_RESTART:,}!",
+                        "board": board,
+                    })
+
+                # ── Place prediction bet ──────────────────────────────────
+                elif action == "place_bet":
+                    if state["phase"] != "trading":
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Bets can only be placed during trading rounds."})); continue
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    stock     = msg.get("stock")
+                    direction = msg.get("direction")
+                    target    = safe_float(msg.get("target"), 0)
+                    amount    = safe_int(msg.get("amount"), 0)
+                    if stock not in state["companies"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid stock."})); continue
+                    if direction not in ("up", "down"):
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Direction must be 'up' or 'down'."})); continue
+                    curr_price = state["companies"][stock]["price"]
+                    if direction == "up"   and target <= curr_price:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be above current price ₹{curr_price:,}."})); continue
+                    if direction == "down" and target >= curr_price:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"Target must be below current price ₹{curr_price:,}."})); continue
+                    if amount < 1000:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Minimum bet is ₹1,000."})); continue
+                    async with _player_locks[code]:
+                        player = await get_player(code)
+                        if amount > player["cash"]:
+                            await websocket.send_text(json.dumps({"type": "error", "msg": f"Max bet ₹{int(player['cash']):,}."})); continue
+                        if stock in (player.get("bets") or {}):
+                            await websocket.send_text(json.dumps({"type": "error", "msg": "Already have an open bet on this stock."})); continue
+                        player["cash"] -= amount
+                        player.setdefault("bets", {})[stock] = {
+                            "direction": direction,
+                            "target":    target,
+                            "amount":    amount,
+                            "locked_at": curr_price,
+                        }
+                        await save_player(player)
+                    pv = player_view(player, state)
+                    cname = state["companies"][stock]["name"]
+                    sentiment = compute_sentiment(await all_players(), state["companies"])
+                    await manager.broadcast_all({"type": "sentiment_update", "sentiment": sentiment})
+                    await websocket.send_text(json.dumps({
+                        "type":   "trade_ok",
+                        "msg":    f"Bet ₹{amount:,} on {cname} going {direction.upper()} to ₹{int(target):,}.",
+                        "player": pv,
+                    }))
+
+                # ── Merger: initiate ──────────────────────────────────────
+                elif action == "merge_initiate":
+                    if state["phase"] != "trading" or not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Can only merge during trading."})); continue
+                    partner_code = (msg.get("partner_code") or "").upper()
+                    stock        = msg.get("stock")
+                    qty          = safe_int(msg.get("qty"), 0)
+                    if stock not in state["companies"] or qty < 1:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Invalid merger request."})); continue
+                    if partner_code == code:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Can't merge with yourself."})); continue
+                    partner = await get_player(partner_code)
+                    if not partner or not partner["name"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Partner not found."})); continue
+                    price  = state["companies"][stock]["price"]
+                    each   = round(price * qty / 2)   # each pays half
+                    # Validate both sides can afford it
+                    if player["cash"] < each:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"You need ₹{each:,} for this merger."})); continue
+                    bid_id = uuid.uuid4().hex[:8]
+                    async with STATE_LOCK:
+                        # Re-read right before mutating — `state` above may be a
+                        # few awaits stale by now, and this write touches shared
+                        # game state that the price loops also write every 4-20s.
+                        fresh_state = await read_state()
+                        fresh_state["merge_bids"][bid_id] = {
+                            "from_code":    code,
+                            "from_name":    player["name"],
+                            "partner_code": partner_code,
+                            "stock":        stock,
+                            "qty":          qty,
+                            "each":         each,
+                            "ts":           time.time(),
+                        }
+                        await write_state(fresh_state)
+                    await manager.send_player(partner_code, {
+                        "type":    "merge_request",
+                        "bid_id":  bid_id,
+                        "from":    player["name"],
+                        "stock":   stock,
+                        "stock_name": state["companies"][stock]["name"],
+                        "qty":     qty,
+                        "each":    each,
+                    })
+                    await websocket.send_text(json.dumps({"type": "info", "msg": f"Merger request sent to {partner['name']}."}))
+
+                # ── Merger: respond ───────────────────────────────────────
+                elif action == "merge_respond":
+                    bid_id = msg.get("bid_id")
+                    accept = msg.get("accept", False)
+                    state  = await read_state()
+                    bid    = state.get("merge_bids", {}).get(bid_id)
+                    if not bid:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Merger bid expired or not found."})); continue
+                    if not accept:
+                        async with STATE_LOCK:
+                            fresh_state = await read_state()
+                            fresh_state.get("merge_bids", {}).pop(bid_id, None)
+                            await write_state(fresh_state)
+                        await manager.send_player(bid["from_code"], {
+                            "type": "info",
+                            "msg":  f"{player['name']} declined the merger.",
+                        })
+                        await websocket.send_text(json.dumps({"type": "info", "msg": "Merger declined."}))
+                        continue
+                    # Accept: both pay `each`, both receive qty//2 shares
+                    # (initiator gets ceil, responder gets floor on odd quantities)
+                    p_init = await get_player(bid["from_code"])
+                    p_resp = await get_player(bid["partner_code"])
+                    stock  = bid["stock"]
+                    qty    = bid["qty"]
+                    each   = bid["each"]
+                    price  = state["companies"][stock]["price"]
+                    qty_init = (qty + 1) // 2   # ceiling
+                    qty_resp = qty // 2         # floor
+
+                    if p_init is None or p_resp is None:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "A player in the merger has left."})); continue
+                    if p_init["cash"] < each:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": f"{p_init['name']} can no longer afford the merger."})); continue
+                    if p_resp["cash"] < each:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "You can no longer afford the merger."})); continue
+
+                    async with _player_locks[bid["from_code"]], _player_locks[bid["partner_code"]]:
+                        p_init = await get_player(bid["from_code"])
+                        p_resp = await get_player(bid["partner_code"])
+                        # Deduct cost from both
+                        p_init["cash"] -= each
+                        p_resp["cash"] -= each
+                        # Distribute shares
+                        for p_side, q in [(p_init, qty_init), (p_resp, qty_resp)]:
+                            old_q   = p_side["holdings"].get(stock, 0)
+                            old_avg = p_side["avg_cost"].get(stock, price)
+                            p_side["avg_cost"][stock] = ((old_avg * old_q + price * q) / (old_q + q)) if old_q else price
+                            p_side["holdings"][stock]  = old_q + q
+                        await save_player(p_init)
+                        await save_player(p_resp)
+
                     async with STATE_LOCK:
                         fresh_state = await read_state()
                         fresh_state.get("merge_bids", {}).pop(bid_id, None)
                         await write_state(fresh_state)
+                        state = fresh_state
+                    cname = state["companies"][stock]["name"]
+                    await manager.send_player(bid["from_code"], {
+                        "type":   "player_update",
+                        "player": player_view(p_init, state),
+                    })
+                    await manager.send_player(bid["partner_code"], {
+                        "type":   "player_update",
+                        "player": player_view(p_resp, state),
+                    })
                     await manager.send_player(bid["from_code"], {
                         "type": "info",
-                        "msg":  f"{player['name']} declined the merger.",
+                        "msg":  f"Merger complete! You received {qty_init}× {cname}.",
                     })
-                    await websocket.send_text(json.dumps({"type": "info", "msg": "Merger declined."}))
-                    continue
-                # Accept: both pay `each`, both receive qty//2 shares
-                # (initiator gets ceil, responder gets floor on odd quantities)
-                p_init = await get_player(bid["from_code"])
-                p_resp = await get_player(bid["partner_code"])
-                stock  = bid["stock"]
-                qty    = bid["qty"]
-                each   = bid["each"]
-                price  = state["companies"][stock]["price"]
-                qty_init = (qty + 1) // 2   # ceiling
-                qty_resp = qty // 2         # floor
+                    await websocket.send_text(json.dumps({
+                        "type": "info",
+                        "msg":  f"Merger complete! You received {qty_resp}× {cname}.",
+                    }))
 
-                if p_init is None or p_resp is None:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "A player in the merger has left."})); continue
-                if p_init["cash"] < each:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": f"{p_init['name']} can no longer afford the merger."})); continue
-                if p_resp["cash"] < each:
-                    await websocket.send_text(json.dumps({"type": "error", "msg": "You can no longer afford the merger."})); continue
+                # ── Full Team Merger — permanently combine two accounts ──────
+                elif action == "team_merge_propose":
+                    if not player:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Join first."})); continue
+                    partner_code = (msg.get("partner_code") or "").strip().upper()
+                    if not partner_code or partner_code == code:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "Enter a different player's code."})); continue
+                    partner = await get_player(partner_code)
+                    if not partner or not partner["name"]:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "No player found with that code."})); continue
+                    if partner.get("merged_into") or player.get("merged_into"):
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "One of you is already part of a merged team."})); continue
+                    req_id = uuid.uuid4().hex[:8]
+                    async with STATE_LOCK:
+                        fresh_state = await read_state()
+                        fresh_state.setdefault("team_merge_requests", {})[req_id] = {
+                            "from_code": code, "from_name": player["name"],
+                            "partner_code": partner_code, "ts": time.time(),
+                        }
+                        await write_state(fresh_state)
+                    await manager.send_player(partner_code, {
+                        "type": "team_merge_request", "req_id": req_id,
+                        "from_name": player["name"], "from_code": code,
+                    })
+                    await websocket.send_text(json.dumps({"type": "info", "msg": f"Team merge proposal sent to {partner_code}."}))
 
-                async with _player_locks[bid["from_code"]], _player_locks[bid["partner_code"]]:
-                    p_init = await get_player(bid["from_code"])
-                    p_resp = await get_player(bid["partner_code"])
-                    # Deduct cost from both
-                    p_init["cash"] -= each
-                    p_resp["cash"] -= each
-                    # Distribute shares
-                    for p_side, q in [(p_init, qty_init), (p_resp, qty_resp)]:
-                        old_q   = p_side["holdings"].get(stock, 0)
-                        old_avg = p_side["avg_cost"].get(stock, price)
-                        p_side["avg_cost"][stock] = ((old_avg * old_q + price * q) / (old_q + q)) if old_q else price
-                        p_side["holdings"][stock]  = old_q + q
-                    await save_player(p_init)
-                    await save_player(p_resp)
-
-                async with STATE_LOCK:
-                    fresh_state = await read_state()
-                    fresh_state.get("merge_bids", {}).pop(bid_id, None)
-                    await write_state(fresh_state)
-                    state = fresh_state
-                cname = state["companies"][stock]["name"]
-                await manager.send_player(bid["from_code"], {
-                    "type":   "player_update",
-                    "player": player_view(p_init, state),
-                })
-                await manager.send_player(bid["partner_code"], {
-                    "type":   "player_update",
-                    "player": player_view(p_resp, state),
-                })
-                await manager.send_player(bid["from_code"], {
-                    "type": "info",
-                    "msg":  f"Merger complete! You received {qty_init}× {cname}.",
-                })
-                await websocket.send_text(json.dumps({
-                    "type": "info",
-                    "msg":  f"Merger complete! You received {qty_resp}× {cname}.",
-                }))
+                elif action == "team_merge_respond":
+                    req_id = msg.get("req_id")
+                    accept = bool(msg.get("accept"))
+                    async with STATE_LOCK:
+                        fresh_state = await read_state()
+                        req = fresh_state.get("team_merge_requests", {}).pop(req_id, None)
+                        await write_state(fresh_state)
+                        state = fresh_state
+                    if not req or req["partner_code"] != code:
+                        await websocket.send_text(json.dumps({"type": "error", "msg": "That proposal isn't valid anymore."})); continue
+                    if not accept:
+                        await manager.send_player(req["from_code"], {"type": "info", "msg": f"{req['from_name']}, your team merge proposal was declined."})
+                        await websocket.send_text(json.dumps({"type": "info", "msg": "Merge declined."}))
+                        continue
+                    async with _player_locks[req["from_code"]], _player_locks[code]:
+                        survivor = await get_player(req["from_code"])
+                        partner  = await get_player(code)
+                        if not survivor or not partner or survivor.get("merged_into") or partner.get("merged_into"):
+                            await websocket.send_text(json.dumps({"type": "error", "msg": "Merge couldn't complete — one of you already merged elsewhere."})); continue
+                        survivor["cash"] += partner["cash"]
+                        for cid, qty in partner.get("holdings", {}).items():
+                            if qty <= 0: continue
+                            old_qty = survivor["holdings"].get(cid, 0)
+                            old_avg = survivor.get("avg_cost", {}).get(cid, 0)
+                            p_avg   = partner.get("avg_cost", {}).get(cid, 0)
+                            new_qty = old_qty + qty
+                            new_avg = ((old_avg * old_qty) + (p_avg * qty)) / new_qty if new_qty else 0
+                            survivor["holdings"][cid] = new_qty
+                            survivor.setdefault("avg_cost", {})[cid] = new_avg
+                        for bank_id, bal in partner.get("loans", {}).items():
+                            if bal <= 0: continue
+                            survivor["loans"][bank_id] = survivor.get("loans", {}).get(bank_id, 0) + bal
+                        for cid, sp in partner.get("shorts", {}).items():
+                            if sp.get("qty", 0) <= 0: continue
+                            old = survivor.get("shorts", {}).get(cid)
+                            if old:
+                                new_qty   = old["qty"] + sp["qty"]
+                                new_entry = ((old["entry_price"] * old["qty"]) + (sp["entry_price"] * sp["qty"])) / new_qty
+                                survivor["shorts"][cid] = {"qty": new_qty, "entry_price": new_entry}
+                            else:
+                                survivor.setdefault("shorts", {})[cid] = sp
+                        # Predictions don't merge cleanly — cancel and refund the stake into the team pot
+                        for cid, bet in partner.get("bets", {}).items():
+                            survivor["cash"] += bet.get("amount", 0)
+                        survivor_old_name = survivor["name"]
+                        survivor["name"]             = f"{survivor_old_name} & {partner['name']}"
+                        survivor["merged_partners"]  = survivor.get("merged_partners", []) + [partner["name"]]
+                        await save_player(survivor)
+                        partner["cash"]        = 0
+                        partner["holdings"]    = {}
+                        partner["loans"]       = {}
+                        partner["shorts"]      = {}
+                        partner["bets"]        = {}
+                        partner["stop_losses"] = {}
+                        partner["insurance"]   = {}
+                        partner["merged_into"] = req["from_code"]
+                        await save_player(partner)
+                    await manager.send_player(req["from_code"], {
+                        "type":   "player_update", "player": player_view(survivor, state),
+                        "msg":    f"🤝 {partner['name']} merged into your team! Combined resources are now yours.",
+                    })
+                    await websocket.send_text(json.dumps({
+                        "type": "team_merge_done",
+                        "msg":  f"Your account merged into {survivor_old_name}'s team. Trading now happens from their device for the rest of the game.",
+                    }))
+                    players_all = await all_players()
+                    board_now   = leaderboard(players_all, state)
+                    await manager.broadcast_all({"type": "leaderboard", "board": board_now})
+                    await manager.broadcast_hosts({"type": "state_update", "state": state, "board": board_now})
+            except WebSocketDisconnect:
+                raise
+            except Exception as e:
+                print(f"[ws_player:{code}] action '{action}' failed: {e}")
+                try:
+                    await websocket.send_text(json.dumps({"type": "error", "msg": "Something went wrong processing that action — try again."}))
+                except Exception:
+                    pass
+                continue
 
     except WebSocketDisconnect:
         pass
@@ -2534,7 +3260,12 @@ async def ws_host(websocket: WebSocket):
             "sentiment":    compute_sentiment(players, state["companies"]),
         }))
         async for raw in websocket.iter_text():
-            msg = json.loads(raw)
+            try:
+                msg = json.loads(raw)
+                if not isinstance(msg, dict):
+                    continue
+            except Exception:
+                continue
             if msg.get("type") == "ping":
                 state   = await read_state()
                 players = await all_players()
