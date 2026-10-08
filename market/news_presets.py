@@ -1,413 +1,304 @@
 """
-news_presets.py — Market Mayhem / Inceptia
+news_presets.py — Market Mayhem
 
-A large bank of ready-made headline text, organised by stock and by
-direction ("up" / "down"). Used by main.py's /api/host/inject_news
-endpoint whenever the host leaves the "News Text" field blank: it looks
-up NEWS_PRESETS[<stock>][<"up" or "down">] and picks one at random.
+Ready-made headline text for the host's manual "Inject News" tab, organised by
+stock id and direction ("up" / "down"). main.py's /api/host/inject_news picks
+one at random when the host leaves the text box blank.
 
-This is intentionally kept separate from NEWS_POOL (in main.py), which
-powers the automatic 2-3 news drops at the start of each round. That
-pool tracks "already used" headlines across the whole game so the same
-line never repeats; this file is for the host's manual injection tab
-and can repeat across a session (there are enough options per stock/
-direction that repeats are rare in a normal 6-round game).
+Every headline is grounded in the organiser dossier (fictional_stock_exchange_dossiers.docx):
+real plot threads, company history and "watch-list hooks" only — nothing here
+contradicts the established backstory.
 
-To add more later: just append more strings to any list below. Nothing
-else needs to change — inject_news() always re-reads this dict fresh.
+Separate from NEWS_POOL in main.py (the automatic round-start headlines, which
+never repeat within a game). This file can repeat across a session.
+
+ORGANISER_NOTES at the bottom is HOST-ONLY: it's served by a password-protected
+endpoint and is never sent to players.
 """
 
 NEWS_PRESETS = {
 
-    # ── ZORA INDUSTRIES (Manufacturing) ──────────────────────────────────
-    "zora": {
+    # ── NEXUS TECHNOLOGIES (IT / Software Services) ─────────────────────
+    "nexus": {
         "up": [
-            "Zora Industries lands a ₹1,200 crore railway-infrastructure order from the Ministry of Railways.",
-            "Zora's Q3 export numbers beat estimates by 18% on strong Gulf demand for structural steel.",
-            "Credit rating agency upgrades Zora Industries to AA+, citing debt reduction and steady cash flow.",
-            "Zora announces a new automated plant in Gujarat, expected to cut production costs by 12%.",
-            "A large mutual fund house discloses a fresh 3% stake in Zora Industries this week.",
-            "Zora wins a multi-year maintenance contract for national highway bridges worth ₹850 crore.",
-            "Government fast-tracks environmental clearance for Zora's new manufacturing unit.",
-            "Zora Industries reports its best quarterly order book in five years.",
-            "Steel prices firm up globally, lifting margins across Zora's core product lines.",
-            "Zora's management reaffirms full-year guidance and hints at a special dividend.",
+            "Nexus Technologies wins a fresh multi-year AI-modernisation contract from a large US client.",
+            "Nexus upgrades FY27 revenue guidance, citing strong demand for enterprise AI integration.",
+            "Rupee weakens against the dollar — analysts expect a margin tailwind for Nexus's domestic-cost base.",
+            "Nexus's AI Delivery Center in Pune gets a green light for expansion.",
+            "Brokerages raise Nexus's target price after another quarter of double-digit deal-win growth.",
+            "Nexus's cybersecurity arm, acquired in 2025, lands its first marquee banking client.",
+            "US client budgets for IT modernisation come in stronger than feared, lifting the whole mid-tier IT pack.",
+            "Nexus's DPDP-compliance advisory line signs a dozen large Indian enterprises in a single quarter.",
+            "Nexus reportedly in talks to bid for a mid-sized European IT firm; market reads it as growth intent.",
+            "Nexus is cleared in the US visa-compliance review with no further penalties.",
         ],
         "down": [
-            "Zora Industries faces a show-cause notice over delayed delivery on a state government contract.",
-            "A key raw-material supplier to Zora halts shipments amid a payment dispute.",
-            "Labour unrest resurfaces at Zora's Pune facility as wage talks stall.",
-            "Zora's largest client trims order volumes by 15% citing its own demand slowdown.",
-            "Import tariffs on finished steel are cut, exposing Zora to cheaper foreign competition.",
-            "Zora Industries misses quarterly delivery targets due to a machinery breakdown.",
-            "An equipment fire at a secondary Zora unit halts production for several days.",
-            "Analysts flag rising input costs squeezing Zora's margins this quarter.",
-            "Zora's promoter family reportedly pledges a larger share of holdings against loans.",
-            "A regulatory audit into Zora's environmental compliance is opened this week.",
+            "US lawmakers revive 'hire local' proposals aimed at outsourced IT contracts; Nexus most exposed among mid-tier names.",
+            "A large US insurance client trims discretionary tech spend, pushing back part of Nexus's AI project.",
+            "Rupee strengthens sharply, raising fears of margin pressure at Nexus.",
+            "Nexus's effective tax rate creeps higher as remaining IT-SEZ benefits expire.",
+            "Rival mid-tier IT firm undercuts Nexus on a major deal, snatching a contract it was expected to win.",
+            "Nexus's AI Delivery Center expansion is deferred, raising questions on the AI-first strategy.",
+            "Key Nexus executives depart for a global consulting major, reviving succession worries.",
+            "Analysts warn integration costs of Nexus's US cybersecurity acquisition may weigh on next quarter.",
+            "A fresh whistleblower complaint on visa compliance surfaces; Nexus says it is reviewing the claims.",
+            "Global tech sell-off dents IT valuations; Nexus falls with the sector.",
         ],
     },
 
-    # ── STREAMVERSE (Media / OTT) ─────────────────────────────────────────
-    "streamvx": {
+    # ── PIONEER TRUST BANK (Private Banking) ────────────────────────────
+    "pioneer": {
         "up": [
-            "StreamVerse crosses 40 million paid subscribers, beating its own internal target.",
-            "A StreamVerse original series becomes the most-watched regional show of the year.",
-            "StreamVerse signs an exclusive streaming deal for a major upcoming cricket tournament.",
-            "Subscription price hike sails through with minimal churn, boosting StreamVerse's ARPU.",
-            "StreamVerse announces expansion into three new international markets.",
-            "A global media giant is reportedly in early talks to license content from StreamVerse.",
-            "StreamVerse's ad-supported tier posts record engagement numbers this quarter.",
-            "StreamVerse trims content costs while viewership holds steady — margins improve sharply.",
-            "Award-season buzz builds around a StreamVerse-produced film, driving new sign-ups.",
-            "StreamVerse announces a profitable quarter for the first time since listing.",
+            "Pioneer Trust Bank's digital lending book grows faster than expected; credit-rating outlook improves.",
+            "RBI clears Pioneer's digital lending partnerships after a routine review.",
+            "Pioneer reports a fall in gross NPAs as the merged regional bank's loan book keeps improving.",
+            "Government credit-guarantee scheme boosts demand for Pioneer's SME loans.",
+            "Pioneer's CASA ratio improves, cutting its funding costs versus peers.",
+            "Pioneer is said to be eyeing a bolt-on acquisition of a small NBFC — the market likes the consolidator story.",
+            "Pioneer announces a capital raise at a premium, signalling confidence in growth.",
+            "A rate-hike cycle expectation lifts net-interest-margin forecasts for banks like Pioneer.",
+            "Pioneer's vehicle and small-business NBFC arm posts record disbursements.",
+            "Pioneer declares a higher dividend after its strongest profit in years.",
         ],
         "down": [
-            "StreamVerse loses a bidding war for marquee sports streaming rights to a rival platform.",
-            "Subscriber growth stalls as StreamVerse faces intensifying competition from global players.",
-            "A high-profile StreamVerse original is cancelled mid-production after budget overruns.",
-            "Password-sharing crackdown backfires, triggering a wave of subscription cancellations.",
-            "StreamVerse's content spend balloons past guidance, spooking margin-focused investors.",
-            "A data-privacy complaint against StreamVerse draws regulatory scrutiny.",
-            "Key creative leadership exits StreamVerse amid reports of internal disagreements.",
-            "StreamVerse delays its flagship show's release by two quarters, frustrating subscribers.",
-            "Churn rate ticks up sharply after StreamVerse's latest price increase.",
-            "A rival platform undercuts StreamVerse with a cheaper bundled offering.",
+            "RBI opens a review of Pioneer's digital-lending partnerships, citing customer-protection concerns.",
+            "Pioneer reports a jump in provisioning on inherited loans from the merged regional bank.",
+            "RBI cuts the repo rate; analysts flag near-term margin compression for Pioneer.",
+            "Stricter unsecured-lending norms slow Pioneer's personal-loan growth again.",
+            "Pioneer's capital-raise plan raises dilution fears among shareholders.",
+            "A large SME borrower defaults, hitting Pioneer's asset-quality numbers.",
+            "Global fintech-backed lenders undercut Pioneer's rates in unsecured retail lending.",
+            "Reports that Pioneer overpaid for a small NBFC target unsettle investors.",
+            "Deposit growth slows for Pioneer as rivals raise fixed-deposit rates.",
+            "Pioneer flags higher-than-expected integration costs on its digital banking upgrade.",
         ],
     },
 
-    # ── FRESHCO (FMCG) ─────────────────────────────────────────────────────
-    "freshco": {
+    # ── GENESIS LIFE SCIENCES (Pharmaceuticals) ─────────────────────────
+    "genesis": {
         "up": [
-            "FreshCo's rural distribution push pays off with 22% volume growth outside metro cities.",
-            "FreshCo launches a premium snacking range that sells out in early markets within days.",
-            "Falling palm-oil prices ease input costs across FreshCo's product portfolio.",
-            "FreshCo signs a large retail partnership, adding shelf space in 5,000 new stores.",
-            "FreshCo's new ad campaign drives a noticeable uptick in brand recall and sales.",
-            "A festive-season demand surge lifts FreshCo's quarterly volumes well above forecast.",
-            "FreshCo announces a share buyback, citing confidence in long-term cash generation.",
-            "Analysts upgrade FreshCo after a stronger-than-expected same-store sales report.",
-            "FreshCo's export orders to Southeast Asia jump on a newly signed trade deal.",
-            "FreshCo unveils a cost-cutting logistics overhaul projected to lift margins by 3%.",
+            "USFDA clears Genesis's third manufacturing facility after a clean re-inspection.",
+            "Genesis wins early US launch of a high-margin generic after a patent ruling in its favour.",
+            "Genesis's new vaccine facility wins large contract-manufacturing orders.",
+            "Genesis signs an in-licensing deal for a promising biosimilar, widening its specialty pipeline.",
+            "Arbitration panel rules in Genesis's favour in its African government supply dispute.",
+            "Genesis reports strong US generic sales as a competitor exits a key product line.",
+            "Genesis's dividend yield climbs as management signals a higher payout.",
+            "Global vaccine demand surges; Genesis's contract capacity is seen as a major beneficiary.",
+            "Genesis clears remaining remediation items at both previously flagged plants.",
+            "Analysts upgrade Genesis, saying quality-control worries are firmly in the past.",
         ],
         "down": [
-            "Rising palm-oil and packaging costs squeeze FreshCo's gross margins this quarter.",
-            "A product recall hits one of FreshCo's flagship snack lines over quality concerns.",
-            "FreshCo's rural demand softens as an uneven monsoon dents consumer spending.",
-            "A newer, cheaper competitor gains rapid market share in FreshCo's core segment.",
-            "FreshCo delays a planned price hike, absorbing costs and hurting near-term margins.",
-            "Distribution disruptions in key states dent FreshCo's quarterly volumes.",
-            "FreshCo's ad spend surges but fails to move the needle on sales growth.",
-            "A social-media complaint about packaging goes viral, denting FreshCo's brand sentiment.",
-            "FreshCo's largest regional distributor exits the network amid a contract dispute.",
-            "Weak festive-season sales fall short of FreshCo's internal projections.",
+            "USFDA issues a fresh observation at a Genesis facility during a re-inspection.",
+            "Genesis receives a warning letter over manufacturing-quality lapses; US exports from that plant halted.",
+            "A patent ruling goes against Genesis, delaying a planned US launch.",
+            "Arbitration over an African government supply contract turns against Genesis.",
+            "US generic pricing pressure squeezes Genesis's margins this quarter.",
+            "Genesis's biosimilar in-licensing talks collapse over terms.",
+            "A batch recall of a Genesis formulation triggers fresh quality-control worries.",
+            "Genesis's new vaccine facility faces a commissioning delay.",
+            "Rival generics maker launches a cheaper version of Genesis's key US product.",
+            "Regulators in an export market flag documentation issues with Genesis shipments.",
         ],
     },
 
-    # ── VOLTEX ENERGY (Renewable Energy) ──────────────────────────────────
-    "voltex": {
+    # ── APEX MOBILITY (Automobile / EV) ─────────────────────────────────
+    "apex": {
         "up": [
-            "Voltex Energy wins a 500MW solar tender, its largest single project to date.",
-            "Government announces fresh subsidies for renewable energy — Voltex is a direct beneficiary.",
-            "Voltex signs a long-term power purchase agreement with a major industrial client.",
-            "A breakthrough in battery-storage efficiency boosts Voltex's next-gen project economics.",
-            "International green-energy fund takes a strategic stake in Voltex Energy.",
-            "Voltex commissions its largest wind farm ahead of schedule and under budget.",
-            "Falling solar panel import costs improve Voltex's project margins significantly.",
-            "Voltex announces a joint venture to enter the green-hydrogen space.",
-            "Credit agencies upgrade Voltex's outlook citing a de-risked project pipeline.",
-            "Voltex Energy's quarterly capacity addition beats guidance by a wide margin.",
+            "Apex's EV sales jump to a record month, ahead of every analyst estimate.",
+            "Government revises the FAME subsidy scheme in a way that favours Apex's EV lineup.",
+            "Apex's battery-cell joint venture confirms local production remains on track for 2027.",
+            "Apex's new dedicated EV plant hits full production ahead of schedule.",
+            "Apex's EV passenger car tops its segment's sales chart for the quarter.",
+            "Apex secures a large fleet order from a leading ride-hailing operator.",
+            "Independent safety testing awards Apex's newest EV a top rating, easing battery-fire fears.",
+            "Apex's export shipments of electric two-wheelers ramp up sharply.",
+            "Apex announces a price-competitive new EV model aimed at the mass market.",
+            "Fuel prices spike, pushing more buyers to Apex's electric range.",
         ],
         "down": [
-            "Delays in land acquisition push back Voltex's flagship solar project by two quarters.",
-            "Rising interest rates raise borrowing costs for Voltex's capital-heavy project pipeline.",
-            "A grid-connectivity dispute stalls power evacuation from a completed Voltex project.",
-            "Import duties on solar components are hiked, denting Voltex's project economics.",
-            "Voltex writes down a stalled wind project after a change in state policy.",
-            "A key state government cancels a renewable tender Voltex had already bid heavily on.",
-            "Monsoon damage to transmission infrastructure disrupts a major Voltex project site.",
-            "Voltex's debt load draws scrutiny after a larger-than-expected capex overrun.",
-            "A competitor undercuts Voltex sharply in a high-profile solar tender bid.",
-            "Voltex delays its green-hydrogen pilot, citing technology and funding hurdles.",
+            "Apex announces a voluntary recall of an EV batch after a battery-related incident.",
+            "A foreign EV brand confirms its India entry with aggressive pricing, worrying Apex investors.",
+            "Government signals a cut to EV subsidies; Apex is among the most exposed.",
+            "Apex's battery-cell joint venture slips its production timeline.",
+            "Apex reports a sharp month-on-month fall in EV sales.",
+            "A video of an Apex EV fire circulates widely on social media.",
+            "Apex's legacy petrol two-wheeler sales decline faster than expected.",
+            "Rising lithium and cell prices squeeze Apex's EV margins.",
+            "Apex's EV plant hit by a supply-chain disruption for key components.",
+            "Analysts cut Apex's target price, citing heavy capital spending with uncertain returns.",
         ],
     },
 
-    # ── MEDIQ (Pharma) ──────────────────────────────────────────────────────
-    "mediq": {
+    # ── VORTEX CLEAN ENERGY (Renewable Energy) ──────────────────────────
+    "vortex": {
         "up": [
-            "MediQ receives regulatory approval to export a key generic drug to the EU market.",
-            "MediQ's new diabetes drug shows strong results in late-stage clinical trials.",
-            "A large government tender for essential medicines is awarded largely to MediQ.",
-            "MediQ announces a licensing deal that opens up a major new international market.",
-            "Raw-material (API) costs ease, improving MediQ's margins across its generics portfolio.",
-            "MediQ's R&D pipeline update surprises analysts with two new molecules in trials.",
-            "A US regulatory inspection of MediQ's plant closes with zero observations.",
-            "MediQ signs a co-marketing deal with a global pharma major for the Indian market.",
-            "Strong flu-season demand drives a sales spike across MediQ's respiratory range.",
-            "MediQ announces capacity expansion at its largest formulation plant.",
+            "Vortex wins a large new power-purchase-agreement tender from a state utility.",
+            "Vortex signs a green-hydrogen off-take agreement, validating its pilot plant.",
+            "Rating agency upgrades Vortex's debt, lowering its borrowing costs.",
+            "Government hikes solar import duties, boosting the case for domestic-linked projects like Vortex's.",
+            "RBI signals rate cuts — good news for debt-heavy Vortex.",
+            "Vortex commissions a large new wind farm ahead of schedule.",
+            "New renewable-energy subsidies announced, with Vortex among the biggest expected beneficiaries.",
+            "Global solar panel prices stabilise, ending a long margin squeeze for Vortex.",
+            "Vortex's green-hydrogen pilot plant meets its output targets for the quarter.",
+            "A large industrial buyer signs a long-term clean power deal with Vortex.",
         ],
         "down": [
-            "A US regulatory inspection flags quality-control lapses at a MediQ manufacturing plant.",
-            "MediQ's key export market imposes new price controls, pressuring margins.",
-            "A patent dispute delays MediQ's launch of a high-value generic drug.",
-            "Raw-material shortages from a key API supplier disrupt MediQ's production schedule.",
-            "MediQ recalls a batch of medication after a quality-control flag during routine testing.",
-            "Government price caps on essential medicines squeeze MediQ's largest product line.",
-            "A competitor's cheaper generic wins a major tender MediQ had counted on.",
-            "MediQ's clinical trial for a flagship drug is paused pending additional safety data.",
-            "Currency headwinds dent MediQ's overseas earnings when converted back to rupees.",
-            "MediQ delays a plant expansion after cost overruns and permitting issues.",
+            "Vortex loses out on a major PPA tender it was widely expected to win.",
+            "Interest rates rise — heavy debt makes Vortex especially vulnerable.",
+            "Global solar panel prices crash again on Chinese oversupply, squeezing Vortex's margins.",
+            "Green-hydrogen off-take talks stall; the pilot plant's commercial future looks uncertain.",
+            "State utility delays payments to Vortex, straining working capital.",
+            "Government rolls back a key renewable-energy incentive.",
+            "A wind-farm equipment failure cuts Vortex's output for the quarter.",
+            "Possible new solar import duty hike raises Vortex's project costs.",
+            "Analysts warn Vortex's balance sheet is stretched by its capex plans.",
+            "Weak wind conditions drag down Vortex's generation this quarter.",
         ],
     },
 
-    # ── SKYLINK TECH (Technology) ──────────────────────────────────────────
-    "skylink": {
+    # ── AURA DAILY ESSENTIALS (FMCG) ────────────────────────────────────
+    "aura": {
         "up": [
-            "SkyLink Tech wins a large multi-year cloud infrastructure contract from a Fortune 500 client.",
-            "SkyLink's new AI-powered analytics product sees faster-than-expected enterprise adoption.",
-            "A major client renews and expands its contract with SkyLink Tech by 40%.",
-            "SkyLink announces record quarterly bookings, beating street estimates comfortably.",
-            "SkyLink Tech is named a leader in an independent industry analyst report.",
-            "SkyLink signs a strategic partnership with a global hyperscaler to co-sell products.",
-            "Strong deal momentum in North America lifts SkyLink's revenue guidance for the year.",
-            "SkyLink Tech announces a share buyback funded by strong free cash flow.",
-            "A key SkyLink product wins a prestigious industry innovation award.",
-            "SkyLink's attrition rate drops sharply, easing margin pressure from wage inflation.",
+            "A good monsoon forecast lifts expectations for rural demand, a key market for Aura.",
+            "Palm-oil and crude-derivative prices ease, improving Aura's margins.",
+            "Aura's rural distribution platform reaches thousands more small-town retailers.",
+            "Aura's relaunched legacy brands gain market share for a second straight quarter.",
+            "Government keeps GST on Aura's key product category unchanged.",
+            "Aura is said to be acquiring a challenger D2C brand to boost its modern portfolio.",
+            "Aura declares its usual steady dividend; defensive investors take comfort.",
+            "Aura's volume growth beats expectations on a rural demand recovery.",
+            "Investors rotate into defensives as markets wobble, supporting Aura.",
+            "Aura's packaged-foods range posts its strongest quarter in years.",
         ],
         "down": [
-            "SkyLink Tech loses a marquee client to a lower-cost competitor after contract renewal talks stall.",
-            "Slower enterprise IT spending in key overseas markets weighs on SkyLink's order book.",
-            "A data breach at SkyLink Tech triggers a client audit and reputational concerns.",
-            "SkyLink misses quarterly revenue guidance, citing project delays from a major client.",
-            "Rising employee attrition forces SkyLink to hike wages, pressuring near-term margins.",
-            "A key SkyLink executive departs abruptly amid reports of a strategy disagreement.",
-            "Currency headwinds dent SkyLink's dollar-denominated revenue when repatriated.",
-            "SkyLink's largest contract is put under review after a client's own budget cuts.",
-            "A botched product rollout forces SkyLink to delay a flagship platform launch.",
-            "Analysts flag margin compression as SkyLink invests heavily in unproven AI bets.",
+            "Poor monsoon forecast raises worries about rural incomes and Aura's volumes.",
+            "Palm-oil and crude-derivative prices spike, threatening Aura's margins.",
+            "GST slab reclassification proposed for one of Aura's key product categories.",
+            "D2C challenger brands eat into Aura's share in personal care.",
+            "Aura announces price hikes, and analysts fear it will dent volumes.",
+            "Aura's acquisition of a challenger brand is seen as overpriced by some analysts.",
+            "A rural distribution glitch delays Aura's new product launches.",
+            "Aura's quarterly volume growth misses estimates by a small margin.",
+            "Rival FMCG giant launches an aggressive discount campaign against Aura's soaps.",
+            "Input-cost inflation returns, and analysts trim Aura's margin forecasts.",
         ],
     },
 
-    # ── SWIFTHAUL LOGISTICS (Logistics) ─────────────────────────────────────
-    "swifthaul": {
+    # ── SKYLINE INFRAPROJECTS (Infrastructure / Real Estate) ────────────
+    "skyline": {
         "up": [
-            "SwiftHaul Logistics wins a nationwide contract with a major e-commerce player.",
-            "Falling fuel prices ease operating costs across SwiftHaul's fleet.",
-            "SwiftHaul announces a tech upgrade that cuts delivery times by 20% in key metros.",
-            "A new highway corridor opening cuts transit times on SwiftHaul's busiest routes.",
-            "SwiftHaul reports record quarterly volumes as e-commerce shipments surge.",
-            "SwiftHaul expands its cold-chain logistics arm, opening a new high-margin revenue line.",
-            "A large FMCG client consolidates all its logistics needs under SwiftHaul.",
-            "SwiftHaul's fleet electrification pilot cuts costs faster than expected.",
-            "Government infrastructure push accelerates key freight corridors SwiftHaul depends on.",
-            "SwiftHaul announces a joint venture to enter international freight forwarding.",
+            "Skyline wins a large new national highway contract.",
+            "Court rules in Skyline's favour in the land-dispute case on its stalled project.",
+            "Skyline shortlisted in a major metro-adjacent tender.",
+            "RBI signals rate cuts — welcome relief for debt-heavy Skyline.",
+            "Skyline's tier-2 city real estate launches sell out ahead of schedule.",
+            "Skyline completes a major highway stretch ahead of the deadline, earning a bonus.",
+            "Government announces a big infrastructure spending push, with highways a priority.",
+            "Skyline's order book reaches an all-time high.",
+            "Rating agency upgrades Skyline after its debt restructuring is fully resolved.",
+            "Skyline signs a large anchor tenant for its commercial real estate development.",
         ],
         "down": [
-            "Rising diesel prices squeeze margins across SwiftHaul's delivery network.",
-            "A major client shifts volumes in-house, cutting SwiftHaul's largest revenue stream.",
-            "Nationwide trucker protests over fuel prices disrupt SwiftHaul's operations for days.",
-            "SwiftHaul faces regulatory scrutiny over driver working-condition complaints.",
-            "A warehouse fire disrupts SwiftHaul's operations in a key distribution hub.",
-            "Intensifying price competition from new logistics entrants pressures SwiftHaul's margins.",
-            "Monsoon flooding disrupts key SwiftHaul freight corridors for over a week.",
-            "SwiftHaul's expansion into cold-chain logistics stalls due to funding delays.",
-            "A key highway toll hike raises SwiftHaul's per-shipment costs significantly.",
-            "SwiftHaul loses a major e-commerce contract to a lower-bid competitor.",
+            "Court rules against Skyline in the land-dispute case, keeping its stalled project on hold.",
+            "Skyline loses a major highway tender to a rival.",
+            "Interest rates rise, and analysts flag debt-heavy Skyline as most exposed.",
+            "Contractual penalty clauses triggered on a delayed Skyline project.",
+            "Skyline's tier-2 real estate launch draws weaker-than-expected demand.",
+            "Cement and steel prices spike, squeezing margins on Skyline's fixed-price contracts.",
+            "Government delays infrastructure payments, straining Skyline's cash flow.",
+            "A fresh land-acquisition dispute halts work on another Skyline site.",
+            "Skyline's lenders ask for additional guarantees after slow project execution.",
+            "Analysts warn Skyline's real estate expansion is stretching its balance sheet.",
         ],
     },
 
-    # ── CROWNMART (FMCG) ─────────────────────────────────────────────────────
-    "crownmart": {
+    # ── PULSE TELECOM (Telecom) ─────────────────────────────────────────
+    "pulse": {
         "up": [
-            "CrownMart's same-store sales growth beats estimates on strong festive demand.",
-            "CrownMart announces aggressive store expansion into tier-2 and tier-3 cities.",
-            "A private-label range launch drives higher margins across CrownMart's stores.",
-            "CrownMart signs a large real-estate deal securing prime retail locations cheaply.",
-            "Footfall at CrownMart outlets jumps after a well-received loyalty programme relaunch.",
-            "CrownMart's online delivery arm posts its first profitable quarter.",
-            "A major FMCG brand signs an exclusive in-store promotion deal with CrownMart.",
-            "CrownMart announces cost savings from a new automated supply-chain system.",
-            "Strong quarterly results prompt analysts to upgrade CrownMart's growth outlook.",
-            "CrownMart's new express-delivery format gains rapid traction in metro markets.",
+            "All three major telecom operators announce tariff hikes; Pulse leads the move.",
+            "Pulse adds millions of 5G subscribers, beating estimates.",
+            "Supreme Court gives relief on Pulse's remaining AGR dues.",
+            "Pulse sells a further stake in its tower subsidiary at a strong valuation, cutting debt.",
+            "Government announces a spectrum auction on terms friendly to existing operators.",
+            "Pulse's average revenue per user climbs for the fifth straight quarter.",
+            "Pulse raises its dividend, following its resumption after years.",
+            "Pulse signs a large enterprise-connectivity contract with a national bank.",
+            "Analysts upgrade Pulse, citing disciplined industry pricing.",
+            "Pulse's broadband arm posts record customer additions.",
         ],
         "down": [
-            "Rising retail rents in key cities squeeze CrownMart's store-level profitability.",
-            "CrownMart's same-store sales growth slows sharply as online competition intensifies.",
-            "A quality complaint about a private-label product goes viral, denting CrownMart's brand image.",
-            "CrownMart shelves its aggressive store-expansion plan citing capital constraints.",
-            "Weak consumer sentiment in urban markets dents CrownMart's discretionary category sales.",
-            "A key supplier dispute leads to stock-outs across several CrownMart categories.",
-            "CrownMart's online delivery arm posts wider-than-expected losses this quarter.",
-            "Employee unrest over wages disrupts operations at several CrownMart outlets.",
-            "A larger rival undercuts CrownMart aggressively on pricing in overlapping markets.",
-            "CrownMart delays store openings after cost overruns on its logistics backbone.",
+            "Supreme Court review goes against telecom operators on remaining AGR dues; Pulse faces a fresh bill.",
+            "A rival launches a surprise price cut, reviving fears of a tariff war.",
+            "Government announces a spectrum auction with steep reserve prices.",
+            "Pulse's subscriber additions slow as 5G adoption plateaus.",
+            "Rumoured tower-stake sale falls through, leaving debt reduction plans in doubt.",
+            "Regulator proposes tougher quality-of-service penalties for telecom operators.",
+            "Pulse suffers a large network outage, triggering customer complaints and regulator scrutiny.",
+            "Tariff-hike plans are delayed after a rival refuses to follow.",
+            "Pulse's capex needs for 5G rollout are higher than analysts expected.",
+            "Global equipment supplier delays deliveries to Pulse's 5G rollout.",
         ],
     },
+}
 
-    # ── SHIELDGEN DEFENCE (Defence) ─────────────────────────────────────────
-    "shieldgen": {
-        "up": [
-            "ShieldGen Defence wins a ₹3,000 crore order for next-generation surveillance systems.",
-            "Government clears a major defence export deal benefiting ShieldGen directly.",
-            "ShieldGen announces a successful test of a new indigenous defence technology.",
-            "A foreign defence ministry signs a preliminary agreement to procure ShieldGen systems.",
-            "ShieldGen's order book hits an all-time high after a string of fresh contract wins.",
-            "Policy push for domestic defence manufacturing gives ShieldGen a direct tailwind.",
-            "ShieldGen announces a joint venture with a global defence major for co-production.",
-            "Strong quarterly execution allows ShieldGen to raise its full-year revenue guidance.",
-            "ShieldGen wins a competitive tender against larger rivals for a key system upgrade.",
-            "Analysts flag ShieldGen's healthy order backlog as a multi-year growth driver.",
-        ],
-        "down": [
-            "A key ShieldGen defence contract faces delays amid budget reprioritisation.",
-            "ShieldGen's export order is put on hold following a shift in the buyer nation's policy.",
-            "A test failure forces ShieldGen to delay delivery on a flagship system.",
-            "Rising raw-material costs for specialised alloys squeeze ShieldGen's project margins.",
-            "ShieldGen faces increased competition from a foreign player undercutting on price.",
-            "A parliamentary panel raises questions over delays in a major ShieldGen programme.",
-            "ShieldGen's largest contract is renegotiated at lower margins after a cost audit.",
-            "Currency fluctuations dent the value of ShieldGen's dollar-denominated export orders.",
-            "A component shortage from an overseas supplier stalls ShieldGen's production line.",
-            "ShieldGen writes down costs on a cancelled joint development programme.",
-        ],
-    },
 
-    # ── INDRANET (Technology) ────────────────────────────────────────────────
-    "indranet": {
-        "up": [
-            "IndraNet wins a large government contract to build a next-gen digital infrastructure platform.",
-            "IndraNet's cybersecurity division reports record enterprise client additions.",
-            "A major telecom operator signs a multi-year deal with IndraNet for network software.",
-            "IndraNet announces a breakthrough partnership to expand into Southeast Asia.",
-            "Strong demand for IndraNet's cloud-security suite drives record quarterly bookings.",
-            "IndraNet's new data-centre facility comes online ahead of schedule.",
-            "A positive analyst report highlights IndraNet's growing recurring-revenue base.",
-            "IndraNet signs a co-development deal with a global technology major.",
-            "IndraNet reports its highest-ever quarterly profit on strong enterprise demand.",
-            "Government's digital infrastructure push directly benefits IndraNet's core business.",
-        ],
-        "down": [
-            "IndraNet faces scrutiny after a client reports a network outage tied to its platform.",
-            "A key government tender is delayed, pushing back expected IndraNet revenue.",
-            "IndraNet's largest telecom client signals plans to build capabilities in-house.",
-            "Rising competition from global cloud players pressures IndraNet's pricing power.",
-            "A cybersecurity incident at a client using IndraNet's platform draws unwanted attention.",
-            "IndraNet delays its Southeast Asia expansion citing regulatory hurdles.",
-            "Weaker enterprise IT budgets globally weigh on IndraNet's near-term order book.",
-            "A senior IndraNet executive resigns amid reports of missed product timelines.",
-            "IndraNet's data-centre expansion runs into cost overruns and permitting delays.",
-            "Analysts flag slowing growth in IndraNet's core network-software segment.",
-        ],
+# ─────────────────────────────────────────────────────────────────────────
+#  HOST / ORGANISER ONLY — never sent to players.
+#  Cross-links and unresolved plot hooks from the dossier, for planning
+#  manual news drops and chaos events.
+# ─────────────────────────────────────────────────────────────────────────
+ORGANISER_NOTES = {
+    "cross_linkages": [
+        "RBI rate moves hit Pioneer, Skyline (debt-heavy) and Vortex (capex-heavy) together — one headline can move three stocks. Aura barely reacts to interest rates.",
+        "Genesis's unique lever is FDA/regulatory shocks. Apex and Vortex are driven by subsidy/policy shocks. Pulse moves on tariff-hike headlines. Skyline moves on contract wins/losses.",
+        "Aura is the deliberate low-volatility anchor — a benchmark showing not every stock swings 20% on news.",
+    ],
+    "watch_list_hooks": {
+        "nexus":   ["Pending US visa policy review", "Rumoured bid for a mid-sized European IT firm", "AI Delivery Center expansion decision due late 2026"],
+        "pioneer": ["Rumoured acquisition of a small NBFC", "RBI review of digital lending partnerships", "Upcoming capital-raise decision"],
+        "genesis": ["Pending FDA re-inspection of a third facility", "Ongoing arbitration over an African government supply contract", "Possible in-licensing deal for a biosimilar"],
+        "apex":    ["Battery JV cell-production timeline", "Rumoured foreign EV brand India entry", "Possible FAME subsidy scheme revision"],
+        "vortex":  ["Green hydrogen off-take agreement talks", "Possible further solar import duty hikes", "A large new PPA tender it is bidding for"],
+        "aura":    ["Possible GST slab reclassification", "Monsoon forecast (rural income and demand)", "Rumoured challenger-brand acquisition for the D2C portfolio"],
+        "skyline": ["Outcome of pending land-dispute court case", "A large new metro-adjacent tender", "Progress of tier-2 real estate bet"],
+        "pulse":   ["Possible fourth spectrum auction", "Pending Supreme Court review of remaining AGR dues", "Rumoured further stake sale in the tower subsidiary"],
     },
+    "game_schedule": [
+        "Round 1: normal, no chaos.",
+        "Round 2 start: Vortex lists (automatic).",
+        "Round 3 start: Skyline lists + dividends on Nexus, Pioneer, Genesis, Apex, Aura (automatic).",
+        "Round 4 start: dividends on all listed stocks (automatic); Nexus/Pulse acquisition rumour at the 5-minute mark, correlating the two prices for the last 15 minutes (automatic).",
+    ],
+}
 
-    # ── NOVAPAY (Fintech — IPO) ──────────────────────────────────────────────
-    "novapay": {
-        "up": [
-            "NovaPay crosses 10 million monthly active users faster than any fintech in the category.",
-            "NovaPay secures a payment-aggregator licence, unlocking a major new revenue stream.",
-            "A leading bank signs an exclusive co-branded card partnership with NovaPay.",
-            "NovaPay's transaction volumes double year-on-year, beating analyst expectations.",
-            "A global payments major takes a strategic minority stake in NovaPay.",
-            "NovaPay launches a lending product that sees rapid early adoption.",
-            "NovaPay announces its first profitable quarter since its market debut.",
-            "Regulatory clarity on digital payments removes a key overhang on NovaPay's stock.",
-            "NovaPay signs up 50,000 new merchants in a single quarter.",
-            "NovaPay's fraud-detection AI wins industry recognition, boosting enterprise trust.",
-        ],
-        "down": [
-            "Regulators tighten digital lending norms, directly impacting NovaPay's newest product line.",
-            "NovaPay reports slower-than-expected merchant acquisition amid intense competition.",
-            "A payment outage during a peak shopping event dents NovaPay's user trust.",
-            "NovaPay's largest banking partner scales back its co-branded card programme.",
-            "Rising customer-acquisition costs widen NovaPay's losses this quarter.",
-            "A data-security lapse at NovaPay triggers a regulatory inquiry.",
-            "Competition from larger payment players intensifies, pressuring NovaPay's market share.",
-            "NovaPay delays its lending product launch amid new compliance requirements.",
-            "Investor sentiment sours on fintech names broadly, dragging NovaPay down with the sector.",
-            "NovaPay's transaction take-rate is cut after a renegotiation with a key partner.",
-        ],
-    },
 
-    # ── GREENLEAF AGRI (Agriculture — IPO) ───────────────────────────────────
-    "greenleaf": {
-        "up": [
-            "GreenLeaf Agri signs a large export deal for organic produce to European markets.",
-            "A bumper harvest season boosts GreenLeaf's processing volumes sharply.",
-            "GreenLeaf announces a new cold-storage network, cutting post-harvest losses significantly.",
-            "Government subsidies for agri-tech adoption give GreenLeaf a direct tailwind.",
-            "GreenLeaf's direct-to-farmer sourcing model shows sharp margin improvement.",
-            "A major retail chain signs an exclusive supply agreement with GreenLeaf.",
-            "GreenLeaf's new seed technology shows strong yield improvements in field trials.",
-            "Favourable monsoon forecasts lift sentiment across GreenLeaf's entire supply chain.",
-            "GreenLeaf announces expansion into packaged organic foods, a higher-margin category.",
-            "Strong quarterly results beat expectations on robust rural demand.",
-        ],
-        "down": [
-            "An unseasonal hailstorm damages crops across GreenLeaf's key sourcing regions.",
-            "Export restrictions on agricultural produce are imposed, hitting GreenLeaf's overseas sales.",
-            "A pest outbreak disrupts yields in one of GreenLeaf's primary growing regions.",
-            "Rising fertiliser costs squeeze margins for GreenLeaf's contracted farmer network.",
-            "GreenLeaf's cold-storage expansion is delayed due to funding constraints.",
-            "A weak monsoon forecast dents sentiment across GreenLeaf's entire supply chain.",
-            "A quality dispute with a major export client stalls a large shipment.",
-            "GreenLeaf writes down inventory after unexpected spoilage at a storage facility.",
-            "Volatile commodity prices squeeze GreenLeaf's processing margins this quarter.",
-            "A key retail partner delays payments, straining GreenLeaf's working capital.",
-        ],
-    },
-
-    # ── ARMORINC (Defence — IPO) ─────────────────────────────────────────────
-    "armorinc": {
-        "up": [
-            "ArmorInc wins a large domestic order for next-generation protective equipment.",
-            "ArmorInc successfully completes trials for a new armoured vehicle component.",
-            "A foreign government places its first export order with ArmorInc.",
-            "ArmorInc announces a joint venture to localise a critical defence component.",
-            "Policy support for domestic defence manufacturing gives ArmorInc a direct boost.",
-            "ArmorInc's order book swells after a string of competitive tender wins.",
-            "ArmorInc's IPO-funded capacity expansion comes online ahead of schedule.",
-            "A large multi-year maintenance contract is awarded to ArmorInc.",
-            "ArmorInc announces its first profitable quarter as a listed company.",
-            "Analysts highlight ArmorInc's improving margins as scale kicks in.",
-        ],
-        "down": [
-            "A key ArmorInc contract is delayed pending additional government approvals.",
-            "Component shortages from an overseas supplier disrupt ArmorInc's production schedule.",
-            "ArmorInc faces increased competition from an established defence manufacturer.",
-            "A test setback forces ArmorInc to push back a key product delivery timeline.",
-            "Rising raw-material costs squeeze margins on ArmorInc's flagship product line.",
-            "ArmorInc's export order is paused following a shift in the buyer nation's budget priorities.",
-            "A parliamentary review flags delays in a defence programme involving ArmorInc.",
-            "ArmorInc's capacity expansion runs into cost overruns post-IPO.",
-            "Currency swings dent the value of ArmorInc's dollar-denominated contracts.",
-            "ArmorInc reports a wider-than-expected quarterly loss as a newly listed company.",
-        ],
-    },
-
-    # ── BYTECORP AI (Technology — IPO) ───────────────────────────────────────
-    "bytecorp": {
-        "up": [
-            "ByteCorp AI signs its first major enterprise pilot-to-contract conversion.",
-            "ByteCorp's BharatGPT model tops an independent regional-language benchmark.",
-            "A global tech major announces a partnership to integrate ByteCorp's AI models.",
-            "ByteCorp AI raises a fresh funding round at a sharply higher valuation.",
-            "ByteCorp signs a government pilot to deploy its AI models in public services.",
-            "ByteCorp's founder-led TED talk goes viral, driving a wave of investor interest.",
-            "ByteCorp announces its first paying enterprise customer at meaningful scale.",
-            "A positive third-party audit validates ByteCorp's AI model performance claims.",
-            "ByteCorp AI is named in a global list of most-watched AI startups.",
-            "ByteCorp signs a data-partnership deal that meaningfully improves its model training.",
-        ],
-        "down": [
-            "ByteCorp AI's enterprise pilots fail to convert into paying contracts this quarter.",
-            "A rival's foundation model outperforms ByteCorp's BharatGPT on key benchmarks.",
-            "ByteCorp burns through cash faster than expected, raising runway concerns.",
-            "ByteCorp AI's much-hyped demo draws criticism after independent testing reveals gaps.",
-            "A senior ByteCorp researcher departs for a rival AI lab.",
-            "ByteCorp's valuation is questioned publicly by a well-known market commentator.",
-            "ByteCorp delays a planned product launch citing technical setbacks.",
-            "A funding round for ByteCorp reportedly closes at a lower valuation than expected.",
-            "ByteCorp's largest enterprise pilot is put on hold pending budget review.",
-            "Regulatory uncertainty around AI governance weighs on sentiment toward ByteCorp.",
-        ],
-    },
+# ─────────────────────────────────────────────────────────────────────────
+#  PLOT GROUPS — mutually exclusive outcomes of the SAME storyline.
+#  Once ANY headline in a group has run (auto-headline, host-injected preset, or the
+#  round-start news pool), every other headline in that group is retired for the rest
+#  of the game. That's what stops one game from containing both "Court rules in
+#  Skyline's favour" and, later, "Court rules against Skyline".
+#  Each entry is a substring that identifies a headline.
+# ─────────────────────────────────────────────────────────────────────────
+PLOT_GROUPS = {
+    "skyline_court":       ["Court rules in Skyline's favour", "Court rules against Skyline"],
+    "genesis_arbitration": ["Arbitration panel rules in Genesis's favour", "Arbitration over an African government supply contract turns against Genesis"],
+    "genesis_fda":         ["USFDA clears Genesis's third", "USFDA issues a fresh observation at a Genesis",
+                            "Genesis receives a warning letter over manufacturing", "Genesis Life Sciences receives an FDA warning letter"],
+    "genesis_biosimilar":  ["Genesis signs an in-licensing deal", "in-licensing talks collapse"],
+    "pulse_agr":           ["Supreme Court gives relief on Pulse", "Supreme Court review goes against telecom operators"],
+    "pulse_tower":         ["Pulse sells a further stake in its tower", "Rumoured tower-stake sale falls through"],
+    "pulse_spectrum":      ["spectrum auction on terms friendly", "spectrum auction with steep reserve prices"],
+    "vortex_ppa":          ["Vortex wins a large new power-purchase-agreement tender", "Vortex loses out on a major PPA tender", "wins a 400MW solar tender"],
+    "vortex_hydrogen":     ["signs a green-hydrogen off-take agreement", "Green-hydrogen off-take talks stall"],
+    "apex_battery_jv":     ["battery-cell joint venture confirms local production remains on track", "battery-cell joint venture slips its production timeline"],
+    "apex_recall":         ["Apex announces a voluntary recall of an EV batch", "Apex Mobility recalls a batch of its flagship EV"],
+    "nexus_visa":          ["Nexus is cleared in the US visa-compliance review", "fresh whistleblower complaint on visa compliance"],
+    "nexus_ai_center":     ["AI Delivery Center in Pune gets a green light", "AI Delivery Center expansion is deferred"],
+    "pioneer_rbi_review":  ["RBI clears Pioneer's digital lending partnerships", "RBI opens a review of Pioneer's digital-lending"],
+    "pioneer_capital":     ["Pioneer announces a capital raise at a premium", "Pioneer's capital-raise plan raises dilution fears"],
+    "pioneer_nbfc":        ["Pioneer is said to be eyeing a bolt-on acquisition", "Reports that Pioneer overpaid for a small NBFC"],
+    "aura_gst":            ["Government keeps GST on Aura", "GST slab reclassification proposed for one of Aura"],
 }

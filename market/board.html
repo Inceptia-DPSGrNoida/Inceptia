@@ -40,7 +40,7 @@ body{display:flex;flex-direction:column;padding:36px 56px;}
   <div class="top">
     <div class="title">Market <span>Mayhem</span></div>
     <div class="meta">
-      <div class="meta-item"><div class="meta-label">Round</div><div class="meta-val" id="m-round">— / 6</div></div>
+      <div class="meta-item"><div class="meta-label">Round</div><div class="meta-val" id="m-round">— / 4</div></div>
       <div class="meta-item"><div class="meta-label">Phase</div><div class="meta-val" id="m-phase">—</div></div>
       <div class="meta-item"><div class="meta-label"><span class="status-dot"></span> Live</div><div class="meta-val timer" id="m-timer">--:--</div></div>
     </div>
@@ -64,9 +64,10 @@ function connect(){
 }
 
 function handleMsg(msg){
+  if(msg.type==='board_update'){ renderBoard(msg.board||[]); return; }   // live re-rank on every price tick
   if(msg.type!=='state_update') return;
   const state=msg.state, board=msg.board||[];
-  document.getElementById('m-round').textContent = `${state.round} / 6`;
+  document.getElementById('m-round').textContent = `${state.round} / 4`;
   document.getElementById('m-phase').textContent = {lobby:'Lobby',trading:'Trading',break:'Break',ended:'Final'}[state.phase]||state.phase;
   updateTimer(state);
   renderBoard(board);

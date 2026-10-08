@@ -210,7 +210,6 @@ label:first-child{margin-top:0;}
           <div class="tab-btn" onclick="switchTab('chaos',this)">Chaos Events</div>
           <div class="tab-btn" onclick="switchTab('intel',this)">Secret Intel</div>
           <div class="tab-btn" onclick="switchTab('loans',this)">Players &amp; Loans</div>
-          <div class="tab-btn" onclick="switchTab('bm',this)">BM Log</div>
         </div>
 
         <!-- Leaderboard -->
@@ -227,7 +226,6 @@ label:first-child{margin-top:0;}
               <select id="news-type">
                 <option value="event">Market Event (Verified)</option>
                 <option value="rumour">Unverified Rumour</option>
-                <option value="insider">Insider Hint</option>
               </select>
             </div>
             <div>
@@ -260,7 +258,7 @@ label:first-child{margin-top:0;}
           <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
             <div class="sec-hdr" style="font-size:13px">Fake Analyst Report</div>
             <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Drops to ALL players. You mark it real/fake — only you know.</p>
-            <textarea id="fake-report-text" rows="2" placeholder="e.g. Analyst upgrades ByteCorp — hidden AI revenue potential..."></textarea>
+            <textarea id="fake-report-text" rows="2" placeholder="e.g. Analyst upgrades Nexus — hidden AI revenue potential..."></textarea>
             <div style="display:flex;gap:8px;margin-top:10px">
               <button class="btn btn-gold" style="flex:1" onclick="injectFakeReport(false)">Drop as REAL</button>
               <button class="btn btn-ghost" style="flex:1" onclick="injectFakeReport(true)">Drop as FAKE</button>
@@ -298,6 +296,11 @@ label:first-child{margin-top:0;}
               <div class="cb-name">Acquisition Rumour</div>
               <div class="cb-desc">Correlate two stocks' prices for this round.</div>
             </div>
+            <div class="chaos-btn" onclick="openCompanyMergerModal()">
+              <div class="cb-icon">🏢</div>
+              <div class="cb-name">Company Merger</div>
+              <div class="cb-desc">Permanently combine two companies into a new one.</div>
+            </div>
             <div class="chaos-btn" onclick="triggerChaosSimple('credit_crunch')">
               <div class="cb-icon">💸</div>
               <div class="cb-name">Credit Crunch</div>
@@ -306,7 +309,7 @@ label:first-child{margin-top:0;}
             <div class="chaos-btn" onclick="openChaosModal('ipo')">
               <div class="cb-icon">🚀</div>
               <div class="cb-name">IPO Drop</div>
-              <div class="cb-desc">List one of the 4 IPO companies mid-game.</div>
+              <div class="cb-desc">Manually list Vortex or Skyline. (Both are AUTOMATIC: Vortex at Round 2 start, Skyline at Round 3 start — only use this to override.)</div>
             </div>
             <div class="chaos-btn" onclick="openChaosModal('freeze_player')">
               <div class="cb-icon">🔒</div>
@@ -323,7 +326,7 @@ label:first-child{margin-top:0;}
           <label>Target Player</label>
           <select id="intel-code"></select>
           <label>Intel Text</label>
-          <textarea id="intel-text" rows="3" placeholder="e.g. SkyLink about to announce a surprise buyback. Don't tell anyone."></textarea>
+          <textarea id="intel-text" rows="3" placeholder="e.g. Skyline about to announce a surprise buyback. Don't tell anyone."></textarea>
           <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="sendIntel()">Send Secret Intel</button>
         </div>
 
@@ -354,14 +357,6 @@ label:first-child{margin-top:0;}
             </div>
             <button class="btn btn-gold btn-full" style="margin-top:10px" onclick="adjustCash()">Apply Adjustment</button>
           </div>
-        </div>
-
-        <!-- Black Market log -->
-        <div class="tab-panel" id="tab-bm" style="padding:16px">
-          <div class="sec-hdr">Black Market Activity Log</div>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">All BM purchases — visible only to host. Players don't know you can see this.</p>
-          <button class="btn btn-ghost btn-sm" style="margin-bottom:12px" onclick="loadBMLog()">↻ Refresh</button>
-          <div id="bm-log-list"><div style="color:var(--muted);font-size:13px">No activity yet.</div></div>
         </div>
 
       </div><!-- end tabs card -->
@@ -424,15 +419,26 @@ label:first-child{margin-top:0;}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-company-merger">
+  <div class="modal-box">
+    <div class="modal-title">🏢 Company Merger</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Permanent — the two companies disappear and a new one takes their place. Holdings, stop-losses and insurance on either one get converted or refunded automatically.</p>
+    <label>Merger</label>
+    <select id="company-merger-pair"></select>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="triggerCompanyMerger()">Trigger</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-company-merger')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-ipo">
   <div class="modal-box">
     <div class="modal-title">🚀 IPO Drop</div>
     <label>Which company to list?</label>
     <select id="ipo-id">
-      <option value="novapay">NovaPay (Fintech) — ₹200</option>
-      <option value="greenleaf">GreenLeaf Agri (Agriculture) — ₹150</option>
-      <option value="armorinc">ArmorInc (Defence) — ₹380</option>
-      <option value="bytecorp">ByteCorp AI (Technology) — ₹650</option>
+      <option value="vortex">Vortex Clean Energy (Renewable Energy) — ₹310</option>
+      <option value="skyline">Skyline Infraprojects (Infrastructure) — ₹610</option>
     </select>
     <div class="modal-actions">
       <button class="btn btn-green" onclick="triggerIPO()">List Company</button>
@@ -480,7 +486,7 @@ label:first-child{margin-top:0;}
 
 <script>
 let pw='', state=null, board=[], ws=null, nameToCode={};
-const MAX_ROUNDS = 6; // must match MAX_ROUNDS in main.py
+const MAX_ROUNDS = 4; // must match MAX_ROUNDS in main.py
 
 // Auto-load saved password on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -497,9 +503,9 @@ async function authSubmit() {
   btn.disabled = true; btn.textContent = 'Verifying…';
   try {
     // Use a read-only endpoint to verify password — never mutates game state
-    const r = await fetch(`/api/bm/log?pw=${encodeURIComponent(val)}`);
-    if (r.status === 403) {
-      document.getElementById('auth-err').textContent = 'Wrong password.';
+    const r = await fetch(`/api/host/organiser_notes?pw=${encodeURIComponent(val)}`);
+    if (!r.ok) {
+      document.getElementById('auth-err').textContent = r.status === 403 ? 'Wrong password.' : 'Server error (' + r.status + ') - check the server log.';
       btn.disabled = false; btn.textContent = 'Unlock →';
       return;
     }
@@ -525,7 +531,7 @@ function init() {
 
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}/ws/host`);
+  ws = new WebSocket(`${proto}://${location.host}/ws/host?pw=${encodeURIComponent(pw)}`);
   ws.onopen  = () => toast('Connected', 'ok');
   ws.onmessage = e => {
     const msg = JSON.parse(e.data);
@@ -742,7 +748,7 @@ async function genCodes() {
 }
 async function loadCodes() {
   try {
-    const data = await (await fetch('/api/codes')).json();
+    const data = await (await fetch(`/api/codes?pw=${encodeURIComponent(pw)}`)).json();
     const sel = document.getElementById('intel-code');
     if (sel) sel.innerHTML = data.codes.map(c => `<option value="${c}">${c}${data.used.includes(c)?'  ✓':''}</option>`).join('');
     const grid = document.getElementById('code-grid');
@@ -888,6 +894,33 @@ async function triggerAcquisition() {
   if (stock1===stock2) return toast('Pick two different stocks.','err');
   stageAction(`Acquisition Rumour — ${stock1} × ${stock2}`, async()=>{ await apiPost('/api/chaos/acquisition_rumour',{stock1,stock2}); });
 }
+let companyMergerPairs=[];
+async function openCompanyMergerModal(){
+  try{
+    const r = await fetch(`/api/chaos/merger_pairs?pw=${encodeURIComponent(pw)}`);
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.detail||'Could not load merger pairs.');
+    companyMergerPairs = data.pairs||[];
+    const sel = document.getElementById('company-merger-pair');
+    if(!companyMergerPairs.length){
+      sel.innerHTML = '<option value="">No valid pairs currently listed</option>';
+    } else {
+      sel.innerHTML = companyMergerPairs.map((p,i)=>
+        `<option value="${i}">${p.name1} + ${p.name2} → ${p.result_name}</option>`
+      ).join('');
+    }
+    document.getElementById('modal-company-merger').classList.add('open');
+  } catch(e){ toast(e.message,'err'); }
+}
+async function triggerCompanyMerger(){
+  const idx = document.getElementById('company-merger-pair').value;
+  const pair = companyMergerPairs[idx];
+  closeModal('modal-company-merger');
+  if(!pair) return toast('Pick a valid merger.','err');
+  stageAction(`Company Merger — ${pair.name1} + ${pair.name2} → ${pair.result_name}`, async()=>{
+    await apiPost('/api/chaos/company_merger', {stock1: pair.cid1, stock2: pair.cid2});
+  });
+}
 async function triggerIPO() {
   const ipo_id = document.getElementById('ipo-id').value;
   closeModal('modal-ipo');
@@ -903,7 +936,7 @@ async function triggerFreezePlayer() {
 // ── Players & Loans ───────────────────────────────────────────────────────────
 async function refreshPlayers() {
   try {
-    const data = await (await fetch('/api/players')).json();
+    const data = await (await fetch(`/api/players?pw=${encodeURIComponent(pw)}`)).json();
     nameToCode = data.players||{};
     if (data.board) { board=data.board; renderLeaderboard(); }
     const sel=document.getElementById('intel-code');
@@ -917,7 +950,7 @@ async function refreshPlayers() {
 }
 async function refreshLoans() {
   try {
-    const data = await (await fetch('/api/players/detail')).json();
+    const data = await (await fetch(`/api/players/detail?pw=${encodeURIComponent(pw)}`)).json();
     const list = document.getElementById('loans-list');
     const withLoans = data.players.filter(p => p.total_loan > 0);
     if (!withLoans.length) { list.innerHTML='<div style="color:var(--muted);font-size:13px">No active loans.</div>'; return; }
@@ -967,35 +1000,12 @@ async function kickPlayer(name,code) {
   } catch(e) { toast(e.message,'err'); }
 }
 
-// ── BM Log ────────────────────────────────────────────────────────────────────
-async function loadBMLog() {
-  try {
-    const data = await (await fetch(`/api/bm/log?pw=${encodeURIComponent(pw)}`)).json();
-    const list = document.getElementById('bm-log-list');
-    if (!data.log||!data.log.length) { list.innerHTML='<div style="color:var(--muted);font-size:13px">No activity yet.</div>'; return; }
-    list.innerHTML = data.log.map(e => {
-      const t=new Date(e.ts*1000).toLocaleTimeString();
-      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 13px;margin-bottom:6px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          <span style="font-weight:600;font-size:13px">${e.player}</span>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">${t}</span>
-        </div>
-        <div style="font-size:12px;color:var(--gold)">${e.item} — ${fmt(e.cost)}</div>
-        ${e.text?`<div style="font-size:11px;color:var(--muted);margin-top:3px">"${e.text}"</div>`:''}
-        ${e.stock?`<div style="font-size:11px;color:var(--muted)">Stock: ${e.stock} · Dir: ${e.direction>0?'▲ UP':'▼ DOWN'}</div>`:''}
-      </div>`;
-    }).join('');
-  } catch(e) { toast('Could not load BM log.','err'); }
-}
-
 // ── Round guide ───────────────────────────────────────────────────────────────
 const ROUND_GUIDE = [
-  {round:1,theme:"Stable Opener",colour:"var(--green)",tips:["2 news events, no chaos","Let players learn the companies","Watch buy/sell patterns to spot leaders","Good time: Insider Scandal vs #1 early leader"]},
-  {round:2,theme:"First Shock",colour:"var(--orange)",tips:["Drop 1 negative + 1 positive news","Trigger Credit Crunch or Regulatory Freeze","Good time for first IPO drop (NovaPay or GreenLeaf)","Send Secret Intel to 1–2 players to create info asymmetry"]},
-  {round:3,theme:"Mid-Game Chaos",colour:"var(--blue)",tips:["Acquisition Rumour between two popular stocks","2nd IPO drop (ArmorInc or ByteCorp)","Dividend on most-held stock creates leaderboard shift","⏰ REMINDER: the break after this round is 20 min — reserved for a bigger planned event/twist (not built yet)"]},
-  {round:4,theme:"The Turn",colour:"var(--purple)",tips:["Fresh off the extended break — good spot for a big reveal or twist","Portfolio Freeze on the current leader for drama","Keep an eye on who used the extended break to reload cash via banks","Re-check bankruptcy eligibility — debt should be piling up for some players by now"]},
-  {round:5,theme:"Escalation",colour:"var(--gold)",tips:["Stack 2-3 chaos events back to back — this is where fortunes flip","3rd/4th IPO drop if not already listed","Good time for a second Credit Crunch if borrowers are heavy","Watch for merger bids consolidating the lead"]},
-  {round:6,theme:"Final Round",colour:"var(--red)",tips:["Maximum chaos — credit crunch + aggressive news","All 4 IPOs should be listed by now","End game triggers final leaderboard reveal","Host: reveal which rumours were real vs fake"]},
+  {round:1,theme:"Clean Opener",colour:"var(--green)",tips:["Completely normal round — no chaos events","Everyone starts with ₹1.5L; let players learn the board","Watch who borrows from banks early"]},
+  {round:2,theme:"New Listing #1",colour:"var(--orange)",tips:["AUTO: Vortex Clean Energy lists at round start","No manual action needed — just narrate it","Optional: inject a verified news event on Vortex/Aura to make the sector move"]},
+  {round:3,theme:"Listing #2 + Dividends",colour:"var(--blue)",tips:["AUTO: Skyline Infraprojects lists at round start","AUTO: dividends paid on Nexus, Pioneer, Genesis, Apex, Aura","Check the round-2 break summary numbers were sensible"]},
+  {round:4,theme:"Final Round",colour:"var(--red)",tips:["AUTO: dividends paid at round start (all listed stocks)","AUTO: Nexus/Pulse acquisition rumour fires with 15 min left — their prices move in tandem","End Game applies the one-time income tax; reveal which rumours were real"]},
 ];
 function renderRoundGuide() {
   const el=document.getElementById('round-guide');
@@ -1021,7 +1031,6 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (name==='bm') loadBMLog();
   if (name==='loans') refreshLoans();
 }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }

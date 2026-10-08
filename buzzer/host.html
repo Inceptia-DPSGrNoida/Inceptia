@@ -1,30 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cipher &mdash; Host</title>
+<title>Meme-Off &mdash; Host</title>
+<script>
+  // Apply the saved theme before first paint (dark is the default)
+  (function () {
+    var t = 'dark';
+    try { var s = localStorage.getItem('memeoff-theme'); if (s === 'light' || s === 'dark') t = s; } catch (e) {}
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --red: #ff2d2d; --red-glow: #ff2d2d44;
-    --green: #00e676; --green-glow: #00e67644;
-    --gold: #ffc400; --gold-glow: #ffc40044;
-    --blue: #40c4ff; --blue-glow: #40c4ff44;
-    --bg: #080810; --surface: #0f0f1a; --surface2: #16162a; --surface3: #1e1e35;
-    --border: #ffffff11; --text: #f0ede8; --muted: #555577;
+  /* ── THEMES ── dark (default) and light (pale-blue slide look) ── */
+  :root, :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0B1B2E;       --surface: #112640;   --surface2: #17314F;  --surface3: #1E3D5F;
+    --border: #2A4D73;   --text: #E8F3FD;      --title: #BBDAF3;     --muted: #86A9C7;
+    --primary: #5B9BD0;  --primary-hi: #86BCE6; --primary-lo: #2F6FA8;
+    --accent: #8FBCE0;   --score: #A8D1F0;   --brand: #5B9BD0;
+    --good: #4BDE9C;     --on-good: #04281A;   --bad: #FF7A7A;
+    --blob1: #5B9BD02B;  --blob2: #8FBCE018;   --grid: #8FBCE00A;
+    --shadow: #00000066; --overlay: #020A14B3;
   }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #F0F9FF;       --surface: #FFFFFF;   --surface2: #E6F3FC;  --surface3: #D6EAF8;
+    --border: #BFD9EC;   --text: #2A5272;      --title: #43749A;     --muted: #587F9C;
+    --primary: #43749A;  --primary-hi: #719FBF; --primary-lo: #365F80;
+    --accent: #719FBF;   --score: #43749A;   --brand: #5E91B7;
+    --good: #1E9E6A;     --on-good: #FFFFFF;   --bad: #D8504A;
+    --blob1: #9DC2DE8C;  --blob2: #719FBF4D;   --grid: #43749A0F;
+    --shadow: #43749A40; --overlay: #2A527266;
+  }
+  :root {
+    --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+    --primary-line: color-mix(in srgb, var(--primary) 40%, transparent);
+    --primary-glow: color-mix(in srgb, var(--primary) 38%, transparent);
+    --good-soft:    color-mix(in srgb, var(--good) 14%, transparent);
+    --good-line:    color-mix(in srgb, var(--good) 45%, transparent);
+    --good-glow:    color-mix(in srgb, var(--good) 40%, transparent);
+    --bad-soft:     color-mix(in srgb, var(--bad) 14%, transparent);
+    --bad-line:     color-mix(in srgb, var(--bad) 45%, transparent);
+    --accent-soft:  color-mix(in srgb, var(--accent) 14%, transparent);
+    --accent-line:  color-mix(in srgb, var(--accent) 45%, transparent);
+    --blobs:
+      radial-gradient(ellipse 420px 320px at -80px -50px, var(--blob1), transparent 70%),
+      radial-gradient(ellipse 340px 380px at calc(100% + 60px) 6%, var(--blob2), transparent 70%),
+      radial-gradient(ellipse 400px 300px at calc(100% + 40px) 100%, var(--blob1), transparent 70%),
+      radial-gradient(ellipse 300px 260px at -40px 100%, var(--blob2), transparent 70%);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background 0.25s, color 0.25s; }
 
   body::before {
     content: '';
     position: fixed; inset: 0;
-    background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none; z-index: 0;
   }
+  body::after { content: ''; position: fixed; inset: 0; background: var(--blobs); pointer-events: none; z-index: 0; }
 
   /* Topbar */
   .topbar {
@@ -34,13 +74,24 @@
     background: var(--surface); border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
-  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 5px; color: var(--text); }
-  .logo span { color: var(--red); }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 5px; color: var(--title); }
+  .logo span { color: var(--brand); }
   .host-tag { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); padding: 3px 10px; border-radius: 99px; }
   .round-tag { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px; background: var(--surface2); border: 1px solid var(--border); padding: 3px 12px; border-radius: 99px; color: var(--muted); }
   .conn-tag { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; border-radius: 99px; margin-left: auto; }
-  .conn-tag.live { background: var(--green)22; border: 1px solid var(--green)44; color: var(--green); }
-  .conn-tag.dead { background: var(--red)22; border: 1px solid var(--red)44; color: var(--red); }
+  .conn-tag.live { background: var(--good-soft); border: 1px solid var(--good-line); color: var(--good); }
+  .conn-tag.dead { background: var(--bad-soft);  border: 1px solid var(--bad-line);  color: var(--bad); }
+
+  .theme-toggle {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--title);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s;
+  }
+  .theme-toggle:hover { transform: scale(1.08); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  :root[data-theme="dark"]  .theme-toggle .i-moon { display: none; }
+  :root[data-theme="light"] .theme-toggle .i-sun  { display: none; }
 
   /* Status bar */
   .statusbar {
@@ -56,98 +107,117 @@
   }
   .si-label { color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-size: 10px; }
   .si-val { font-weight: 600; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; }
-  .si-val.open { color: var(--green); }
-  .si-val.locked { color: var(--red); }
+  .si-val.open { color: var(--good); }
+  .si-val.locked { color: var(--bad); }
 
   /* Main layout */
-  .main { flex: 1; display: grid; grid-template-columns: 280px 1fr 280px; overflow: hidden; position: relative; z-index: 10; }
+  .main { flex: 1; display: grid; grid-template-columns: 270px 1fr 350px; overflow: hidden; position: relative; z-index: 10; }
 
   /* Panels */
   .panel { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .panel-left { border-right: 1px solid var(--border); background: var(--surface)88; }
+  .panel-left { border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 60%, transparent); }
   .panel-center { background: transparent; }
-  .panel-right { border-left: 1px solid var(--border); background: var(--surface)88; }
+  .panel-right { border-left: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 60%, transparent); }
 
   .panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 4px; color: var(--muted); margin-bottom: 4px; }
-
-  /* Card */
-  .card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .hint { font-size: 11px; color: var(--muted); line-height: 1.5; }
 
   /* Buttons */
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: 8px; border: none; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; letter-spacing: 0.5px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: 10px; border: none; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; letter-spacing: 0.5px; }
   .btn:active { transform: scale(0.97); }
-  .btn-green  { background: var(--green); color: #000; box-shadow: 0 4px 20px var(--green-glow); }
-  .btn-green:hover  { background: #4dffa0; box-shadow: 0 6px 24px var(--green-glow); }
-  .btn-red    { background: var(--red)22; border: 1px solid var(--red)66; color: var(--red); }
-  .btn-red:hover    { background: var(--red)33; }
-  .btn-gold   { background: var(--gold); color: #000; box-shadow: 0 4px 20px var(--gold-glow); }
-  .btn-gold:hover   { background: #ffd740; }
-  .btn-ghost  { background: var(--surface3); border: 1px solid var(--border); color: var(--muted); }
-  .btn-ghost:hover  { border-color: #ffffff33; color: var(--text); }
-  .btn-blue   { background: var(--blue)22; border: 1px solid var(--blue)44; color: var(--blue); }
-  .btn-blue:hover   { background: var(--blue)33; }
+  .btn-green  { background: var(--good); color: var(--on-good); box-shadow: 0 4px 20px var(--good-glow); }
+  .btn-green:hover  { filter: brightness(1.08); }
+  .btn-red    { background: var(--bad-soft); border: 1px solid var(--bad-line); color: var(--bad); }
+  .btn-red:hover    { background: color-mix(in srgb, var(--bad) 22%, transparent); }
+  .btn-gold   { background: var(--primary); color: #fff; box-shadow: 0 4px 20px var(--primary-glow); }
+  .btn-gold:hover   { background: var(--primary-lo); }
+  .btn-ghost  { background: var(--surface3); border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover  { border-color: var(--accent-line); }
+  .btn-blue   { background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--title); }
+  .btn-blue:hover   { background: color-mix(in srgb, var(--accent) 24%, transparent); }
   .btn-sm { padding: 7px 12px; font-size: 12px; }
 
   /* Buzz display (center) */
   .buzz-hero {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
     padding: 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;
     transition: border-color 0.3s;
   }
-  .buzz-hero.has-winner { border-color: var(--green)44; background: var(--green)05; }
+  .buzz-hero.has-winner { border-color: var(--good-line); background: color-mix(in srgb, var(--good) 7%, var(--surface)); }
   .buzz-eyebrow { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); }
-  .buzz-name { font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 4px; color: var(--green); text-shadow: 0 0 30px var(--green-glow); line-height: 1; }
+  .buzz-name { font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 4px; color: var(--good); text-shadow: 0 0 30px var(--good-glow); line-height: 1; }
   .buzz-empty { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 4px; color: var(--muted); }
   .buzz-order-list { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 8px; }
-  .buzz-order-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface2); border-radius: 6px; border: 1px solid var(--border); }
+  .buzz-order-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
   .boi-num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--muted); min-width: 24px; }
-  .boi-num.first { color: var(--gold); }
+  .boi-num.first { color: var(--good); }
   .boi-name { flex: 1; font-size: 14px; font-weight: 600; text-align: left; }
 
-  /* Timer display */
-  .timer-hero { font-family: 'Bebas Neue', sans-serif; font-size: 72px; color: var(--gold); text-shadow: 0 0 20px var(--gold-glow); text-align: center; letter-spacing: 4px; min-height: 80px; transition: color 0.3s; }
-  .timer-hero.urgent { color: var(--red); text-shadow: 0 0 20px var(--red-glow); animation: urgBlink 0.4s infinite; }
-  @keyframes urgBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  /* Timer controls */
-  .timer-row { display: flex; gap: 8px; align-items: center; }
-  .timer-input { background: var(--surface3); border: 1px solid var(--border); color: var(--text); font-family: 'Bebas Neue', sans-serif; font-size: 20px; padding: 8px 12px; border-radius: 8px; width: 72px; text-align: center; outline: none; }
-  .timer-input:focus { border-color: var(--gold); }
-
   /* Teams list */
-  .team-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--surface3); border: 1px solid var(--border); border-radius: 8px; transition: border-color 0.2s; }
-  .team-row.buzzed-first { border-color: var(--green)44; background: var(--green)08; }
+  .team-row { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; transition: border-color 0.2s; margin-bottom: 8px; }
+  .team-row.buzzed-first { border-color: var(--good-line); background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
   .tr-rank { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--muted); min-width: 20px; }
-  .tr-rank.gold { color: var(--gold); }
-  .tr-name { flex: 1; font-size: 13px; font-weight: 600; cursor: pointer; transition: color 0.15s; }
-  .tr-name:hover { color: var(--gold); }
-  .tr-name.selected { color: var(--gold); }
-  .tr-score { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--gold); min-width: 36px; text-align: right; }
+  .tr-rank.gold { color: var(--primary); }
+  .tr-name { flex: 1; font-size: 13px; font-weight: 600; cursor: pointer; transition: color 0.15s; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tr-name:hover { color: var(--primary); }
+  .tr-name.selected { color: var(--primary); }
+  .tr-score { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--score); min-width: 36px; text-align: right; }
   .score-btns { display: flex; gap: 4px; }
-  .sc-btn { width: 28px; height: 28px; border-radius: 5px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-  .sc-btn.plus  { background: var(--green)22; color: var(--green); border: 1px solid var(--green)44; }
-  .sc-btn.minus { background: var(--red)22;   color: var(--red);   border: 1px solid var(--red)44;   }
+  .sc-btn { width: 28px; height: 28px; border-radius: 6px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .sc-btn.plus  { background: var(--good-soft); color: var(--good); border: 1px solid var(--good-line); }
+  .sc-btn.minus { background: var(--bad-soft);  color: var(--bad);  border: 1px solid var(--bad-line);  }
   .sc-btn:hover { opacity: 0.8; }
   .rm-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 4px; }
-  .rm-btn:hover { color: var(--red); }
+  .rm-btn:hover { color: var(--bad); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+  .dot.on { background: var(--good); box-shadow: 0 0 8px var(--good-glow); }
 
   /* Selected team indicator */
   .selected-indicator { font-size: 11px; color: var(--muted); text-align: center; padding: 4px; letter-spacing: 1px; }
-  .selected-indicator span { color: var(--gold); }
+  .selected-indicator span { color: var(--primary); font-weight: 600; }
 
-  /* Divider */
   .divider { border: none; border-top: 1px solid var(--border); }
 
   /* Password screen */
-  .pw-screen { position: fixed; inset: 0; z-index: 999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
-  .pw-logo { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 8px; color: var(--text); }
-  .pw-logo span { color: var(--red); }
+  .pw-screen { position: fixed; inset: 0; z-index: 999; background: var(--blobs), var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .pw-logo { font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 8px; color: var(--title); }
+  .pw-logo span { color: var(--brand); }
   .pw-sub { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .pw-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 18px; padding: 14px 20px; border-radius: 10px; width: 280px; outline: none; text-align: center; letter-spacing: 4px; }
-  .pw-input:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-glow); }
-  .pw-btn { background: var(--red); border: none; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 4px; padding: 14px; border-radius: 10px; cursor: pointer; width: 280px; box-shadow: 0 4px 20px var(--red-glow); transition: all 0.15s; }
-  .pw-btn:hover { background: #ff5252; transform: translateY(-2px); }
-  .pw-error { color: var(--red); font-size: 12px; letter-spacing: 1px; min-height: 16px; }
+  .pw-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 18px; padding: 14px 20px; border-radius: 12px; width: 280px; max-width: 86vw; outline: none; text-align: center; letter-spacing: 4px; }
+  .pw-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+  .pw-btn { background: var(--primary); border: none; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 4px; padding: 14px; border-radius: 12px; cursor: pointer; width: 280px; max-width: 86vw; box-shadow: 0 4px 20px var(--primary-glow); transition: all 0.15s; }
+  .pw-btn:hover { background: var(--primary-lo); transform: translateY(-2px); }
+  .pw-error { color: var(--bad); font-size: 12px; letter-spacing: 1px; min-height: 16px; text-align: center; max-width: 86vw; }
+
+  /* Team codes modal */
+  .modal-back { position: fixed; inset: 0; z-index: 500; background: var(--overlay); display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
+  .modal-back.open { display: flex; }
+  .modal { width: min(760px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 24px 80px var(--shadow); overflow: hidden; }
+  .modal-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 4px; color: var(--title); flex: 1; }
+  .modal-x { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+  .modal-x:hover { color: var(--text); }
+  .modal-body { padding: 16px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .warn-box { font-size: 12px; line-height: 1.5; color: var(--text); background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: 10px; padding: 10px 12px; }
+  .add-box { display: flex; flex-direction: column; gap: 8px; }
+  .add-area { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; border-radius: 10px; padding: 10px 12px; min-height: 112px; resize: vertical; outline: none; }
+  .add-area:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+  .add-area::placeholder { color: var(--muted); opacity: 0.85; }
+  .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row-actions .btn { width: auto; }
+  .code-list { display: flex; flex-direction: column; gap: 6px; }
+  .code-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; }
+  .cr-name { flex: 1; font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cr-code { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: var(--primary); min-width: 110px; text-align: center; }
+  .cr-actions { display: flex; gap: 6px; }
+  .mini { background: var(--surface3); border: 1px solid var(--border); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+  .mini:hover { border-color: var(--accent-line); }
+  .empty-note { color: var(--muted); font-size: 12px; text-align: center; padding: 18px 0; }
+
+  /* Toast */
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); z-index: 700; max-width: min(520px, 92vw); background: var(--surface); border: 1px solid var(--accent-line); color: var(--text); padding: 10px 16px; border-radius: 12px; font-size: 13px; box-shadow: 0 10px 40px var(--shadow); opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.warn { border-color: var(--bad-line); }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
@@ -159,7 +229,7 @@
 
 <!-- PASSWORD SCREEN -->
 <div class="pw-screen" id="pw-screen">
-  <div class="pw-logo">CI<span>PH</span>ER</div>
+  <div class="pw-logo">MEME<span>-OFF</span></div>
   <div class="pw-sub">Host Access Only</div>
   <input class="pw-input" id="pw-input" type="password" placeholder="Password" />
   <button class="pw-btn" onclick="checkPassword()">ENTER</button>
@@ -167,15 +237,20 @@
 </div>
 
 <div class="topbar">
-  <div class="logo">CI<span>PH</span>ER</div>
+  <div class="logo">MEME<span>-OFF</span></div>
   <div class="host-tag">Host Panel</div>
   <div class="round-tag" id="round-tag">Round 1</div>
   <div class="conn-tag live" id="conn-tag">● Live</div>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Switch light/dark theme" title="Switch theme">
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+  </button>
 </div>
 
 <div class="statusbar">
   <div class="status-item"><div class="si-label">Buzzer</div><div class="si-val locked" id="sb-status">Locked</div></div>
   <div class="status-item"><div class="si-label">Teams</div><div class="si-val" id="sb-teams">0</div></div>
+  <div class="status-item"><div class="si-label">Online</div><div class="si-val" id="sb-online">0</div></div>
   <div class="status-item"><div class="si-label">Buzzed</div><div class="si-val" id="sb-buzzed">—</div></div>
   <div class="status-item"><div class="si-label">Round</div><div class="si-val" id="sb-round">1</div></div>
 </div>
@@ -186,6 +261,7 @@
   <div class="panel panel-left">
     <div class="panel-title">Buzzer Control</div>
     <button class="btn btn-green" onclick="send({type:'unlock'})">🔓 Unlock Buzzer</button>
+    <button class="btn btn-red"   onclick="send({type:'lock'})">🔒 Lock Buzzer</button>
     <button class="btn btn-ghost" onclick="send({type:'reset'})">&#x21BA; Reset Buzz</button>
     <button class="btn btn-gold"  onclick="nextRound()">&#x23ED; Next Round</button>
 
@@ -196,6 +272,11 @@
       <button class="btn btn-green btn-sm" style="flex:1;" onclick="scoreSelected(3)">+3</button>
       <button class="btn btn-red   btn-sm" style="flex:1;" onclick="scoreSelected(-1)">−1</button>
     </div>
+
+    <hr class="divider">
+    <div class="panel-title">Entry</div>
+    <button class="btn btn-blue" onclick="openCodes()">🔑 Team Codes</button>
+    <div class="hint">Only teams with an allotted code can get in. Everyone else stays locked out.</div>
   </div>
 
   <!-- CENTER: Buzz result -->
@@ -210,61 +291,143 @@
   <div class="panel panel-right">
     <div class="panel-title">Teams &amp; Scores</div>
     <div id="teams-list">
-      <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0;">Waiting for teams to join...</div>
+      <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0;">No teams yet. Add some under Team Codes.</div>
     </div>
   </div>
 
 </div>
 
+<!-- TEAM CODES -->
+<div class="modal-back" id="codes-modal" onclick="if(event.target===this)closeCodes()">
+  <div class="modal" role="dialog" aria-label="Team codes">
+    <div class="modal-head">
+      <div class="modal-title">Team Codes</div>
+      <button class="modal-x" onclick="closeCodes()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box">
+        Only these codes get a team into the game. Share each code with its own team only, and keep this window
+        hidden while the screen is projected. Changing or removing a code instantly locks that team's devices out.
+      </div>
+
+      <div class="add-box">
+        <div class="panel-title">Add teams</div>
+        <textarea class="add-area" id="add-area" spellcheck="false"
+          placeholder="One team per line.&#10;Team name&#10;Team name, CUSTOMCODE&#10;&#10;Leave the code out and a random one is made."></textarea>
+        <div class="row-actions">
+          <button class="btn btn-gold btn-sm" onclick="addTeams()">Add teams</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-title" style="margin-bottom:8px;">Allotted codes (<span id="codes-count">0</span>)</div>
+        <div class="row-actions" style="margin-bottom:10px;">
+          <button class="btn btn-ghost btn-sm" id="reveal-btn" onclick="toggleReveal()">👁 Show codes</button>
+          <button class="btn btn-ghost btn-sm" onclick="copyAll()">Copy all</button>
+        </div>
+        <div class="code-list" id="code-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-  // ── PASSWORD ──
-  const PASSWORD = 'RasnaKaGuavaJuice'; // Change this to set the host password
+  // ── THEME ──
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('memeoff-theme', next); } catch (e) {}
+  }
+
+  // ── LOGIN ──
+  // The password is checked by the server. It is never stored in this page.
+  let ws = null, gameState = null, selectedTeam = null, hostTeams = [];
+  let hostPassword = null;          // kept in memory only, used to log back in after a reconnect
+  let reconnectTimer = null;
+
+  function showPwError(text) {
+    const err = document.getElementById('pw-error');
+    err.textContent = text;
+    setTimeout(() => { if (err.textContent === text) err.textContent = ''; }, 4000);
+  }
 
   function checkPassword() {
-    const val = document.getElementById('pw-input').value;
-    if (val === PASSWORD) {
-      document.getElementById('pw-screen').style.display = 'none';
-      connect();
-    } else {
-      const err = document.getElementById('pw-error');
-      err.textContent = 'Wrong password. Try again.';
-      document.getElementById('pw-input').value = '';
-      setTimeout(() => err.textContent = '', 3000);
-    }
+    const input = document.getElementById('pw-input');
+    if (!input.value) return;
+    hostPassword = input.value;
+    input.value = '';
+    connect();
   }
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && document.getElementById('pw-screen').style.display !== 'none') {
-      checkPassword();
-    }
+    if (e.key === 'Enter' && document.getElementById('pw-screen').style.display !== 'none') checkPassword();
+    if (e.key === 'Escape') closeCodes();
   });
 
-  let ws, gameState = null, selectedTeam = null;
+  function setConn(live) {
+    const tag = document.getElementById('conn-tag');
+    tag.textContent = live ? '● Live' : '○ Reconnecting';
+    tag.className = live ? 'conn-tag live' : 'conn-tag dead';
+  }
 
   function connect() {
+    if (!hostPassword) return;
+    clearTimeout(reconnectTimer);
+    if (ws) { const old = ws; ws = null; try { old.close(); } catch (e) {} }
+
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(`${proto}//${location.host}/ws`);
-    ws.onopen = () => {
-      document.getElementById('conn-tag').textContent = '● Live';
-      document.getElementById('conn-tag').className = 'conn-tag live';
+    const sock = new WebSocket(`${proto}//${location.host}/ws`);
+    ws = sock;
+
+    sock.onopen = () => sock.send(JSON.stringify({ type: 'host_auth', password: hostPassword }));
+
+    sock.onmessage = e => {
+      let d;
+      try { d = JSON.parse(e.data); } catch (_) { return; }
+      if (d.type === 'host_ok') {
+        document.getElementById('pw-screen').style.display = 'none';
+        setConn(true);
+      } else if (d.type === 'host_denied') {
+        hostPassword = null;                       // stop auto-retrying a bad password
+        document.getElementById('pw-screen').style.display = 'flex';
+        showPwError(d.msg || 'Access denied.');
+        try { sock.close(); } catch (_) {}
+      } else if (d.type === 'state') {
+        gameState = d.state;
+        updateUI();
+      } else if (d.type === 'host_teams') {
+        hostTeams = d.teams || [];
+        renderCodes();
+      } else if (d.type === 'host_notice') {
+        toast(d.msg, d.level === 'warn');
+      }
     };
-    ws.onmessage = e => {
-      const d = JSON.parse(e.data);
-      if (d.type === 'state') { gameState = d.state; updateUI(); }
-    };
-    ws.onclose = () => {
-      document.getElementById('conn-tag').textContent = '○ Reconnecting';
-      document.getElementById('conn-tag').className = 'conn-tag dead';
-      setTimeout(connect, 2000);
+
+    sock.onclose = () => {
+      if (sock !== ws) return;                     // an old socket we replaced on purpose
+      setConn(false);
+      if (hostPassword) reconnectTimer = setTimeout(connect, 2000);
     };
   }
 
   function send(msg) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg)); }
 
-  function nextRound() { send({type:'next_round'}); }
+  function nextRound() {
+    if (confirm('Start the next round?\n\nThis clears the buzz order and locks the buzzer.')) {
+      send({ type: 'next_round' });
+    }
+  }
+
+  function removeTeam(name) {
+    if (confirm(`Remove team ${name}?\n\nTheir score and code will be deleted, and their devices locked out.`)) {
+      send({ type: 'remove_team', team: name });
+    }
+  }
 
   function scoreSelected(delta) {
-    if (!selectedTeam) { alert('Click a team name to select it first'); return; }
+    if (!selectedTeam || !gameState || !gameState.teams[selectedTeam]) { alert('Click a team name to select it first'); return; }
     send({type:'score', team: selectedTeam, delta});
   }
 
@@ -276,15 +439,115 @@
     });
   }
 
+  let toastTimer = null;
+  function toast(text, warn) {
+    const el = document.getElementById('toast');
+    el.textContent = text;
+    el.className = 'toast show' + (warn ? ' warn' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.className = 'toast', 4500);
+  }
+
+  // ── TEAM CODES ──
+  let codesVisible = false;
+
+  function openCodes() {
+    document.getElementById('codes-modal').classList.add('open');
+    renderCodes();
+  }
+  function closeCodes() {
+    document.getElementById('codes-modal').classList.remove('open');
+    codesVisible = false;                          // always re-hide secrets when closing
+    document.getElementById('reveal-btn').textContent = '👁 Show codes';
+    renderCodes();
+  }
+  function toggleReveal() {
+    codesVisible = !codesVisible;
+    document.getElementById('reveal-btn').textContent = codesVisible ? '🙈 Hide codes' : '👁 Show codes';
+    renderCodes();
+  }
+
+  function addTeams() {
+    const area = document.getElementById('add-area');
+    const entries = area.value.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const parts = line.split(/[,\t]/);
+      return { name: parts[0].trim(), code: (parts[1] || '').trim() };
+    });
+    if (!entries.length) { toast('Type at least one team name first.', true); return; }
+    send({ type: 'add_teams', entries });
+    area.value = '';
+  }
+
+  function renderCodes() {
+    document.getElementById('codes-count').textContent = hostTeams.length;
+    const list = document.getElementById('code-list');
+    if (!hostTeams.length) { list.innerHTML = `<div class="empty-note">No teams yet. Add some above.</div>`; return; }
+    list.innerHTML = hostTeams.map(t => `
+      <div class="code-row">
+        <span class="dot ${t.online ? 'on' : ''}" title="${t.online ? 'Online' : 'Offline'}"></span>
+        <div class="cr-name">${t.name}</div>
+        <div class="cr-code">${codesVisible ? t.code : '••••••'}</div>
+        <div class="cr-actions">
+          <button class="mini" data-act="copy" data-name="${t.name}">Copy</button>
+          <button class="mini" data-act="edit" data-name="${t.name}">Edit</button>
+          <button class="mini" data-act="regen" data-name="${t.name}">New</button>
+        </div>
+      </div>`).join('');
+  }
+
+  document.getElementById('code-list').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const name = b.dataset.name;
+    const t = hostTeams.find(x => x.name === name);
+    if (!t) return;
+    if (b.dataset.act === 'copy') {
+      copyText(t.code).then(ok => toast(ok ? `Copied the code for ${name}.` : 'Could not copy. Show codes and copy by hand.', !ok));
+    } else if (b.dataset.act === 'edit') {
+      const v = prompt(`New code for ${name}\n(4-12 letters or numbers. Leave empty for a random one.)\n\nThe team's current devices will be locked out.`, '');
+      if (v === null) return;
+      if (v.trim() === '') send({ type: 'regen_code', team: name });
+      else send({ type: 'set_code', team: name, code: v });
+    } else if (b.dataset.act === 'regen') {
+      if (confirm(`Generate a new code for ${name}?\n\nDevices using the old code will be locked out.`)) {
+        send({ type: 'regen_code', team: name });
+      }
+    }
+  });
+
+  function copyAll() {
+    if (!hostTeams.length) return;
+    const text = hostTeams.map(t => `${t.name} - ${t.code}`).join('\n');
+    copyText(text).then(ok => toast(ok ? 'Copied all team codes.' : 'Could not copy.', !ok));
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(() => true, () => false);
+    }
+    return new Promise(resolve => {                // plain-http fallback
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) {}
+      document.body.removeChild(ta);
+      resolve(ok);
+    });
+  }
+
+  // ── MAIN VIEW ──
   function updateUI() {
     if (!gameState) return;
     const locked = gameState.locked;
     const buzzCount = gameState.buzz_order.length;
+    const teamEntries = Object.entries(gameState.teams);
 
     // Status bar
     document.getElementById('sb-status').textContent = locked ? 'Locked' : 'Open';
     document.getElementById('sb-status').className = `si-val ${locked ? 'locked' : 'open'}`;
-    document.getElementById('sb-teams').textContent = Object.keys(gameState.teams).length;
+    document.getElementById('sb-teams').textContent = teamEntries.length;
+    document.getElementById('sb-online').textContent = teamEntries.filter(([, t]) => t.online).length;
     document.getElementById('sb-buzzed').textContent = buzzCount || '—';
     document.getElementById('sb-round').textContent = gameState.round;
     document.getElementById('round-tag').textContent = `Round ${gameState.round}`;
@@ -309,28 +572,33 @@
     }
 
     // Teams
-    const teams = Object.entries(gameState.teams).sort((a,b) => b[1].score - a[1].score);
+    if (selectedTeam && !gameState.teams[selectedTeam]) {
+      selectedTeam = null;
+      document.getElementById('sel-label').textContent = 'Click a team to select';
+    }
+    const teams = teamEntries.sort((a,b) => b[1].score - a[1].score);
     const tl = document.getElementById('teams-list');
     if (!teams.length) {
-      tl.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0;">Waiting for teams to join...</div>`;
+      tl.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px 0;">No teams yet. Add some under Team Codes.</div>`;
       return;
     }
     tl.innerHTML = teams.map(([name, data], i) => {
       const isFirst = gameState.buzz_order[0] === name;
       return `<div class="team-row ${isFirst?'buzzed-first':''}">
         <div class="tr-rank ${i===0?'gold':''}">${i+1}</div>
+        <span class="dot ${data.online ? 'on' : ''}" title="${data.online ? 'Online' : 'Offline'}"></span>
         <div class="tr-name ${selectedTeam===name?'selected':''}" data-name="${name}" onclick="selectTeam('${name}')">${name}</div>
         <div class="score-btns">
           <button class="sc-btn plus"  onclick="send({type:'score',team:'${name}',delta:3})">+3</button>
           <button class="sc-btn minus" onclick="send({type:'score',team:'${name}',delta:-1})">&#8722;1</button>
         </div>
         <div class="tr-score">${data.score}</div>
-        <button class="rm-btn" onclick="send({type:'remove_team',team:'${name}'})">&#x2715;</button>
+        <button class="rm-btn" onclick="removeTeam('${name}')">&#x2715;</button>
       </div>`;
     }).join('');
   }
 
-  // connect() called after password — not on load
+  // connect() is called after the password is entered, not on load
 </script>
 </body>
 </html>

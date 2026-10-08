@@ -33,13 +33,8 @@
 [data-theme="light"] .ticker-wrap{background:rgba(255,255,255,0.7);}
 [data-theme="light"] .ticker-sym{color:rgba(20,30,48,0.5);}
 [data-theme="light"] .join-field input{background:#fff;color:var(--text);}
-[data-theme="light"] .repay-input,[data-theme="light"] .merge-input,[data-theme="light"] .pred-input,[data-theme="light"] .bm-inline-form select,[data-theme="light"] .bm-inline-form textarea{background:#fff;color:var(--text);}
 [data-theme="light"] .settings-drawer{background:rgba(255,255,255,0.98);}
 [data-theme="light"] .settings-coming{color:rgba(20,30,48,0.3);}
-[data-theme="light"] .bm-drawer{background:linear-gradient(160deg,rgba(255,250,250,0.98),rgba(250,242,244,0.98));border-left-color:#e6d8da;}
-[data-theme="light"] .bm-title{color:#5a3a3e;}
-[data-theme="light"] .bm-item{background:rgba(0,0,0,0.02);border-color:#ecdfe1;}
-[data-theme="light"] .merge-popup{background:#fff;border-color:rgba(206,147,216,0.5);}
 [data-theme="light"] .chaos-overlay{background:rgba(255,255,255,0.98);}
 [data-theme="light"] .chaos-msg{color:rgba(20,30,48,0.6);}
 [data-theme="light"] .toast.info{background:#fff;color:var(--text);border-color:var(--border);}
@@ -49,10 +44,49 @@
 [data-theme="light"] .guide-modal{background:#fff;}
 [data-theme="light"] .guide-sidebar{background:rgba(20,30,48,0.03);}
 [data-theme="light"] .how-body-title{color:#0a0f1a;}
-[data-theme="light"] .obc-name{color:#0a0f1a;}
 [data-theme="light"] .cc-name,[data-theme="light"] .port-name,[data-theme="light"] .bank-name,[data-theme="light"] .news-text{color:#0a0f1a;}
-[data-theme="light"] .cc-price,[data-theme="light"] .pred-sel-price{color:#0a0f1a;}
-[data-theme="light"] .obc-val{color:#0a0f1a;}
+[data-theme="light"] .cc-price{color:#0a0f1a;}
+/* ── LIGHT THEME — readability pass ─────────────────────────────────────
+   Goal: comfortable, high-contrast. Body text is near-black, secondary text is a
+   real mid-grey (not a faint tint), accent colours are darkened so they hold up
+   on white, and every button is a SOLID DARK fill with white text. */
+[data-theme="light"]{
+  --bg:#eef1f6; --surface:#ffffff; --surface2:#e6eaf1; --border:#c5cedb;
+  --text:#0f1724; --muted:#4a5568;
+  --green:#0b7a45; --red:#c0243c; --gold:#9a5b00; --blue:#0b5f94;
+  --purple:#6b2f95; --pink:#a3275a; --orange:#a8500a; --lime:#4d6b00; --teal:#0a6f7d;
+}
+[data-theme="light"] body,[data-theme="light"] html{color:var(--text);}
+/* text that was hard-coded white / white-ish for the dark theme */
+[data-theme="light"] .ticker-sym,[data-theme="light"] .how-title,[data-theme="light"] .how-body-title,
+[data-theme="light"] .hdr-name,[data-theme="light"] .hdr-round,[data-theme="light"] .hdr-timer-val,
+[data-theme="light"] .cc-name,[data-theme="light"] .cc-price,[data-theme="light"] .port-name,
+[data-theme="light"] .bank-name,[data-theme="light"] .news-text,[data-theme="light"] .settings-title,
+[data-theme="light"] .chaos-title,[data-theme="light"] .guide-title,[data-theme="light"] .guide-content h3,
+[data-theme="light"] .lb-name,[data-theme="light"] .lb-nw{color:#0f1724;}
+[data-theme="light"] .cc-trait,[data-theme="light"] .qty-cost,[data-theme="light"] .sp-label,
+[data-theme="light"] .bank-desc,[data-theme="light"] .insurance-desc,[data-theme="light"] .bankruptcy-desc,
+[data-theme="light"] .chaos-msg,[data-theme="light"] .guide-content p,[data-theme="light"] .settings-coming,
+[data-theme="light"] .nav-tab:not(.active) .tab-label,[data-theme="light"] .settings-close{color:#334155;}
+[data-theme="light"] .chaos-msg,[data-theme="light"] .chaos-msg strong{color:#1e293b;}
+[data-theme="light"] .ticker-wrap,[data-theme="light"] .hdr-peek{background:#ffffff;}
+[data-theme="light"] .company-card,[data-theme="light"] .port-card,[data-theme="light"] .news-card,
+[data-theme="light"] .lb-row{border-color:#c5cedb;box-shadow:0 1px 2px rgba(15,23,36,0.06);}
+[data-theme="light"] .qty-field,[data-theme="light"] .repay-input,[data-theme="light"] .join-field input{
+  background:#fff;color:#0f1724;border:1px solid #94a3b8;}
+/* every button: solid dark fill, white text */
+[data-theme="light"] .btn-enter,[data-theme="light"] .exec-btn,[data-theme="light"] .repay-btn,
+[data-theme="light"] .repay-full-btn,[data-theme="light"] .guide-btn,[data-theme="light"] .insurance-buy-btn,
+[data-theme="light"] .shadow-demand-btn,[data-theme="light"] .chaos-dismiss,[data-theme="light"] .bankruptcy-btn,
+[data-theme="light"] .qty-btn,[data-theme="light"] .settings-toggle,[data-theme="light"] .chart-type-btn{
+  background:#1e293b;color:#ffffff;border:1px solid #0f172a;}
+[data-theme="light"] .exec-buy{background:#0b6b3a;border-color:#084d29;}
+[data-theme="light"] .exec-sell{background:#b01e34;border-color:#8a1728;}
+[data-theme="light"] .bankruptcy-btn{background:#8a1728;border-color:#6d1220;}
+[data-theme="light"] .settings-toggle.on,[data-theme="light"] .chart-type-btn.active{background:#0b6b3a;border-color:#084d29;color:#fff;}
+[data-theme="light"] .btn-enter:disabled,[data-theme="light"] .exec-btn:disabled{opacity:0.45;}
+[data-theme="light"] .risk-badge{border-width:1px;font-weight:700;}
+[data-theme="light"] .up{color:#0b7a45;} [data-theme="light"] .dn{color:#c0243c;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overscroll-behavior:none;}
 ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
@@ -181,7 +215,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .nav-tab.t-market.active    .tab-label{color:var(--green);}
 .nav-tab.t-portfolio.active .tab-label{color:var(--blue);}
 .nav-tab.t-loans.active     .tab-label{color:var(--purple);}
-.nav-tab.t-predict.active   .tab-label{color:var(--gold);}
 .nav-tab.t-news.active      .tab-label{color:var(--pink);}
 .nav-tab.t-board.active     .tab-label{color:var(--orange);}
 .nav-badge{position:absolute;top:6px;right:calc(50% - 20px);background:#ed4245;color:#fff;font-size:8px;font-weight:800;padding:2px 5px;border-radius:99px;min-width:18px;height:18px;text-align:center;line-height:14px;box-shadow:0 0 0 2px var(--surface),0 2px 8px rgba(237,66,69,0.7);animation:badge-pop 0.25s cubic-bezier(0.34,1.56,0.64,1);border:1.5px solid rgba(255,255,255,0.15);}
@@ -208,7 +241,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .panel-tint-portfolio{background:rgba(79,195,247,0.015);}
 .panel-tint-loans    {background:rgba(206,147,216,0.015);}
 .panel-tint-news     {background:rgba(244,143,177,0.015);}
-.panel-tint-predict  {background:rgba(245,166,35,0.015);}
 .panel-tint-board    {background:rgba(255,183,77,0.015);}
 .phase-banner{padding:13px 18px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:20px;border:1px solid;font-family:var(--mono);display:flex;align-items:center;gap:8px;}
 .banner-lobby  {background:rgba(79,195,247,0.06);border-color:rgba(79,195,247,0.2);color:var(--blue);}
@@ -240,8 +272,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .cc-price{font-family:var(--mono);font-size:30px;font-weight:500;color:#fff;line-height:1;}
 .cc-chg{font-size:14px;font-family:var(--mono);font-weight:700;}
 .up{color:var(--green);} .dn{color:var(--red);} .nc{color:var(--muted);}
-.cc-sparkline{height:72px;margin-top:6px;}
-.cc-sparkline svg{width:100%;height:72px;display:block;}
+.cc-sparkline{margin-top:6px;}
+.cc-sparkline svg{width:100%;height:auto;display:block;}
 .cc-badges{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap;padding:0 20px 18px;}
 .risk-badge{display:inline-block;font-size:9px;font-weight:700;padding:4px 9px;border-radius:6px;letter-spacing:0.5px;text-transform:uppercase;font-family:var(--mono);}
 .risk-Low        {background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2);}
@@ -407,56 +439,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .snd-hint{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:8px;line-height:1.6;}
 .snd-hint code{color:var(--green);}
 
-/* ── PREDICT REDESIGN ── */
-.pred-stock-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;}
-.pred-stock-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 10px;text-align:left;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;}
-.pred-stock-btn .psb-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;}
-.pred-stock-btn .psb-price{font-size:11px;color:var(--muted);font-family:var(--mono);}
-.pred-stock-btn .psb-risk{position:absolute;top:8px;right:8px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;font-family:var(--mono);}
-.pred-stock-btn.selected{border-color:var(--gold);background:rgba(245,166,35,0.09);}
-.pred-stock-btn.selected .psb-name{color:var(--gold);}
-.pred-stock-btn.has-bet{opacity:0.4;pointer-events:none;}
-.pred-bet-form{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:4px;}
-.pred-selected-stock{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:10px;margin-bottom:16px;}
-.pred-sel-name{font-weight:700;font-size:15px;color:var(--gold);}
-.pred-sel-price{font-family:var(--mono);font-size:14px;color:var(--text);}
-.pred-dir-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.dir-btn{padding:16px 10px;border-radius:12px;font-family:var(--mono);font-size:15px;font-weight:700;cursor:pointer;border:2px solid;transition:all 0.15s;text-align:center;letter-spacing:1px;}
-.dir-up  {background:rgba(0,230,118,0.07);border-color:rgba(0,230,118,0.25);color:rgba(0,230,118,0.5);}
-.dir-down{background:rgba(255,77,109,0.07);border-color:rgba(255,77,109,0.25);color:rgba(255,77,109,0.5);}
-.dir-btn.active-dir.dir-up  {background:rgba(0,230,118,0.15);border-color:var(--green);color:var(--green);box-shadow:0 0 20px rgba(0,230,118,0.1);}
-.dir-btn.active-dir.dir-down{background:rgba(255,77,109,0.15);border-color:var(--red);color:var(--red);box-shadow:0 0 20px rgba(255,77,109,0.1);}
-.pred-inputs-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.pred-input-wrap{display:flex;flex-direction:column;gap:5px;}
-.pred-input-lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);}
-.pred-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;}
-.pred-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,0.07);}
-.pred-payout-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
-.pred-payout-box{border-radius:10px;padding:10px 8px;text-align:center;}
-.ppb-win  {background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);}
-.ppb-half {background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);}
-.ppb-lose {background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);}
-.ppb-label{font-size:8px;color:var(--muted);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
-.ppb-val  {font-family:var(--mono);font-size:13px;font-weight:700;}
-.ppb-win .ppb-val{color:var(--green);} .ppb-half .ppb-val{color:var(--gold);} .ppb-lose .ppb-val{color:var(--red);}
-.pred-submit{width:100%;padding:15px;background:var(--gold);color:#000;border:none;border-radius:12px;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s;}
-.pred-submit:disabled{opacity:0.35;cursor:not-allowed;}
-.pred-locked-notice{font-size:13px;color:var(--muted);text-align:center;padding:40px 20px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px solid var(--border);font-family:var(--mono);}
-.open-bet-card{border-radius:16px;margin-bottom:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.07);}
-.obc-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;}
-.obc-name{font-weight:700;font-size:17px;color:#fff;}
-.obc-sector{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
-.obc-dir{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-weight:800;font-size:15px;letter-spacing:1px;}
-.obc-dir.up{color:var(--green);} .obc-dir.dn{color:var(--red);}
-.obc-stripe{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.06);}
-.obc-cell{padding:12px 14px;display:flex;flex-direction:column;gap:4px;}
-.obc-cell+.obc-cell{border-left:1px solid rgba(255,255,255,0.06);}
-.obc-lbl{font-size:9px;color:rgba(255,255,255,0.35);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;}
-.obc-val{font-family:var(--mono);font-size:14px;font-weight:700;color:#fff;}
-.obc-val.gold{color:var(--gold);} .obc-val.green{color:var(--green);} .obc-val.red{color:var(--red);}
-.obc-status{display:flex;align-items:center;gap:5px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:1px;}
-.obc-status.winning{color:var(--green);} .obc-status.losing{color:var(--red);}
-
 /* ── NEWS ── */
 .news-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;}
 .news-react-row{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
@@ -484,26 +466,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .section-hdr{font-size:9px;color:var(--muted);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--border);font-family:var(--mono);}
 .empty{text-align:center;padding:56px 20px;color:var(--muted);}
 .empty-icon{font-size:40px;margin-bottom:14px;} .empty-text{font-size:13px;}
-.merge-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:20px;}
-.merge-section h3{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;color:var(--muted);}
-.merge-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 15px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;margin-bottom:9px;}
-.merge-select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 15px;color:var(--text);font-size:14px;outline:none;margin-bottom:9px;}
-.btn-merge{width:100%;padding:12px;background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.3);color:var(--blue);border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;}
-.merge-popup{display:none;position:fixed;bottom:20px;left:14px;right:14px;max-width:440px;margin:auto;background:#111928;border:1px solid rgba(206,147,216,0.4);border-radius:18px;padding:20px;z-index:150;}
-.merge-popup.show{display:block;}
-.merge-popup-title{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:1px;color:var(--purple);margin-bottom:10px;}
-.merge-popup-body{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:16px;}
-.merge-popup-btns{display:flex;gap:10px;}
-.btn-accept{flex:1;padding:12px;background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.35);color:var(--green);border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;}
-.btn-reject{flex:1;padding:12px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);color:var(--red);border-radius:10px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;}
 .chaos-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;flex-direction:column;align-items:center;justify-content:center;padding:36px;text-align:center;}
-.merged-away-overlay{display:none;position:fixed;inset:0;background:rgba(10,5,15,0.97);z-index:210;flex-direction:column;align-items:center;justify-content:center;padding:36px;text-align:center;}
-.merged-away-overlay.show{display:flex;}
-.merged-away-icon{font-size:60px;margin-bottom:16px;}
-.merged-away-title{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:14px;}
-.merged-away-text{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.7;max-width:380px;margin-bottom:10px;}
-.merged-away-hint{font-size:12px;color:var(--muted);max-width:340px;margin-bottom:28px;font-family:var(--mono);}
-.merged-away-dismiss{padding:13px 30px;background:rgba(206,147,216,0.15);border:1px solid rgba(206,147,216,0.4);color:var(--purple);border-radius:10px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .chaos-overlay.show{display:flex;}
 .chaos-icon{font-size:72px;margin-bottom:18px;}
 .chaos-title{font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#fff;margin-bottom:14px;}
@@ -591,50 +554,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   .guide-topic-btn{display:inline-block;width:auto;white-space:nowrap;flex-shrink:0;}
 }
 
-/* ── Secret Black Market trigger (mysterious, low-key) ── */
-.bm-secret-btn{
-  width:100%;margin-top:26px;padding:15px;border-radius:12px;cursor:pointer;
-  background:linear-gradient(150deg,#161616,#2a2a2a);
-  border:1px solid #3a3a3a;color:#7a7a7a;
-  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
-  transition:all .2s;
-}
-.bm-secret-btn:hover{background:linear-gradient(150deg,#1c1c1c,#333);color:#aaa;border-color:#555;}
-
-/* ── Black Market drawer ── */
-.bm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:410;opacity:0;pointer-events:none;transition:opacity .28s;}
-.bm-overlay.open{opacity:1;pointer-events:all;}
-.bm-drawer{
-  position:fixed;top:0;right:0;bottom:0;width:min(360px,90vw);
-  background:linear-gradient(160deg,rgba(10,10,10,0.97),rgba(18,14,16,0.97));
-  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
-  border-left:1px solid #332426;z-index:411;
-  transform:translateX(100%);transition:transform .3s cubic-bezier(0.4,0,0.2,1);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-.bm-drawer.open{transform:translateX(0);}
-.bm-hdr{border-bottom:1px solid #332426;}
-.bm-title{color:#e0d0d0;}
-.bm-cash{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:18px;letter-spacing:1px;}
-.bm-cash strong{color:var(--gold);}
-.bm-item{background:rgba(255,255,255,0.03);border:1px solid #2c2226;border-radius:12px;padding:14px 16px;margin-bottom:14px;}
-.bm-item.locked{opacity:0.45;}
-.bm-item-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.bm-item-icon{font-size:16px;}
-.bm-item-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;flex:1;}
-.bm-item-cost{font-family:var(--mono);font-size:12px;color:var(--red);}
-.bm-item-desc{font-size:11.5px;color:rgba(255,255,255,0.45);line-height:1.6;font-family:var(--mono);margin-bottom:12px;}
-.bm-item-locked-tag{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
-.bm-item-btn{width:100%;padding:11px;border-radius:9px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.35);color:var(--red);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background .15s;}
-.bm-item-btn:hover:not(:disabled){background:rgba(255,77,109,0.2);}
-.bm-item-btn:disabled{opacity:0.35;cursor:not-allowed;}
-.bm-inline-form{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
-.bm-inline-form select,.bm-inline-form textarea{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:9px 10px;resize:vertical;}
-.bm-inline-form textarea{min-height:60px;}
-.bm-dir-row{display:flex;gap:8px;}
-.bm-dir-btn{flex:1;padding:9px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;}
-.bm-dir-btn.active.up{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.4);color:var(--green);}
-.bm-dir-btn.active.dn{background:rgba(255,77,109,0.12);border-color:rgba(255,77,109,0.4);color:var(--red);}
 </style>
 </head>
 <body>
@@ -665,11 +584,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   </div>
   <div class="how-section">
     <div class="how-title">How it works</div>
-    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹0 cash — borrow from a bank to get going.</div></div></div>
+    <div class="how-card"><div class="how-num">01</div><div><div class="how-body-title">Join with your code</div><div class="how-body-text">Enter the 6-digit code from your host and pick a display name. You start with ₹1,50,000 cash — borrow more from a bank if you want extra firepower.</div></div></div>
     <div class="how-card"><div class="how-num">02</div><div><div class="how-body-title">Pick your bank</div><div class="how-body-text">3 banks to borrow from — Bharat Bank, VentureCapX, ShadowCredit. Each has different rates and limits.</div></div></div>
-    <div class="how-card"><div class="how-num">03</div><div><div class="how-body-title">Read the market</div><div class="how-body-text">14 companies across 10 sectors. Tap a card to expand it, read the backstory, and trade directly.</div></div></div>
-    <div class="how-card"><div class="how-num">04</div><div><div class="how-body-title">Trade in rounds</div><div class="how-body-text">Buy and sell before each round closes. Watch the timer. Place predictions for bonus cash.</div></div></div>
-    <div class="how-card"><div class="how-num">05</div><div><div class="how-body-title">Win by net worth</div><div class="how-body-text">Cash + portfolio value − loan balance at end of the final round. Highest net worth wins.</div></div></div>
+    <div class="how-card"><div class="how-num">03</div><div><div class="how-body-title">Read the market</div><div class="how-body-text">8 companies across 8 sectors, plus 2 safe-route funds. Two companies list mid-game as fresh New Listings — keep an eye out.</div></div></div>
+    <div class="how-card"><div class="how-num">04</div><div><div class="how-body-title">Trade in 4 rounds</div><div class="how-body-text">4 rounds of 20 minutes each, with a 10-minute break between them. Buy and sell before the timer runs out.</div></div></div>
+    <div class="how-card"><div class="how-num">05</div><div><div class="how-body-title">Win by net worth</div><div class="how-body-text">Cash + portfolio value − loan balance at end of the final round, after tax. Highest net worth wins.</div></div></div>
   </div>
 </div>
 
@@ -690,8 +609,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 
     <div class="hdr-expand-wrap" id="hdr-expand-wrap">
       <div class="hdr-name-block">
-        <span class="hdr-name" id="top-name" onclick="handleNameTap()">—</span>
-        <span class="hdr-round" id="top-phase">Round 0 / 6</span>
+        <span class="hdr-name" id="top-name">—</span>
+        <span class="hdr-round" id="top-phase">Round 0 / 4</span>
       </div>
       <div class="hdr-row2" id="timer-section">
         <div class="hdr-timer-label"><span id="hdr-timer-label-text">⏱ Round closes in</span></div>
@@ -717,7 +636,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <div class="nav-tab t-portfolio"      onclick="switchTab('portfolio')" id="tab-portfolio"><span class="tab-icon">💼</span><span class="tab-label">Holdings</span></div>
     <div class="nav-tab t-loans"          onclick="switchTab('loans')"     id="tab-loans">    <span class="tab-icon">🏦</span><span class="tab-label">Bank</span></div>
     <div class="nav-tab t-news"           onclick="switchTab('news')"      id="tab-news">     <span class="tab-icon">📰</span><span class="tab-label">News</span><span class="nav-badge" id="news-badge" style="display:none">0</span></div>
-    <div class="nav-tab t-predict"        onclick="switchTab('predict')"   id="tab-predict">  <span class="tab-icon">🎯</span><span class="tab-label">Predict</span></div>
     <div class="nav-tab t-board"          onclick="switchTab('board')"     id="tab-board" style="display:none"><span class="tab-icon">🏆</span><span class="tab-label">Ranks</span></div>
   </div>
 
@@ -728,22 +646,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <div class="frozen-banner"     id="frozen-banner">⚠️ Your portfolio is frozen this round.</div>
       <div class="reg-freeze-banner" id="reg-freeze-banner">🚫 Regulatory Freeze on <span id="freeze-sector-name"></span>.</div>
       <div id="market-list"></div>
-      <div class="merge-section" id="merge-section" style="display:none">
-        <h3>⚔️ Merger Bid</h3>
-        <input class="merge-input"   id="merge-partner" placeholder="Partner's 6-digit code" maxlength="6">
-        <select class="merge-select" id="merge-stock"><option value="">Select stock</option></select>
-        <input class="merge-input"   id="merge-qty" type="number" placeholder="Total shares to buy" min="1">
-        <button class="btn-merge" onclick="initiateMerge()">Propose Merger</button>
-      </div>
-      <div class="merge-section team-merge-section" id="team-merge-section" style="display:none">
-        <h3 style="color:var(--purple)">🤝 Team Merger — Permanent</h3>
-        <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px;font-family:var(--mono)">
-          Combines your ENTIRE portfolio (cash, holdings, loans, shorts) with another player's into one account, for the rest of the game.
-          If they accept, your session becomes a spectator — trading happens from their device from then on. Not reversible.
-        </p>
-        <input class="merge-input" id="team-merge-partner" placeholder="Partner's 6-digit code" maxlength="6">
-        <button class="btn-merge" style="background:rgba(206,147,216,0.1);border-color:rgba(206,147,216,0.3);color:var(--purple)" onclick="proposeTeamMerge()">Propose Team Merger</button>
-      </div>
     </div>
 
     <div class="panel panel-tint-portfolio" id="panel-portfolio"><div id="portfolio-list"></div></div>
@@ -769,9 +671,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <div id="news-list"><div class="empty"><div class="empty-icon">📰</div><div class="empty-text">No news yet</div></div></div>
     </div>
 
-    <div class="panel panel-tint-predict" id="panel-predict">
-      <div id="predict-content"></div>
-    </div>
 
     <div class="panel panel-tint-board" id="panel-board">
       <div class="section-hdr">Live Rankings</div>
@@ -786,29 +685,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   <div class="chaos-title" id="chaos-title"></div>
   <div class="chaos-msg"   id="chaos-msg"></div>
   <button class="chaos-dismiss" onclick="dismissChaos()">Got it</button>
-</div>
-<div class="merge-popup" id="merge-popup">
-  <div class="merge-popup-title">⚔️ Merger Proposal!</div>
-  <div class="merge-popup-body" id="merge-popup-body"></div>
-  <div class="merge-popup-btns">
-    <button class="btn-accept" onclick="respondMerge(true)">Accept</button>
-    <button class="btn-reject" onclick="respondMerge(false)">Reject</button>
-  </div>
-</div>
-<div class="merge-popup" id="team-merge-popup" style="border-color:rgba(206,147,216,0.5)">
-  <div class="merge-popup-title" style="color:var(--purple)">🤝 Team Merger Proposal!</div>
-  <div class="merge-popup-body" id="team-merge-popup-body"></div>
-  <div class="merge-popup-btns">
-    <button class="btn-accept" onclick="respondTeamMerge(true)">Accept — Merge In</button>
-    <button class="btn-reject" onclick="respondTeamMerge(false)">Reject</button>
-  </div>
-</div>
-<div class="merged-away-overlay" id="merged-away-overlay">
-  <div class="merged-away-icon">🤝</div>
-  <div class="merged-away-title">Merged Into a Team</div>
-  <div class="merged-away-text" id="merged-away-text"></div>
-  <div class="merged-away-hint">You can still browse the market and news — trading now happens from your teammate's device.</div>
-  <button class="merged-away-dismiss" onclick="dismissMergedAwayOverlay()">Got it, let me browse</button>
 </div>
 <div class="toast-wrap" id="toast-wrap"></div>
 
@@ -829,9 +705,8 @@ function sendAction(payload, cooldownMs=450){
 let phase='lobby', currentRound=0;
 let market={}, playerData={cash:0,loans:{},total_loan:0,frozen:false,net_worth:0,portfolio:{},bets:{}};
 let boardData=[], prevPrices={}, priceHistory={}, newsCount=0, activeTab='market';
-let joinStep1Done=false, wasKicked=false, pendingMerge=null, pendingTeamMerge=null, expandedCard=null, bankruptFrozen=false;
-let banksConfig={}, sentiment={}, regFreeze=null, creditCrunch=false, priceFrozenStocks={};
-let isMergedAway=false, mergedIntoCode=null;
+let joinStep1Done=false, wasKicked=false, expandedCard=null, bankruptFrozen=false;
+let banksConfig={}, regFreeze=null, creditCrunch=false, priceFrozenStocks={};
 let predDirection=null, predStock=null;
 let timerInterval=null, timerEndTime=null, timerTotal=1200;
 // trade pressure: {cid: {buys: N, sells: N}} — tracks this round's player actions
@@ -863,9 +738,8 @@ function renderMarketPricesOnly(){
   updateTicker();
 }
 const TICKER_BASE=[
-  {sym:'ZORA',price:420},{sym:'STRE',price:310},{sym:'FRES',price:185},
-  {sym:'VOLT',price:560},{sym:'MEDI',price:275},{sym:'SKYL',price:890},
-  {sym:'SWIF',price:340},{sym:'CROW',price:220},{sym:'SHIE',price:490},{sym:'INDR',price:430},
+  {sym:'NEXU',price:460},{sym:'PION',price:285},{sym:'GENE',price:395},
+  {sym:'APEX',price:520},{sym:'AURA',price:165},{sym:'PULS',price:255},
 ];
 function mkTicker(sym,price,raw){
   const d=raw>=0?'up':raw<0?'dn':'nc', ar=raw>0?'▲':raw<0?'▼':'—';
@@ -965,14 +839,29 @@ function joinStep(){
   if(!joinStep1Done){
     const code=document.getElementById('code-input').value.trim().toUpperCase();
     if(code.length<4) return showJoinErr('Enter a valid code.');
-    myCode=code;
-    document.getElementById('code-input').style.borderColor='var(--green)';
-    document.getElementById('code-input').style.boxShadow='0 0 0 3px rgba(0,230,118,0.12)';
-    document.getElementById('name-field').style.display='block';
-    document.getElementById('join-btn').textContent='Enter Market →';
-    joinStep1Done=true;
-    document.getElementById('name-input').focus();
-    showJoinErr('');
+    const btn=document.getElementById('join-btn');
+    btn.disabled=true; btn.textContent='Checking...';
+    fetch(`/api/codes/check?code=${encodeURIComponent(code)}`)
+      .then(r=>r.json())
+      .then(data=>{
+        btn.disabled=false;
+        if(!data.valid){
+          btn.textContent='Verify Code →';
+          return showJoinErr('That code is not valid. Double-check with your host.');
+        }
+        myCode=code;
+        document.getElementById('code-input').style.borderColor='var(--green)';
+        document.getElementById('code-input').style.boxShadow='0 0 0 3px rgba(0,230,118,0.12)';
+        document.getElementById('name-field').style.display='block';
+        btn.textContent='Enter Market →';
+        joinStep1Done=true;
+        document.getElementById('name-input').focus();
+        showJoinErr('');
+      })
+      .catch(()=>{
+        btn.disabled=false; btn.textContent='Verify Code →';
+        showJoinErr('Could not reach the server — check your connection and try again.');
+      });
   } else {
     const name=document.getElementById('name-input').value.trim();
     if(!name) return showJoinErr('Pick a display name.');
@@ -1020,7 +909,6 @@ function handleMsg(msg){
       regFreeze=msg.reg_freeze||null; creditCrunch=msg.credit_crunch||false;
       if(msg.price_history) priceHistory=msg.price_history;
       if(msg.player) playerData=msg.player;
-      isMergedAway=!!msg.merged_into; mergedIntoCode=msg.merged_into||null;
       // Restore news history
       if(msg.news&&msg.news.length){
         msg.news.forEach(n=>addNews(n,true));
@@ -1029,7 +917,6 @@ function handleMsg(msg){
       if(!msg.joined) ws.send(JSON.stringify({action:'set_name',name:myName}));
       else {
         myName=msg.name; showApp();
-        if(isMergedAway) showMergedAwayScreen();
         // If already mid-round or mid-break, resume the right timer
         if(phase==='trading'&&msg.round_end_time) startTimer(msg.round_end_time,1200);
         else if(phase==='break'&&msg.break_end_time) startBreakTimer(msg.break_end_time,msg.break_duration||600);
@@ -1058,7 +945,7 @@ function handleMsg(msg){
         if(msg.break_end_time) startBreakTimer(msg.break_end_time,msg.break_duration||600);
         else stopTimer();
       }
-      updatePhase(); renderMarket(); renderPredictPanel(); syncMusicForPhase();
+      updatePhase(); renderMarket(); syncMusicForPhase();
       toast({trading:`🟢 Round ${currentRound} — TRADE!`,break:'⏸ Break time.',ended:'🏁 Game over!'}[phase]||phase,'info');
       break;
     case 'trade_ok':
@@ -1068,10 +955,9 @@ function handleMsg(msg){
       if(msg.player?.bets && predStock && msg.player.bets[predStock]){
         predStock=null; predDirection=null; _predSavedTarget=''; _predSavedAmount='';
       }
-      renderPredictPanel();
       toast(msg.msg,'ok'); break;
     case 'player_update':
-      playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks(); renderPredictPanel();
+      playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks();
       if(msg.msg) toast(msg.msg,'info'); break;
     case 'prices_bulk':
       if(msg.prices) applyPricesWithFlash(msg.prices);
@@ -1079,17 +965,17 @@ function handleMsg(msg){
       renderMarket(); break;
     case 'leaderboard':
       boardData=msg.board||boardData; renderBoard(); break;
-    case 'sentiment_update':
-      sentiment=msg.sentiment||{}; renderMarket(); break;
     case 'news':
       addNews(msg);
       break;
     case 'chaos': handleChaos(msg); break;
+    case 'final_summary': myFinal=msg.summary; break;
     case 'game_ended':
       phase='ended'; stopTimer(); updatePhase(); boardData=msg.board||boardData; renderBoard();
-      switchTab('board'); showChaos('🏁','Game Over!','Final leaderboard is live. Check your ranking!'); break;
+      switchTab('board'); showFinalSummary(); break;
     case 'reset': location.reload(); break;
     case 'info':  toast(msg.msg,'info'); break;
+    case 'personal_round_summary': myRoundSummary=msg.summary; break;
     case 'round_summary': showRoundSummary(msg.summary); break;
     case 'news_reaction': updateNewsReactionUI(msg.news_id, msg.counts); break;
     case 'bankrupt':
@@ -1097,18 +983,6 @@ function handleMsg(msg){
       playerData=msg.player; updateTopBar(); renderPortfolio(); renderBanks();
       showChaos('💀','BANKRUPTCY',msg.msg);
       addNews({type:'chaos',type_tag:'chaos',label:'Chaos Event',text:msg.msg}); break;
-    case 'merge_request':
-      pendingMerge=msg;
-      document.getElementById('merge-popup-body').innerHTML=`<strong>${msg.from}</strong> wants to jointly buy <strong>${msg.qty}× ${market[msg.stock]?.name||msg.stock}</strong>. You each pay <strong>${fmt(msg.each)}</strong>.`;
-      document.getElementById('merge-popup').classList.add('show'); break;
-    case 'team_merge_request':
-      pendingTeamMerge=msg;
-      document.getElementById('team-merge-popup-body').innerHTML=`<strong>${msg.from_name}</strong> wants to permanently merge your ENTIRE account (cash, holdings, loans, shorts) into theirs. If you accept, your session becomes a spectator for the rest of the game — trading happens from their device from then on. This can't be undone.`;
-      document.getElementById('team-merge-popup').classList.add('show'); break;
-    case 'team_merge_done':
-      isMergedAway=true;
-      toast(msg.msg,'info');
-      showMergedAwayScreen(); break;
     case 'kicked':
       wasKicked=true;
       document.getElementById('app').style.display='none';
@@ -1152,7 +1026,7 @@ function showApp(){
   const track=document.getElementById('panels-track');
   if(track) track.style.transform='translateX(0)';
   updateTopBar(); updatePhase(); renderMarket();
-  renderPortfolio(); renderBanks(); renderBoard(); renderPredictPanel(); populateMergeStocks();
+  renderPortfolio(); renderBanks(); renderBoard();
   if(phase==='trading') startMicroTick();
   // Music defaults to ON but only plays outside trading — this call sits right
   // after the user's "Enter Market" click, so browsers allow the play() call.
@@ -1195,11 +1069,9 @@ function updatePhase(){
   } else {
     el.style.display='none';
   }
-  const phaseTxt={lobby:'Lobby · Market Mayhem',trading:`Round ${currentRound} / 6`,break:'Break · Market Mayhem',ended:'Game Ended'}[phase]||phase;
+  const phaseTxt={lobby:'Lobby · Market Mayhem',trading:`Round ${currentRound} / 4`,break:'Break · Market Mayhem',ended:'Game Ended'}[phase]||phase;
   phEl.textContent=phaseTxt;
   const phMini=document.getElementById('top-phase-mini'); if(phMini) phMini.textContent=phaseTxt;
-  document.getElementById('merge-section').style.display=phase==='trading'?'block':'none';
-  const tms=document.getElementById('team-merge-section'); if(tms) tms.style.display=(phase==='trading'&&!isMergedAway)?'block':'none';
   const inTrading=phase==='trading';
   document.getElementById('tab-board').style.display=inTrading?'none':'';
   document.getElementById('main-nav').style.gridTemplateColumns=inTrading?'repeat(5,1fr)':'repeat(6,1fr)';
@@ -1246,15 +1118,6 @@ function toggleTheme(){
 function closeSettings(){
   document.getElementById('settings-overlay').classList.remove('open');
   document.getElementById('settings-drawer').classList.remove('open');
-  // Re-lock the Black Market button — they have to redo the tap gesture next time
-  bmUnlocked=false;
-  renderSettingsExtras();
-}
-function renderSettingsExtras(){
-  const slot=document.getElementById('bm-secret-slot');
-  slot.innerHTML = bmUnlocked
-    ? '<button class="bm-secret-btn" onclick="openBlackMarket()">● Black Market</button>'
-    : '';
 }
 
 // ── Background music (served as a real static file — see /static/music.mp3) ──
@@ -1298,182 +1161,33 @@ function setMusicVolume(v){
   else document.getElementById('bg-music').volume=Math.min(1,pct/100); // fallback, hard-capped at 100%
 }
 
-// ── Black Market — secret unlock: tap the name 3× within 1 second ────────────
-// bmUnlocked lives only in memory, so it resets the moment the tab is closed
-// or reloaded, and also re-locks whenever Settings is closed.
-let bmUnlocked=false, _nameTapTimes=[];
-function handleNameTap(){
-  const now=Date.now();
-  _nameTapTimes.push(now);
-  _nameTapTimes=_nameTapTimes.filter(t=>now-t<=1000);
-  if(_nameTapTimes.length>=3){
-    _nameTapTimes=[];
-    if(!bmUnlocked){ bmUnlocked=true; renderSettingsExtras(); }
-  }
-}
-let bmItemsCache=null;
-function openBlackMarket(){
-  document.getElementById('bm-overlay').classList.add('open');
-  document.getElementById('bm-drawer').classList.add('open');
-  loadBMItems();
-}
-function closeBlackMarket(){
-  document.getElementById('bm-overlay').classList.remove('open');
-  document.getElementById('bm-drawer').classList.remove('open');
-}
-async function loadBMItems(){
-  const body=document.getElementById('bm-body');
-  body.innerHTML='<div class="settings-coming">Loading…</div>';
-  try{
-    const r=await fetch(`/api/bm/items?code=${encodeURIComponent(myCode)}`);
-    const data=await r.json();
-    if(!r.ok) throw new Error(data.detail||'Could not load Black Market.');
-    bmItemsCache=data.items;
-    renderBMItems(data);
-  }catch(e){
-    body.innerHTML=`<div class="settings-coming">${e.message}</div>`;
-  }
-}
-function renderBMItems(data){
-  const body=document.getElementById('bm-body');
-  let html=`<div class="bm-cash">Cash on hand: <strong>${fmt(data.cash)}</strong></div>`;
-  data.items.forEach(item=>{
-    const canAfford=data.cash>=item.cost;
-    const breakOnly=item.id==='early_word';
-    const breakBlocked=breakOnly&&phase!=='break';
-    const disabled=item.locked||!canAfford||breakBlocked;
-    const btnLabel={insider_hint:'Buy',early_word:'Buy',price_freeze:'Set up',rate_freeze:'Set up',portfolio_peek:'Set up'}[item.id]||'Set up';
-    html+=`<div class="bm-item ${item.locked?'locked':''}" id="bm-card-${item.id}">
-      <div class="bm-item-top"><span class="bm-item-icon">${item.icon}</span><span class="bm-item-name">${item.name}</span><span class="bm-item-cost">${fmt(item.cost)}</span></div>
-      <div class="bm-item-desc">${item.desc}</div>
-      ${breakBlocked?'<div class="bm-item-locked-tag">Only available during a break</div>':''}
-      ${item.locked
-        ? '<div class="bm-item-locked-tag">Already used this game</div>'
-        : `<button class="bm-item-btn" ${disabled?'disabled':''} onclick="bmBuyFlow('${item.id}')">${btnLabel}</button>`}
-    </div>`;
-  });
-  body.innerHTML=html;
-}
-function bmBuyFlow(itemId){
-  const item=(bmItemsCache||[]).find(i=>i.id===itemId);
-  if(!item) return;
-  if(itemId==='insider_hint'){
-    if(!confirm(`Buy Insider Hint for ${fmt(item.cost)}?`)) return;
-    bmBuy(itemId,{}); return;
-  }
-  if(itemId==='early_word'){
-    if(!confirm(`Buy Early Word for ${fmt(item.cost)}? Reveals next round's real headlines now.`)) return;
-    bmBuy(itemId,{}); return;
-  }
-  const existing=document.getElementById('bm-form-'+itemId);
-  if(existing){ existing.remove(); return; }
-  const container=document.getElementById('bm-card-'+itemId);
-  const form=document.createElement('div');
-  form.className='bm-inline-form'; form.id='bm-form-'+itemId; form.dataset.dir='1';
-
-  if(itemId==='spread_rumour'||itemId==='leak_card'){
-    const stockOpts=Object.entries(market).map(([cid,c])=>`<option value="${cid}">${c.name}</option>`).join('');
-    form.innerHTML=`
-      <select id="bm-stock-${itemId}">${stockOpts}</select>
-      <div class="bm-dir-row">
-        <button type="button" class="bm-dir-btn up active" onclick="setBMDir('${itemId}',1,this)">▲ UP</button>
-        <button type="button" class="bm-dir-btn dn" onclick="setBMDir('${itemId}',-1,this)">▼ DOWN</button>
-      </div>
-      <textarea id="bm-text-${itemId}" maxlength="200" placeholder="Write the rumour text..."></textarea>
-      <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Deploy — ${fmt(item.cost)}</button>`;
-  } else if(itemId==='price_freeze'){
-    const stockOpts=Object.entries(market).map(([cid,c])=>`<option value="${cid}">${c.name}</option>`).join('');
-    form.innerHTML=`
-      <select id="bm-stock-${itemId}">${stockOpts}</select>
-      <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Freeze it — ${fmt(item.cost)}</button>`;
-  } else if(itemId==='rate_freeze'){
-    const myBanks=Object.entries(banksConfig).filter(([bid])=>((playerData.loans||{})[bid]||0)>0);
-    if(!myBanks.length){
-      form.innerHTML=`<div class="bm-item-desc">You don't owe any bank right now — nothing to lock.</div>`;
-    } else {
-      const bankOpts=myBanks.map(([bid,b])=>`<option value="${bid}">${b.name} (owe ${fmt((playerData.loans||{})[bid]||0)})</option>`).join('');
-      form.innerHTML=`
-        <select id="bm-bank-${itemId}">${bankOpts}</select>
-        <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Lock it in — ${fmt(item.cost)}</button>`;
-    }
-  } else if(itemId==='portfolio_peek'){
-    const rivals=(boardData||[]).filter(p=>p.name!==myName);
-    if(!rivals.length){
-      form.innerHTML=`<div class="bm-item-desc">No other players to peek at yet.</div>`;
-    } else {
-      const rivalOpts=rivals.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
-      form.innerHTML=`
-        <select id="bm-target-${itemId}">${rivalOpts}</select>
-        <button class="bm-item-btn" onclick="confirmBMBuy('${itemId}')">Peek — ${fmt(item.cost)}</button>`;
-    }
-  }
-  container.appendChild(form);
-}
-function setBMDir(itemId,dir,btn){
-  const form=document.getElementById('bm-form-'+itemId);
-  form.dataset.dir=dir;
-  form.querySelectorAll('.bm-dir-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-function confirmBMBuy(itemId){
-  const form=document.getElementById('bm-form-'+itemId);
-  if(itemId==='spread_rumour'||itemId==='leak_card'){
-    const stock=document.getElementById('bm-stock-'+itemId).value;
-    const text=document.getElementById('bm-text-'+itemId).value.trim();
-    const direction=parseInt(form.dataset.dir||'1');
-    if(!text) return toast('Write the rumour text first.','err');
-    bmBuy(itemId,{stock,direction,text});
-  } else if(itemId==='price_freeze'){
-    const stock=document.getElementById('bm-stock-'+itemId).value;
-    bmBuy(itemId,{stock});
-  } else if(itemId==='rate_freeze'){
-    const bank_id=document.getElementById('bm-bank-'+itemId).value;
-    bmBuy(itemId,{bank_id});
-  } else if(itemId==='portfolio_peek'){
-    const target_name=document.getElementById('bm-target-'+itemId).value;
-    bmBuy(itemId,{target_name});
-  }
-}
-async function bmBuy(itemId,extra){
-  try{
-    const r=await fetch('/api/bm/buy',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({code:myCode,item_id:itemId,...extra})});
-    const data=await r.json();
-    if(!r.ok) throw new Error(data.detail||'Purchase failed.');
-    playerData.cash=data.cash; updateTopBar();
-    toast('Black Market purchase complete.','ok');
-    loadBMItems();
-  }catch(e){ toast(e.message,'err'); }
-}
-
 // ── Guide modal ────────────────────────────────────────────────────────────
 const GUIDE_DATA = {
   "How This Works": { icon:'🎓', topics: {
     "The Big Picture": `<h3>🎓 The Big Picture</h3>
-      <p>Market Mayhem runs in <strong>6 rounds</strong>. Each round is a live trading window where prices move for real and you buy and sell shares. Between rounds there's a <strong>break</strong> — no trading, but it's when you repay loans and catch your breath. At the very end, whoever has the highest <strong>net worth</strong> (cash + what your shares are worth − what you owe the banks) wins.</p>
-      <p>You start with <strong>₹0 cash</strong>. On purpose — the game wants you to visit a bank on day one and make a real decision about leverage before you've even seen a stock move.</p>`,
+      <p>Market Mayhem runs in <strong>4 rounds</strong> of 20 minutes each, with a 10-minute break between rounds. Each round is a live trading window where prices move for real and you buy and sell shares. Between rounds there's a break — no trading, but it's when interest, STT, and wealth tax get settled and you can repay loans. At the very end, whoever has the highest <strong>net worth</strong> (cash + what your shares are worth − what you owe the banks, after final tax) wins.</p>
+      <p>You start with <strong>₹1,50,000 cash</strong>. You can still borrow more from a bank if you want extra firepower — that leverage decision is entirely yours.</p>`,
     "Stock Market": `<h3>📈 Stock Market</h3>
-      <p>There are 10 companies live from the start, spanning manufacturing, tech, pharma, defence, and more, plus up to 4 more that can IPO mid-game if the host triggers it. Every company has a <strong>risk rating</strong> (Low → Very High) — that's not flavour text, it directly controls how hard that stock can swing.</p>
-      <p>Prices aren't static between rounds. Every 20 seconds the "real" fair value for each stock gets recalculated based on its volatility profile, and every 4 seconds the actual price you'd trade at wobbles around that value — small, fast, and genuinely tradable, not just cosmetic. Tap a card to expand it and trade.</p>`,
+      <p>8 companies across 8 sectors, plus 2 safe-route funds. Round 1 is calm on purpose so you can learn the board. Two more companies — fresh <strong>New Listings</strong> — join the exchange mid-game: one at the start of Round 2, one at the start of Round 3. Every company has a <strong>risk rating</strong> (Low → Very High) that directly controls how hard it can swing — and pricier stocks swing harder in rupee terms too.</p>
+      <p>Prices aren't static between rounds. Every 20 seconds the "real" fair value for each stock gets recalculated based on its volatility profile, and every 4 seconds the actual price you'd trade at wobbles around that value — small, fast, and genuinely tradable, not just cosmetic. Buying pushes a stock's price up a little, selling pushes it down — bigger orders move it more.</p>`,
     "Banks": `<h3>🏦 Banks</h3>
       <p>Three lenders, three personalities. <strong>Bharat Bank</strong> is safe and cheap but capped low. <strong>VentureCapX</strong> sits in the middle. <strong>ShadowCredit</strong> lends huge amounts with no questions asked — and charges for it.</p>
       <p>Here's the part people miss: the rate you pay isn't fixed. It's <strong>tiered by how much you currently owe that bank</strong> — borrow near a bank's limit and your rate climbs with it, re-checked every round. Pay a loan down and your rate drops back down too. Repayment only happens during breaks.</p>`,
+    "Taxes & STT": `<h3>🧾 Taxes & STT</h3>
+      <p><strong>Securities Transaction Tax (STT)</strong> is 0.2% of every trade's value — it quietly accrues in the background on every buy and sell, and is actually deducted from your cash at the end of each round.</p>
+      <p><strong>Income tax</strong> works differently: it's <em>not</em> charged round by round. It's 15% of your total realized gains across the <em>whole game</em>, and it's only ever charged once — right at the very end, after the final round. <strong>Wealth tax</strong> (3% of net worth) still applies every round-end, but only to whoever's in 1st place at that moment.</p>`,
     "News": `<h3>📰 News</h3>
-      <p>Headlines show up tagged as <strong>Market Event</strong> (verified — it will move the price) or <strong>Unverified Rumour</strong> (might be true, might be noise, might be someone in the Black Market messing with you). The host can also drop chaos events — credit crunches, regulatory freezes on a whole sector, surprise dividends — that hit everyone at once.</p>`,
+      <p>Headlines show up tagged as <strong>Market Event</strong> (verified — it will move the price) or <strong>Unverified Rumour</strong>. Rumours are genuinely 50/50 — some are completely real and will play out exactly as described, others are noise. There's no way to tell which from the label alone. The host can also drop chaos events — new listings, dividends, credit crunches, regulatory freezes, acquisition rumours that link two stocks' prices together — that hit everyone at once.</p>`,
     "Bankruptcy": `<h3>💀 Bankruptcy</h3>
-      <p>If your debt gets bad enough — specifically, once it exceeds your net worth by ₹9,00,000 or more — you can voluntarily declare bankruptcy. It wipes your holdings, loans, and open bets, and restarts you with ₹25,000 cash. The catch: you're frozen out of trading until the next round starts. It's a real reset, not a shortcut.</p>`,
-    "Predictions": `<h3>🎯 Predictions</h3>
-      <p>Separate from regular trading — you pick a stock, a direction, and a target price, and stake cash on it. Nail both the direction and the target and you get a 3x payout; get the direction right but miss the target and it's 1.5x; get it wrong and the stake's gone. One open bet per stock at a time.</p>`,
-    "Black Market": `<h3>🖤 Black Market</h3>
-      <p>A hidden shop with anonymous, higher-impact moves — insider tips, rumours you plant yourself, price freezes, rival intel, and more. Everything you do there is untraceable back to you. Find it by tapping your name in the header quickly a few times.</p>`,
+      <p>If your debt gets bad enough — specifically, once it exceeds your net worth by ₹9,00,000 or more — you can voluntarily declare bankruptcy. It wipes your holdings and loans, and restarts you with ₹25,000 cash. The catch: you're frozen out of trading until the next round starts. It's a real reset, not a shortcut.</p>`,
     "Winning": `<h3>🏆 Winning</h3>
-      <p>Net worth, plain and simple: cash + current value of everything you hold − everything you owe. Checked at the end of the final round. Leverage can win you the game or bury you — that tension is the whole point.</p>`,
+      <p>Net worth, plain and simple: cash + current value of everything you hold − everything you owe, after the one-time final income tax and wealth tax are settled. Checked at the end of Round 4. Leverage can win you the game or bury you — that tension is the whole point.</p>`,
   }},
   "UI Exploration": { icon:'🧭', topics: {
     "Header & Timer": `<h3>⏱ Header & Timer</h3>
       <p>The thin strip at the very top is collapsed by default to save space — tap it (or hover, on a mouse) to reveal your name, the round number, and the countdown. The countdown bar changes colour as time runs out: green → lime → yellow → orange → a pulsing red in the final stretch. Below that, four cards always show your cash, portfolio value, loans, and net worth at a glance.</p>`,
     "Market Tab": `<h3>📈 Market Tab</h3>
-      <p>Every company as a card — tap one to expand it and reveal the backstory, your current holding, and buy/sell controls with a quantity stepper and a MAX/ALL shortcut. A thin coloured bar under the price shows recent buy vs. sell pressure from the room, separate from the sentiment bar (which reflects open predictions).</p>`,
+      <p>Every company as a card — tap one to expand it to see your current holding and buy/sell controls with a quantity stepper and a MAX/ALL shortcut. A thin coloured bar under the price shows recent buy vs. sell pressure from the room.</p>`,
     "Price Charts": `<h3>📉 Price Charts</h3>
       <p>By default you get a clean line chart with a dashed baseline (the round's opening price) and small high/low labels. In Settings you can switch to <strong>Candlesticks</strong> (proper open/high/low/close bodies and wicks, bucketed from the last few minutes of real ticks) or simple <strong>Bars</strong>. Green means that segment closed higher than it opened; red means lower.</p>`,
     "Holdings Tab": `<h3>💼 Holdings Tab</h3>
@@ -1481,11 +1195,11 @@ const GUIDE_DATA = {
     "Bank Tab": `<h3>🏦 Bank Tab</h3>
       <p>Each bank card shows its rate range, your current tier if you owe them anything, and one-tap borrow amounts that preview exactly what you'd owe next round at that tier's rate. Repayment options only appear during breaks. Voluntary bankruptcy lives at the bottom of this tab.</p>`,
     "News Tab": `<h3>📰 News Tab</h3>
-      <p>A running feed of everything that's happened — verified events, rumours, chaos, and any private intel that's landed just for you. A badge on the tab counts what you haven't read yet.</p>`,
-    "Predict Tab": `<h3>🎯 Predict Tab</h3>
-      <p>Pick a stock, choose UP or DOWN, set a target price and a stake, and watch the live payout preview update as you type. Any open bets you already have show up above the picker with a live "on track / needs a move" status.</p>`,
+      <p>A running feed of everything that's happened — verified events, rumours, and chaos. A badge on the tab counts what you haven't read yet.</p>`,
+    "Round Summary": `<h3>📊 Round Summary</h3>
+      <p>The moment a round ends, you get a personal breakdown: your current portfolio value, how much you realized in profit/loss from anything you sold this round, and the STT you were charged — right before the wealth-tax and interest updates land.</p>`,
     "Settings": `<h3>⚙️ Settings</h3>
-      <p>Music on/off and volume (it can go past 100% if you need it louder), chart type, light/dark theme, and this guide all live here. There's also something else in here if you know where to tap.</p>`,
+      <p>Music on/off and volume (it can go past 100% if you need it louder), chart type, light/dark theme, and this guide all live here.</p>`,
   }},
 };
 let guideActiveGroup="How This Works", guideActiveTopic="The Big Picture";
@@ -1519,6 +1233,13 @@ function showGuideTopic(group,topic){
   renderGuideSidebar();
 }
 let chartType='line'; // 'line' | 'candle' | 'bar' — set from Settings
+// Measure the real rendered width of the chart slot so the SVG's viewBox matches it 1:1 —
+// otherwise the line, dots and H/L labels get squashed or stretched.
+function chartW(){
+  const list=document.getElementById('market-list');
+  const cardW=(list&&list.clientWidth)||window.innerWidth||360;
+  return Math.max(120,Math.min(260,Math.round(cardW*0.46)-8));
+}
 function renderChart(cid,w,h){
   if(chartType==='candle') return candlestickChart(cid,w,h);
   if(chartType==='bar')    return barChart(cid,w,h);
@@ -1530,7 +1251,7 @@ function setChartType(t){
   const btn=document.getElementById('ct-'+t); if(btn) btn.classList.add('active');
   renderMarket();
 }
-function emptyChartSvg(w,h){ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block"></svg>`; }
+function emptyChartSvg(w,h){ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block"></svg>`; }
 // Groups a flat price-history array into OHLC buckets for candle/bar charts.
 // Bucket count adapts to how much real history exists yet — early in a round
 // (few ticks so far) this avoids degenerate 1-tick "candles" with no visible
@@ -1568,7 +1289,7 @@ function candlestickChart(cid,w,h){
     svg+=`<line x1="${cx.toFixed(1)}" y1="${yHigh.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yLow.toFixed(1)}" stroke="${color}" stroke-width="1.6" opacity="0.85"/>`;
     svg+=`<rect x="${(cx-bodyW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${bodyH.toFixed(1)}" rx="1" fill="${color}" opacity="${flat?0.55:0.95}"/>`;
   });
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">
     ${svg}
     <text x="2" y="10" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">H ₹${fmtShortSpark(rawMax)}</text>
     <text x="2" y="${h-3}" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">L ₹${fmtShortSpark(rawMin)}</text>
@@ -1592,7 +1313,7 @@ function barChart(cid,w,h){
     if(baseY-yTop<minBarPx) yTop=baseY-minBarPx;
     svg+=`<rect x="${(cx-barW/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${(baseY-yTop).toFixed(1)}" fill="${color}" opacity="0.88" rx="1.5"/>`;
   });
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">
     ${svg}
     <text x="2" y="9" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">H ₹${fmtShortSpark(rawMax)}</text>
     <text x="2" y="${h-3}" font-family="'JetBrains Mono',monospace" font-size="8" fill="rgba(255,255,255,0.38)">L ₹${fmtShortSpark(rawMin)}</text>
@@ -1600,7 +1321,7 @@ function barChart(cid,w,h){
 }
 function sparklineChart(cid,w,h){
   const hist=priceHistory[cid];
-  if(!hist||hist.length<2) return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block"></svg>`;
+  if(!hist||hist.length<2) return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block"></svg>`;
   const rawMin=Math.min(...hist), rawMax=Math.max(...hist);
   const min=rawMin*0.998, max=rawMax*1.002, range=max-min||1;
   const pad=6;
@@ -1622,7 +1343,7 @@ function sparklineChart(cid,w,h){
     const gy=(pad+f*(h-pad*2)).toFixed(1);
     return `<line x1="0" y1="${gy}" x2="${w}" y2="${gy}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
   }).join('');
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">
     <defs>
       <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
@@ -1643,7 +1364,8 @@ function sparklineChart(cid,w,h){
 }
 
 // ── Market render ─────────────────────────────────────────────────────────────
-const BASE_IDS=new Set(["zora","streamvx","freshco","voltex","mediq","skylink","swifthaul","crownmart","shieldgen","indranet"]);
+// Companies present from the start. Vortex & Skyline arrive later as New Listings, so they get the badge.
+const BASE_IDS=new Set(["nexus","pioneer","genesis","apex","aura","pulse"]);
 
 function renderMarket(){
   const list=document.getElementById('market-list');
@@ -1655,19 +1377,18 @@ function renderMarket(){
     const p=c.price||0, prev=prevPrices[cid], chg=(prev!=null)?p-prev:0;
     const pct=prev?((chg/prev)*100).toFixed(1):'0.0';
     const dir=chg>0?'up':chg<0?'dn':'nc', arrow=chg>0?'▲':chg<0?'▼':'—';
-    const isIPO=!BASE_IDS.has(cid), isFrozen=!!(regFreeze&&c.sector===regFreeze);
+    const isIPO=!BASE_IDS.has(cid)&&!c.is_fund&&!c.is_etf, isFrozen=!!(regFreeze&&c.sector===regFreeze);
     const isPriceFrozen=!!priceFrozenStocks[cid];
     const riskKey=(c.risk||'').replace(/ /g,'-');
-    const sent=sentiment[cid];
     const owned=playerData.portfolio?.[cid]?.qty||0;
-    const maxBuy=p>0?Math.floor(playerData.cash/p):0;
+    const maxBuy=p>0?maxAffordable(cid):0;
     const isExp=expandedCard===cid;
 
     html+=`<div class="company-card${isFrozen?' sector-frozen':''}" id="card-${cid}">
       <div class="cc-header" onclick="toggleCard('${cid}')">
         <div class="cc-header-row">
           <div class="cc-left">
-            <div class="cc-name">${c.name}${isIPO?'<span class="ipo-badge">IPO</span>':''}${isFrozen?'<span class="freeze-badge">🚫 FROZEN</span>':''}${isPriceFrozen?'<span class="freeze-badge" style="background:rgba(79,195,247,0.15);color:var(--blue);border-color:rgba(79,195,247,0.3)">🧊 PRICE LOCKED</span>':''}</div>
+            <div class="cc-name">${c.name}${isIPO?'<span class="ipo-badge">NEW LISTING</span>':''}${isFrozen?'<span class="freeze-badge">🚫 FROZEN</span>':''}${isPriceFrozen?'<span class="freeze-badge" style="background:rgba(79,195,247,0.15);color:var(--blue);border-color:rgba(79,195,247,0.3)">🧊 PRICE LOCKED</span>':''}</div>
             <div class="cc-meta">${c.sector||''}${c.age?' · '+c.age+' years':''}${c.cap?' · '+c.cap:c.risk?' · '+c.risk:''}</div>
             <div class="cc-trait">${c.trait||''}</div>
           </div>
@@ -1676,7 +1397,7 @@ function renderMarket(){
               <div class="cc-chg ${dir}" id="cc-chg-${cid}">${arrow} ${pct}%</div>
               <div class="cc-price" id="cc-price-${cid}">₹${p.toLocaleString('en-IN')}</div>
             </div>
-            <div class="cc-sparkline">${renderChart(cid,200,64)}</div>
+            <div class="cc-sparkline">${renderChart(cid,chartW(),64)}</div>
           </div>
         </div>
       </div>
@@ -1684,10 +1405,8 @@ function renderMarket(){
         <span class="risk-badge risk-${riskKey}">${c.risk||''}</span>
         ${owned>0?`<span style="font-size:9px;font-family:var(--mono);color:var(--gold);padding:4px 9px;border-radius:6px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.2);">${owned} held</span>`:''}
       </div>
-      ${sent?`<div class="sentiment-wrap"><div class="sentiment-bar"><div class="sentiment-up" style="width:${sent.up_pct}%"></div><div class="sentiment-down" style="width:${sent.down_pct}%"></div></div><div class="sentiment-label"><span style="color:var(--green)">▲ ${sent.up_pct}%</span><span>SENTIMENT</span><span style="color:var(--red)">▼ ${sent.down_pct}%</span></div></div>`:''}
       ${(()=>{const tp=tradePressure[cid];if(!tp||(!tp.buys&&!tp.sells))return'';const tot=tp.buys+tp.sells;const bpct=Math.round(tp.buys/tot*100),spct=100-bpct;return`<div class="sentiment-wrap"><div class="sentiment-bar"><div class="sentiment-up" style="width:${bpct}%"></div><div class="sentiment-down" style="width:${spct}%"></div></div><div class="sentiment-label"><span style="color:var(--green)">🟢 ${tp.buys} bought</span><span>PRESSURE</span><span style="color:var(--red)">${tp.sells} sold 🔴</span></div></div>`;})()}
       <div class="cc-expanded${isExp&&phase==='trading'?' open':''}" id="exp-${cid}" style="${phase!=='trading'?'display:none':''}">
-        <div class="cc-bio">${c.bio||'No description available.'}</div>
         <div class="cc-held">You hold: <strong style="color:${owned>0?'var(--gold)':'var(--muted)'}">${owned} share${owned===1?'':'s'}</strong></div>
         <div class="trade-controls">
           <div class="trade-side buy-side">
@@ -1696,7 +1415,7 @@ function renderMarket(){
               <button class="qty-btn" onclick="adjQty('b','${cid}',-1)">−</button>
               <input class="qty-field" id="bq-${cid}" type="number" value="1" min="1" oninput="updCost('b','${cid}')">
               <button class="qty-btn" onclick="adjQty('b','${cid}',1)">+</button>
-              <button class="exec-btn exec-buy" onclick="execTrade('buy','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen||isMergedAway?'disabled':''}>BUY</button>
+              <button class="exec-btn exec-buy" onclick="execTrade('buy','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen?'disabled':''}>BUY</button>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div class="qty-cost" id="bc-${cid}">Cost: ${fmt(p)}</div>
@@ -1709,7 +1428,7 @@ function renderMarket(){
               <button class="qty-btn" onclick="adjQty('s','${cid}',-1)">−</button>
               <input class="qty-field" id="sq-${cid}" type="number" value="1" min="1" oninput="updCost('s','${cid}')">
               <button class="qty-btn" onclick="adjQty('s','${cid}',1)">+</button>
-              <button class="exec-btn exec-sell" onclick="execTrade('sell','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen||owned===0||isMergedAway?'disabled':''}>SELL</button>
+              <button class="exec-btn exec-sell" onclick="execTrade('sell','${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen||owned===0?'disabled':''}>SELL</button>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div class="qty-cost" id="sc-${cid}">Value: ${fmt(p)}</div>
@@ -1717,21 +1436,6 @@ function renderMarket(){
             </div>
           </div>
         </div>
-        ${(!c.is_fund && !c.is_etf) ? (()=>{
-          const shortPos = playerData.shorts?.[cid];
-          const hasShort = shortPos && shortPos.qty>0;
-          return `<div class="trade-side short-side" style="margin-top:10px">
-            <div class="trade-side-label" style="color:var(--purple)">Short${hasShort?` — open: ${shortPos.qty} @ ₹${shortPos.entry_price.toLocaleString('en-IN')}`:''}</div>
-            <div class="trade-inline">
-              <button class="qty-btn" onclick="adjQty('sh','${cid}',-1)">−</button>
-              <input class="qty-field" id="shq-${cid}" type="number" value="1" min="1" oninput="updateShortMargin('${cid}')">
-              <button class="qty-btn" onclick="adjQty('sh','${cid}',1)">+</button>
-              <button class="exec-btn" style="background:var(--purple);color:#fff" onclick="execShort('${cid}')" ${phase!=='trading'||isFrozen||playerData.frozen?'disabled':''}>SHORT</button>
-              ${hasShort?`<button class="exec-btn" style="background:rgba(206,147,216,0.15);color:var(--purple);border:1px solid rgba(206,147,216,0.4)" onclick="execCoverShort('${cid}')" ${phase!=='trading'?'disabled':''}>COVER</button>`:''}
-            </div>
-            <div class="qty-cost" style="margin-top:4px">Margin needed: ${fmt(p*(parseInt(document.getElementById('shq-'+cid)?.value)||1)*0.4)} (40%)</div>
-          </div>`;
-        })() : ''}
         ${owned>0 ? (()=>{
           const stopTrigger = playerData.stop_losses?.[cid];
           return `<div class="trade-side stop-side" style="margin-top:10px">
@@ -1762,7 +1466,7 @@ function toggleCard(cid){
   if(expandedCard){
     // Refresh max values when card opens
     const p=market[cid]?.price||1;
-    const maxBuy=Math.floor(playerData.cash/p);
+    const maxBuy=maxAffordable(cid);
     const owned=playerData.portfolio?.[cid]?.qty||0;
     const maxEl=document.querySelector(`#exp-${cid} .max-lnk[onclick*="'b'"]`);
     const allEl=document.querySelector(`#exp-${cid} .max-lnk[onclick*="'s'"]`);
@@ -1772,31 +1476,37 @@ function toggleCard(cid){
   }
 }
 function adjQty(side,cid,delta){
-  const id=side==='b'?`bq-${cid}`:side==='sh'?`shq-${cid}`:`sq-${cid}`;
+  const id=side==='b'?`bq-${cid}`:`sq-${cid}`;
   const el=document.getElementById(id); if(!el) return;
   el.value=Math.max(1,(parseInt(el.value)||1)+delta);
-  if(side==='sh') updateShortMargin(cid);
-  else updCost(side,cid);
+  updCost(side,cid);
 }
-function updateShortMargin(cid){
+// Mirrors the server's slippage: big orders fill at the midpoint of the price move they cause.
+function fillPrice(cid,q,isBuy){
   const p=market[cid]?.price||0;
-  const q=parseInt(document.getElementById(`shq-${cid}`)?.value)||1;
-  const row=document.getElementById('card-'+cid);
-  if(row){ const el=row.querySelector('.short-side .qty-cost'); if(el) el.textContent=`Margin needed: ${fmt(p*q*0.4)} (40%)`; }
+  if(market[cid]?.is_fund||market[cid]?.is_etf) return p;
+  const imp=Math.min(0.05,0.015*(q*p/150000));
+  return Math.round(p*(1+(isBuy?1:-1)*imp/2));
+}
+function maxAffordable(cid){
+  const p=market[cid]?.price||0; if(p<=0) return 0;
+  let q=Math.floor(playerData.cash/p);
+  while(q>0 && q*fillPrice(cid,q,true)>playerData.cash) q--;
+  return q;
 }
 function updCost(side,cid){
   const p=market[cid]?.price||0;
   if(side==='b'){
     const q=parseInt(document.getElementById(`bq-${cid}`)?.value)||1;
-    const el=document.getElementById(`bc-${cid}`); if(el) el.textContent=`Cost: ${fmt(q*p)}`;
+    const el=document.getElementById(`bc-${cid}`); if(el) el.textContent=`Cost: ${fmt(q*fillPrice(cid,q,true))}`;
   } else {
     const q=parseInt(document.getElementById(`sq-${cid}`)?.value)||1;
-    const el=document.getElementById(`sc-${cid}`); if(el) el.textContent=`Value: ${fmt(q*p)}`;
+    const el=document.getElementById(`sc-${cid}`); if(el) el.textContent=`Value: ${fmt(q*fillPrice(cid,q,false))}`;
   }
 }
 function doMax(side,cid){
   if(side==='b'){
-    const p=market[cid]?.price||1, max=Math.floor(playerData.cash/p);
+    const max=maxAffordable(cid);
     const el=document.getElementById(`bq-${cid}`); if(el){el.value=Math.max(1,max);updCost('b',cid);}
   } else {
     const owned=playerData.portfolio?.[cid]?.qty||0;
@@ -1818,18 +1528,6 @@ function execTrade(action,cid){
   if(action==='buy') tradePressure[cid].buys+=qty;
   else tradePressure[cid].sells+=qty;
 }
-function execShort(cid){
-  if(!ws) return;
-  if(phase!=='trading') return toast('Trading is closed.','err');
-  if(playerData.frozen) return toast('Your portfolio is frozen this round.','err');
-  const qty=parseInt(document.getElementById(`shq-${cid}`)?.value)||0;
-  if(qty<1) return toast('Enter a valid quantity.','err');
-  sendAction({action:'short_sell',stock:cid,qty});
-}
-function execCoverShort(cid){
-  if(!ws) return;
-  sendAction({action:'cover_short',stock:cid});
-}
 function execSetStop(cid){
   if(!ws) return;
   const trigger=parseFloat(document.getElementById(`stopq-${cid}`)?.value);
@@ -1847,8 +1545,7 @@ function execCancelStop(cid){
 function renderPortfolio(){
   const list=document.getElementById('portfolio-list');
   const holdings=Object.entries(playerData.portfolio||{}).filter(([,holding])=>holding.qty>0);
-  const shorts=Object.entries(playerData.shorts||{}).filter(([,s])=>s.qty>0);
-  if(!holdings.length && !shorts.length){list.innerHTML='<div class="empty"><div class="empty-icon">💼</div><div class="empty-text">No holdings yet.</div></div>';return;}
+  if(!holdings.length){list.innerHTML='<div class="empty"><div class="empty-icon">💼</div><div class="empty-text">No holdings yet.</div></div>';return;}
   let html='';
   if(holdings.length){
     html+='<div class="section-hdr">Holdings</div>';
@@ -1877,34 +1574,6 @@ function renderPortfolio(){
           <div style="flex:1;padding-left:16px">
             <div class="ps-label">Return</div>
             <div class="ps-val ${cls}">${sign}${holding.avg>0?(((holding.price-holding.avg)/holding.avg)*100).toFixed(1):0}%</div>
-          </div>
-        </div>
-      </div>`;
-    }
-  }
-  if(shorts.length){
-    html+='<div class="section-hdr" style="margin-top:20px">Open Shorts</div>';
-    for(const [cid,s] of shorts){
-      const name=market[cid]?.name||cid, cls=s.pnl>=0?'up':'dn', sign=s.pnl>=0?'+':'';
-      html+=`<div class="port-card" style="border-color:rgba(206,147,216,0.3)">
-        <div class="port-top">
-          <div>
-            <div class="port-name">${name} <span style="font-size:10px;color:var(--purple);font-family:var(--mono);padding:2px 7px;border-radius:5px;background:rgba(206,147,216,0.12);border:1px solid rgba(206,147,216,0.3)">SHORT</span></div>
-            <div class="port-qty">${s.qty} shares · Entry ₹${s.entry_price.toLocaleString('en-IN')}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="port-name ${cls}" style="font-size:22px">${sign}${fmt(s.pnl)}</div>
-            <div class="port-qty">Unrealized P&amp;L</div>
-          </div>
-        </div>
-        <div class="port-stats">
-          <div style="flex:1;padding-right:16px;border-right:1px solid var(--border)">
-            <div class="ps-label">Current Price</div>
-            <div class="ps-val">${fmt(s.price)}</div>
-          </div>
-          <div style="flex:1;padding-left:16px">
-            <div class="ps-label">Cost to Cover</div>
-            <div class="ps-val" style="color:var(--purple)">${fmt(s.cost_to_cover)}</div>
           </div>
         </div>
       </div>`;
@@ -2069,182 +1738,8 @@ function repayLoanFull(bid){
 }
 function declareBankruptcy(){
   if(!ws) return;
-  if(!confirm('Declare bankruptcy? All holdings, loans, and bets wiped. Restart with ₹25,000.')) return;
+  if(!confirm('Declare bankruptcy? All holdings and loans wiped. Restart with ₹25,000.')) return;
   sendAction({action:'declare_bankruptcy'});
-}
-
-// ── Predictions ───────────────────────────────────────────────────────────────
-function renderPredictPanel(){
-  const el=document.getElementById('predict-content'); if(!el) return;
-  const openBets=playerData.bets||{}; let html='';
-
-  // Open bets section
-  if(Object.keys(openBets).length){
-    html+='<div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">YOUR ACTIVE BETS</div>';
-    for(const [cid,bet] of Object.entries(openBets)){
-      const cname=market[cid]?.name||cid;
-      const sector=market[cid]?.sector||'';
-      const curPrice=market[cid]?.price||0;
-      const isUp=bet.direction==='up';
-      const isWinning=isUp?(curPrice>=bet.target):(curPrice<=bet.target);
-      const dirArrow=isUp?'▲':'▼';
-      const dirLabel=isUp?'GOING UP':'GOING DOWN';
-      const bgCol=isUp?'rgba(0,230,118,0.04)':'rgba(255,77,109,0.04)';
-      const borderCol=isUp?'rgba(0,230,118,0.15)':'rgba(255,77,109,0.15)';
-      const pctToTarget=((Math.abs(curPrice-bet.target)/bet.target)*100).toFixed(1);
-      const statusLabel=isWinning?'● ON TRACK':'● NEEDS MOVE';
-      html+=`<div class="open-bet-card" style="background:${bgCol};border-color:${borderCol}">
-        <div class="obc-header">
-          <div>
-            <div class="obc-name">${cname}</div>
-            <div class="obc-sector">${sector}</div>
-          </div>
-          <div class="obc-dir ${isUp?'up':'dn'}">${dirArrow} ${dirLabel}</div>
-        </div>
-        <div class="obc-stripe">
-          <div class="obc-cell">
-            <div class="obc-lbl">Staked</div>
-            <div class="obc-val gold">${fmt(bet.amount)}</div>
-          </div>
-          <div class="obc-cell">
-            <div class="obc-lbl">Target</div>
-            <div class="obc-val gold">₹${Math.round(bet.target).toLocaleString('en-IN')}</div>
-          </div>
-          <div class="obc-cell">
-            <div class="obc-lbl">Current</div>
-            <div class="obc-val">₹${curPrice.toLocaleString('en-IN')}</div>
-          </div>
-          <div class="obc-cell">
-            <div class="obc-lbl">If Win</div>
-            <div class="obc-val ${isWinning?'green':'red'}">${fmt(bet.amount*3)}</div>
-            <div class="obc-status ${isWinning?'winning':'losing'}">${statusLabel}</div>
-          </div>
-        </div>
-      </div>`;
-    }
-  }
-
-  if(phase!=='trading'){
-    const icon=phase==='break'?'⏸':'⏳';
-    const msg=phase==='break'?'Predictions open\nduring trading rounds.':'Waiting for the\nround to start.';
-    html+=`<div class="pred-locked-notice" style="white-space:pre-line">${icon}<br><br>${msg}</div>`;
-    el.innerHTML=html; return;
-  }
-
-  // Stock picker
-  html+=`<div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;margin-top:${Object.keys(openBets).length?'18px':'0'}">PICK A STOCK TO BET ON</div>
-  <div class="pred-stock-grid">`;
-  for(const [cid,c] of Object.entries(market)){
-    if(!c.name) continue;
-    const alreadyBet=!!openBets[cid], isSel=predStock===cid;
-    const prev=prevPrices[cid], chg=prev?(((c.price-prev)/prev)*100):0;
-    const chgCls=chg>0?'up':chg<0?'dn':'nc', ar=chg>0?'▲':chg<0?'▼':'—';
-    const riskCols={'Low':'rgba(0,230,118,0.15)','Medium':'rgba(245,166,35,0.15)','High':'rgba(255,77,109,0.15)','Medium-High':'rgba(206,147,216,0.15)','Very High':'rgba(255,77,109,0.2)'};
-    const riskTxt={'Low':'var(--green)','Medium':'var(--gold)','High':'var(--red)','Medium-High':'var(--purple)','Very High':'var(--red)'};
-    const rk=c.risk||'Low';
-    html+=`<button class="pred-stock-btn ${isSel?'selected':''} ${alreadyBet?'has-bet':''}" onclick="selectPredStock('${cid}')">
-      ${alreadyBet?`<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(245,166,35,0.08);border-radius:12px"><span style="font-size:11px;font-weight:700;color:var(--gold);font-family:var(--mono)">✓ BET PLACED</span></div>`:''}
-      <span class="psb-risk" style="background:${riskCols[rk]||'rgba(255,255,255,0.1)'};color:${riskTxt[rk]||'#fff'}">${rk}</span>
-      <div class="psb-name">${c.name}</div>
-      <div class="psb-price">₹${c.price.toLocaleString('en-IN')} <span class="${chgCls}">${ar}${Math.abs(chg).toFixed(1)}%</span></div>
-    </button>`;
-  }
-  html+=`</div>`;
-
-  // Bet form — always rendered if stock selected, direction buttons update in-place
-  if(predStock&&market[predStock]){
-    const c=market[predStock];
-    html+=`<div class="pred-bet-form" id="pred-bet-form">
-      <div class="pred-selected-stock">
-        <div><div class="pred-sel-name">${c.name}</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px">${c.sector||''} · ${c.risk||''}</div></div>
-        <div class="pred-sel-price">₹${c.price.toLocaleString('en-IN')}</div>
-      </div>
-      <div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Direction</div>
-      <div class="pred-dir-row">
-        <button class="dir-btn dir-up ${predDirection==='up'?'active-dir':''}" onclick="setDir('up')">▲ &nbsp;GOING UP</button>
-        <button class="dir-btn dir-down ${predDirection==='down'?'active-dir':''}" onclick="setDir('down')">▼ &nbsp;GOING DOWN</button>
-      </div>
-      <div class="pred-inputs-row">
-        <div class="pred-input-wrap">
-          <span class="pred-input-lbl">Target Price (₹)</span>
-          <input class="pred-input" id="pred-target" type="number" placeholder="${c.price}" min="1">
-        </div>
-        <div class="pred-input-wrap">
-          <span class="pred-input-lbl">Bet Amount</span>
-          <input class="pred-input" id="pred-amount" type="number" placeholder="min ₹1,000" min="1000" oninput="refreshPayouts(this.value)">
-        </div>
-      </div>
-      <div style="font-size:9px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Payout Preview</div>
-      <div class="pred-payout-preview">
-        <div class="pred-payout-box ppb-win"><div class="ppb-label">Dir + Target ✓</div><div class="ppb-val" id="ppb-win">—</div></div>
-        <div class="pred-payout-box ppb-half"><div class="ppb-label">Dir only ✓</div><div class="ppb-val" id="ppb-half">—</div></div>
-        <div class="pred-payout-box ppb-lose"><div class="ppb-label">Wrong ✗</div><div class="ppb-val" id="ppb-lose">₹0</div></div>
-      </div>
-      <button class="pred-submit" onclick="submitBet()">🔒 Lock In Bet</button>
-    </div>`;
-  }
-
-  // Preserve input values across re-renders (stock picker re-renders on market updates)
-  const _prevTarget = _predSavedTarget;
-  const _prevAmount = _predSavedAmount;
-
-  el.innerHTML=html;
-
-  // Restore saved input values
-  if(predStock){
-    const tEl=document.getElementById('pred-target');
-    const aEl=document.getElementById('pred-amount');
-    if(tEl&&_prevTarget) tEl.value=_prevTarget;
-    if(aEl&&_prevAmount){ aEl.value=_prevAmount; refreshPayouts(_prevAmount); }
-    // Re-attach listeners to save values on input
-    if(tEl) tEl.addEventListener('input',()=>{ _predSavedTarget=tEl.value; });
-    if(aEl) aEl.addEventListener('input',()=>{ _predSavedAmount=aEl.value; refreshPayouts(aEl.value); });
-  }
-}
-
-// Saved input state — persists across renderPredictPanel calls
-let _predSavedTarget='', _predSavedAmount='';
-
-function refreshPayouts(val){
-  const amt=parseInt(val)||0;
-  const w=document.getElementById('ppb-win'), h=document.getElementById('ppb-half');
-  if(w) w.textContent=amt?fmt(amt*3):'—';
-  if(h) h.textContent=amt?fmt(amt*1.5):'—';
-}
-
-function selectPredStock(cid){
-  if(predStock===cid) return; // clicking same stock does nothing
-  predStock=cid;
-  // Clear saved inputs when switching to a different stock
-  _predSavedTarget=''; _predSavedAmount='';
-  renderPredictPanel();
-}
-
-function setDir(dir){
-  if(predDirection===dir) return; // no-op if already selected
-  predDirection=dir;
-  // Only update the two direction buttons, don't re-render the whole panel
-  document.querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active-dir'));
-  const target = dir==='up' ? document.querySelector('.dir-up') : document.querySelector('.dir-down');
-  if(target) target.classList.add('active-dir');
-}
-
-function submitBet(){
-  if(!predStock)     return toast('Select a stock first.','err');
-  if(!predDirection) return toast('Choose UP or DOWN.','err');
-  const tEl=document.getElementById('pred-target');
-  const aEl=document.getElementById('pred-amount');
-  const target=parseFloat(tEl?.value);
-  const amount=parseInt(aEl?.value);
-  if(!target||target<=0) return toast('Enter a valid target price.','err');
-  if(!amount||amount<1000) return toast('Minimum bet is ₹1,000.','err');
-  if(amount > playerData.cash) return toast(`You only have ${fmt(playerData.cash)} cash.`,'err');
-  const currPrice = market[predStock]?.price||0;
-  if(predDirection==='up' && target<=currPrice) return toast(`Target must be above current price ₹${currPrice.toLocaleString('en-IN')}.`,'err');
-  if(predDirection==='down' && target>=currPrice) return toast(`Target must be below current price ₹${currPrice.toLocaleString('en-IN')}.`,'err');
-  sendAction({action:'place_bet',stock:predStock,direction:predDirection,target,amount});
-  // Only clear state after successful send — server confirms via trade_ok
-  // (actual clear happens in the trade_ok handler below)
 }
 
 // ── News ──────────────────────────────────────────────────────────────────────
@@ -2271,7 +1766,7 @@ function reactNews(newsId,emoji){
 }
 
 // ── Chaos ─────────────────────────────────────────────────────────────────────
-const chaosIcons={regulatory_freeze:'🚫',dividend:'💰',acquisition_rumour:'🤝',credit_crunch:'💸',ipo_drop:'🚀',bankrupt:'💀',price_freeze:'🧊'};
+const chaosIcons={regulatory_freeze:'🚫',dividend:'💰',acquisition_rumour:'🤝',credit_crunch:'💸',ipo_drop:'🚀',bankrupt:'💀',price_freeze:'🧊',company_merger:'🏢'};
 function handleChaos(msg){
   if(msg.event==='regulatory_freeze'&&msg.sector){regFreeze=msg.sector;updatePhase();renderMarket();}
   if(msg.event==='credit_crunch'){creditCrunch=true;renderBanks();}
@@ -2283,9 +1778,19 @@ function handleChaos(msg){
   }
   if(msg.event==='ipo_drop'&&msg.company){
     const c=msg.company;
-    market[c.id]={name:c.name,sector:c.sector,risk:c.risk,price:c.price,bio:c.bio,trait:c.trait};
+    market[c.id]={name:c.name,sector:c.sector,risk:c.risk,price:c.price,bio:c.bio,trait:c.trait,is_fund:c.is_fund,is_etf:c.is_etf};
     prevPrices[c.id]=c.price; priceHistory[c.id]=[c.price];
-    renderMarket(); populateMergeStocks(); renderPredictPanel();
+    renderMarket();
+  }
+  if(msg.event==='company_merger'&&msg.new_company){
+    for(const oldId of (msg.old_ids||[])){
+      delete market[oldId]; delete prevPrices[oldId]; delete priceHistory[oldId];
+      if(expandedCard===oldId) expandedCard=null;
+    }
+    const c=msg.new_company;
+    market[c.id]={name:c.name,sector:c.sector,risk:c.risk,price:c.price,bio:c.bio,trait:c.trait,is_fund:c.is_fund,is_etf:c.is_etf};
+    prevPrices[c.id]=c.price; priceHistory[c.id]=[c.price];
+    renderMarket(); renderPortfolio();
   }
   if(msg.board){boardData=msg.board;renderBoard();}
   if(msg.player){playerData=msg.player;updateTopBar();renderPortfolio();renderBanks();}
@@ -2300,21 +1805,52 @@ function showChaos(icon,title,text){
   document.getElementById('chaos-overlay').classList.add('show');
 }
 function dismissChaos(){document.getElementById('chaos-overlay').classList.remove('show');}
+let myFinal=null;
+// Persistent end-of-game results: stays open until the player dismisses it, and a copy is kept
+// in the News tab so it can be re-read afterwards.
+function ordinal(n){ const s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function showFinalSummary(){
+  const f=myFinal;
+  if(!f){ showChaos('🏁','Game Over!','Final leaderboard is live. Check your ranking!'); return; }
+  const row=(label,val,color)=>`<div style="display:flex;justify-content:space-between;gap:16px"><span>${label}</span><strong style="color:${color||'inherit'}">${val}</strong></div>`;
+  const rank=f.rank?`<div style="font-size:26px;font-weight:800;margin-bottom:10px">You finished ${ordinal(f.rank)} of ${f.players}</div>`:'';
+  const body=`${rank}<div style="text-align:left;font-family:var(--mono);font-size:13px;line-height:2">
+    ${row('Total realized gains (whole game)',fmt(f.total_realized_gains))}
+    ${row('Income tax (15% of those gains)','−'+fmt(f.income_tax),'var(--red)')}
+    ${f.wealth_tax?row('Wealth tax (1st place)','−'+fmt(f.wealth_tax),'var(--red)'):''}
+    ${f.stt?row('STT on final trades','−'+fmt(f.stt),'var(--red)'):''}
+    ${f.total_loan?row('Loans owed','−'+fmt(f.total_loan),'var(--red)'):''}
+    <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px">${row('Final net worth',fmt(f.net_worth))}</div>
+  </div>`;
+  document.getElementById('chaos-icon').textContent='🏁';
+  document.getElementById('chaos-title').textContent='GAME OVER';
+  document.getElementById('chaos-msg').innerHTML=body;
+  document.getElementById('chaos-overlay').classList.add('show');
+  try{ addNews({type_tag:'chaos',label:'Final Result',id:'final-'+Date.now(),reactions:{},
+    text:`Game over — you finished ${f.rank?ordinal(f.rank)+' of '+f.players:'the game'} with a final net worth of ${fmt(f.net_worth)} `+
+         `(income tax ${fmt(f.income_tax)}${f.wealth_tax?', wealth tax '+fmt(f.wealth_tax):''}${f.stt?', STT '+fmt(f.stt):''}).`},true); }catch(e){}
+}
+let myRoundSummary=null;
 function showRoundSummary(summary){
   if(!summary) return;
   const parts=[];
+  const me=myRoundSummary; myRoundSummary=null;
+  const sgn=v=>(v>=0?'+':'−')+fmt(Math.abs(v));
+  const col=v=>v>=0?'var(--green)':'var(--red)';
+  if(me){
+    parts.push(`<div style="text-align:left;font-family:var(--mono);font-size:13px;line-height:2">
+      <div style="display:flex;justify-content:space-between"><span>Stocks you hold (value)</span><strong>${fmt(me.portfolio_value)}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>Profit/loss from sales</span><strong style="color:${col(me.realized_pnl)}">${sgn(me.realized_pnl)}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>STT charged (0.2%)</span><strong style="color:var(--red)">−${fmt(me.stt)}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>Net worth change this round</span><strong style="color:${col(me.delta)}">${sgn(me.delta)}</strong></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:4px"><span>Net worth now</span><strong>${fmt(me.net_worth)}</strong></div>
+    </div>`);
+  }
   if(summary.winner && summary.winner.delta>0) parts.push(`📈 Biggest gain: <strong>${summary.winner.name}</strong> (+${fmt(summary.winner.delta)})`);
   if(summary.loser && summary.loser.delta<0) parts.push(`📉 Biggest drop: <strong>${summary.loser.name}</strong> (${fmt(summary.loser.delta)})`);
   if(summary.most_active && summary.most_active.trades>0) parts.push(`⚡ Most active: <strong>${summary.most_active.name}</strong> (${summary.most_active.trades} trades)`);
-  if(summary.taxes && summary.taxes.length){
-    const lines=summary.taxes.map(t=>{
-      const bits=[];
-      if(t.income_tax) bits.push(`income ₹${t.income_tax.toLocaleString('en-IN')}`);
-      if(t.wealth_tax) bits.push(`wealth ₹${t.wealth_tax.toLocaleString('en-IN')}`);
-      return `${t.name} — ${bits.join(' + ')}`;
-    });
-    parts.push(`🧾 Taxes charged:<br>${lines.join('<br>')}`);
-  }
+  const wt=(summary.taxes||[]).filter(t=>t.wealth_tax);
+  if(wt.length) parts.push(`🧾 Wealth tax on the leader:<br>${wt.map(t=>`${t.name} — ₹${t.wealth_tax.toLocaleString('en-IN')}`).join('<br>')}`);
   if(!parts.length) return;
   document.getElementById('chaos-icon').textContent='📊';
   document.getElementById('chaos-title').textContent=`ROUND ${summary.round} SUMMARY`;
@@ -2339,45 +1875,8 @@ function renderBoard(){
   list.innerHTML=boardData.map(p=>`<div class="lb-row"><div class="lb-rank ${cls[p.rank-1]||''}">${p.rank}</div><div class="lb-name ${p.name===myName?'me':''}">${p.name}${p.name===myName?'<span class="lb-you">YOU</span>':''}</div><div class="lb-nw">${fmt(p.net_worth)}</div></div>`).join('');
 }
 
-// ── Merger ────────────────────────────────────────────────────────────────────
-function populateMergeStocks(){
-  const sel=document.getElementById('merge-stock'); if(!sel) return;
-  sel.innerHTML='<option value="">Select stock</option>'+Object.entries(market).filter(([,c])=>c.name).map(([k,c])=>`<option value="${k}">${c.name}</option>`).join('');
-}
-function initiateMerge(){
-  const partner=document.getElementById('merge-partner').value.trim().toUpperCase();
-  const stock=document.getElementById('merge-stock').value;
-  const qty=parseInt(document.getElementById('merge-qty').value);
-  if(!partner||!stock||!qty) return toast('Fill all merger fields.','err');
-  ws.send(JSON.stringify({action:'merge_initiate',partner_code:partner,stock,qty}));
-}
-function respondMerge(accept){
-  if(!pendingMerge||!ws) return;
-  ws.send(JSON.stringify({action:'merge_respond',bid_id:pendingMerge.bid_id,accept}));
-  document.getElementById('merge-popup').classList.remove('show'); pendingMerge=null;
-}
-function proposeTeamMerge(){
-  const partner=document.getElementById('team-merge-partner').value.trim().toUpperCase();
-  if(!partner) return toast('Enter the partner\'s code.','err');
-  if(!confirm(`Propose a PERMANENT team merger with ${partner}? If they accept, your two accounts combine for the rest of the game.`)) return;
-  ws.send(JSON.stringify({action:'team_merge_propose',partner_code:partner}));
-}
-function respondTeamMerge(accept){
-  if(!pendingTeamMerge||!ws) return;
-  ws.send(JSON.stringify({action:'team_merge_respond',req_id:pendingTeamMerge.req_id,accept}));
-  document.getElementById('team-merge-popup').classList.remove('show'); pendingTeamMerge=null;
-}
-function showMergedAwayScreen(){
-  document.getElementById('merged-away-text').textContent =
-    `Your account has merged into a teammate's — you're now viewing the market read-only.`;
-  document.getElementById('merged-away-overlay').classList.add('show');
-}
-function dismissMergedAwayOverlay(){
-  document.getElementById('merged-away-overlay').classList.remove('show');
-}
-
 // ── Tab order for directional sliding ────────────────────────────────────────
-const TAB_ORDER = ['market','portfolio','loans','news','predict','board'];
+const TAB_ORDER = ['market','portfolio','loans','news','board'];
 
 // Tab accent colours for the sliding indicator
 const TAB_COLORS = {
@@ -2385,7 +1884,6 @@ const TAB_COLORS = {
   portfolio: {bg:'rgba(79,195,247,0.07)', border:'var(--blue)'},
   loans:     {bg:'rgba(206,147,216,0.07)',border:'var(--purple)'},
   news:      {bg:'rgba(244,143,177,0.07)',border:'var(--pink)'},
-  predict:   {bg:'rgba(245,166,35,0.07)', border:'var(--gold)'},
   board:     {bg:'rgba(255,183,77,0.07)', border:'var(--orange)'},
 };
 
@@ -2423,7 +1921,6 @@ function switchTab(tab){
   setTimeout(()=>{ document.getElementById('panel-'+tab)?.scrollTo(0,0); }, 50);
 
   if(tab==='news'){newsCount=0;document.getElementById('news-badge').style.display='none';}
-  if(tab==='predict')   renderPredictPanel();
   if(tab==='portfolio') renderPortfolio();
   if(tab==='loans')     renderBanks();
 }
@@ -2475,19 +1972,6 @@ function toast(msg,type='info'){
       <button class="settings-toggle" id="theme-toggle" onclick="toggleTheme()">DARK</button>
     </div>
     <button class="guide-btn" onclick="openGuide()">📖 Guide</button>
-    <div id="bm-secret-slot"></div>
-  </div>
-</div>
-
-<div class="bm-overlay" id="bm-overlay" onclick="closeBlackMarket()"></div>
-<div class="bm-drawer" id="bm-drawer">
-
-  <div class="settings-hdr bm-hdr">
-    <span class="settings-title bm-title">🖤 Black Market</span>
-    <button class="settings-close" onclick="closeBlackMarket()">✕</button>
-  </div>
-  <div class="settings-body" id="bm-body">
-    <div class="settings-coming">Loading…</div>
   </div>
 </div>
 

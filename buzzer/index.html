@@ -1,25 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cipher &mdash; Buzzer</title>
+<title>Meme-Off &mdash; Buzzer</title>
+<script>
+  // Apply the saved theme before first paint (dark is the default)
+  (function () {
+    var t = 'dark';
+    try { var s = localStorage.getItem('memeoff-theme'); if (s === 'light' || s === 'dark') t = s; } catch (e) {}
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ── THEMES ── dark (default) and light (pale-blue slide look) ── */
+  :root, :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0B1B2E;       --surface: #112640;   --surface2: #17314F;  --surface3: #1E3D5F;
+    --border: #2A4D73;   --text: #E8F3FD;      --title: #BBDAF3;     --muted: #86A9C7;
+    --primary: #5B9BD0;  --primary-hi: #86BCE6; --primary-lo: #2F6FA8;
+    --accent: #8FBCE0;   --score: #A8D1F0;   --brand: #5B9BD0;
+    --good: #4BDE9C;     --bad: #FF7A7A;
+    --blob1: #5B9BD02B;  --blob2: #8FBCE018;   --grid: #8FBCE00C;
+    --shadow: #00000066; --ambient-op: 0.14;
+    --btn-late-hi: #2B4663;   --btn-late-lo: #1A2F46;   --btn-late-text: #5F7F9E;
+    --btn-lock-hi: #16304B;   --btn-lock-lo: #0F2238;   --btn-lock-text: #3D5F80;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #F0F9FF;       --surface: #FFFFFF;   --surface2: #E6F3FC;  --surface3: #D6EAF8;
+    --border: #BFD9EC;   --text: #2A5272;      --title: #43749A;     --muted: #587F9C;
+    --primary: #43749A;  --primary-hi: #719FBF; --primary-lo: #365F80;
+    --accent: #719FBF;   --score: #43749A;   --brand: #5E91B7;
+    --good: #1E9E6A;     --bad: #D8504A;
+    --blob1: #9DC2DE8C;  --blob2: #719FBF4D;   --grid: #43749A0F;
+    --shadow: #43749A40; --ambient-op: 0.10;
+    --btn-late-hi: #C8DCEB;   --btn-late-lo: #A9C5DB;   --btn-late-text: #6C8DA6;
+    --btn-lock-hi: #E1EEF8;   --btn-lock-lo: #CFE3F2;   --btn-lock-text: #8FAEC6;
+  }
   :root {
-    --red: #ff2d2d;
-    --red-glow: #ff2d2d66;
-    --green: #00e676;
-    --green-glow: #00e67666;
-    --gold: #ffc400;
-    --gold-glow: #ffc40044;
-    --bg: #080810;
-    --surface: #0f0f1a;
-    --surface2: #16162a;
-    --border: #ffffff11;
-    --text: #f0ede8;
-    --muted: #555577;
+    --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
+    --primary-line: color-mix(in srgb, var(--primary) 40%, transparent);
+    --primary-glow: color-mix(in srgb, var(--primary) 38%, transparent);
+    --good-soft:    color-mix(in srgb, var(--good) 12%, transparent);
+    --good-line:    color-mix(in srgb, var(--good) 40%, transparent);
+    --good-glow:    color-mix(in srgb, var(--good) 40%, transparent);
+    --accent-soft:  color-mix(in srgb, var(--accent) 14%, transparent);
+    --accent-line:  color-mix(in srgb, var(--accent) 45%, transparent);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,20 +60,46 @@
     min-height: 100vh;
     overflow-x: hidden;
     position: relative;
+    transition: background 0.25s, color 0.25s;
   }
 
-  /* Animated background grid */
+  /* Soft grid + corner blobs (echoes the slide look) */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size: 60px 60px;
     pointer-events: none;
     z-index: 0;
   }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 420px 320px at -80px -50px, var(--blob1), transparent 70%),
+      radial-gradient(ellipse 340px 380px at calc(100% + 60px) 6%, var(--blob2), transparent 70%),
+      radial-gradient(ellipse 400px 300px at calc(100% + 40px) 100%, var(--blob1), transparent 70%),
+      radial-gradient(ellipse 300px 260px at -40px 100%, var(--blob2), transparent 70%);
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    position: fixed; right: 14px; bottom: 14px; z-index: 300;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border); color: var(--title);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px var(--shadow); transition: transform 0.15s, background 0.25s;
+  }
+  .theme-toggle:hover { transform: scale(1.08); }
+  .theme-toggle svg { width: 20px; height: 20px; }
+  :root[data-theme="dark"]  .theme-toggle .i-moon { display: none; }
+  :root[data-theme="light"] .theme-toggle .i-sun  { display: none; }
 
   /* Ambient glow behind buzzer */
   .ambient {
@@ -53,19 +108,19 @@
     height: 500px;
     border-radius: 50%;
     filter: blur(120px);
-    opacity: 0.12;
+    opacity: var(--ambient-op);
     pointer-events: none;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: var(--red);
+    background: var(--primary);
     transition: background 0.5s, opacity 0.5s;
     z-index: 0;
   }
-  .ambient.open { opacity: 0.18; background: var(--red); animation: ambientPulse 2s infinite; }
-  .ambient.winner { opacity: 0.3; background: var(--green); }
-  .ambient.late { opacity: 0.1; background: #333; }
-  @keyframes ambientPulse { 0%,100%{opacity:0.18} 50%{opacity:0.28} }
+  .ambient.open { background: var(--primary); animation: ambientPulse 2s infinite; }
+  .ambient.winner { opacity: 0.3; background: var(--good); }
+  .ambient.late { opacity: 0.08; background: var(--muted); }
+  @keyframes ambientPulse { 0%,100%{opacity:0.16} 50%{opacity:0.28} }
 
   /* ── JOIN SCREEN ── */
   .join-screen {
@@ -86,21 +141,23 @@
     letter-spacing: 6px;
     color: var(--muted);
     margin-bottom: 12px;
+    text-align: center;
   }
 
   .join-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(72px, 15vw, 120px);
-    color: var(--text);
-    letter-spacing: 8px;
+    font-size: clamp(48px, 13vw, 120px);
+    color: var(--title);
+    letter-spacing: 0.07em;
+    white-space: nowrap;
     line-height: 0.9;
     margin-bottom: 8px;
     text-align: center;
   }
 
   .join-title span {
-    color: var(--red);
-    text-shadow: 0 0 40px var(--red-glow);
+    color: var(--brand);
+    text-shadow: 0 0 40px var(--primary-glow);
   }
 
   .join-subtitle {
@@ -108,7 +165,8 @@
     color: var(--muted);
     letter-spacing: 3px;
     text-transform: uppercase;
-    margin-bottom: 48px;
+    margin-bottom: 40px;
+    text-align: center;
   }
 
   .join-form {
@@ -125,52 +183,58 @@
     text-transform: uppercase;
     color: var(--muted);
     text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
   }
+  .join-label svg { width: 14px; height: 14px; }
 
   .join-input {
-    background: var(--surface2);
+    background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
     font-family: 'Outfit', sans-serif;
-    font-size: 18px;
-    font-weight: 500;
+    font-size: 22px;
+    font-weight: 600;
     padding: 16px 20px;
-    border-radius: 10px;
+    border-radius: 12px;
     outline: none;
     text-align: center;
-    letter-spacing: 2px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
     transition: border-color 0.2s, box-shadow 0.2s;
     width: 100%;
   }
   .join-input:focus {
-    border-color: var(--red);
-    box-shadow: 0 0 0 3px var(--red-glow);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
   }
-  .join-input::placeholder { color: var(--muted); font-size: 14px; letter-spacing: 1px; }
+  .join-input::placeholder { color: var(--muted); font-size: 14px; letter-spacing: 3px; font-weight: 400; opacity: 0.8; }
+  .join-input.shake { animation: shake 0.4s; border-color: var(--bad); }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
 
   .join-btn {
-    background: var(--red);
+    background: var(--primary);
     border: none;
     color: #fff;
     font-family: 'Bebas Neue', sans-serif;
     font-size: 22px;
     letter-spacing: 4px;
     padding: 16px;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.15s;
-    box-shadow: 0 4px 24px var(--red-glow);
+    box-shadow: 0 4px 24px var(--primary-glow);
   }
-  .join-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--red-glow); }
+  .join-btn:hover { background: var(--primary-lo); transform: translateY(-2px); box-shadow: 0 8px 32px var(--primary-glow); }
   .join-btn:active { transform: translateY(0); }
 
   .join-error {
-    color: var(--red);
-    font-size: 12px;
+    color: var(--bad);
+    font-size: 13px;
     text-align: center;
-    min-height: 16px;
-    letter-spacing: 1px;
+    min-height: 18px;
+    letter-spacing: 0.5px;
   }
+  .join-error.info { color: var(--muted); }
 
   /* ── GAME SCREEN ── */
   .game-screen {
@@ -186,49 +250,70 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     padding: 16px 24px;
     border-bottom: 1px solid var(--border);
-    background: var(--surface)aa;
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
     backdrop-filter: blur(10px);
   }
 
-  .topbar-left {
+  .topbar-left, .topbar-right {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
   }
 
   .event-name {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 22px;
     letter-spacing: 4px;
-    color: var(--text);
+    color: var(--title);
+    white-space: nowrap;
   }
 
-  .event-name span { color: var(--red); }
+  .event-name span { color: var(--brand); }
 
   .round-pill {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 14px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    background: var(--red)22;
-    border: 1px solid var(--red)66;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-line);
     padding: 4px 14px;
     border-radius: 99px;
-    color: var(--red);
+    color: var(--primary);
+    white-space: nowrap;
   }
 
   .team-pill {
     font-size: 11px;
     letter-spacing: 2px;
-    background: var(--red)22;
-    border: 1px solid var(--red)44;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
     padding: 4px 12px;
     border-radius: 99px;
-    color: var(--red);
+    color: var(--text);
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 38vw;
   }
+
+  .leave-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    cursor: pointer;
+  }
+  .leave-btn:hover { color: var(--text); border-color: var(--accent-line); }
 
   /* Main content */
   .game-content {
@@ -248,28 +333,11 @@
     padding: 40px;
   }
 
-  /* Timer */
-  .timer-wrap {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 80px;
-    color: var(--gold);
-    text-shadow: 0 0 30px var(--gold-glow);
-    min-height: 90px;
-    letter-spacing: 4px;
-    transition: color 0.3s;
-  }
-  .timer-wrap.urgent {
-    color: var(--red);
-    text-shadow: 0 0 30px var(--red-glow);
-    animation: urgentBlink 0.4s infinite;
-  }
-  @keyframes urgentBlink { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
   /* The big buzzer */
   .buzzer-outer {
     position: relative;
-    width: 280px;
-    height: 280px;
+    width: min(280px, 72vw);
+    height: min(280px, 72vw);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -284,69 +352,72 @@
   }
 
   .buzzer-ring.ready {
-    border-color: var(--red);
-    box-shadow: 0 0 0 8px var(--red-glow), 0 0 60px var(--red-glow);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 8px var(--primary-glow), 0 0 60px var(--primary-glow);
     animation: ringPulse 1.5s infinite;
   }
-  .buzzer-ring.winner { border-color: var(--green); box-shadow: 0 0 0 8px var(--green-glow), 0 0 60px var(--green-glow); }
-  .buzzer-ring.late { border-color: #333; }
-  .buzzer-ring.locked { border-color: #222; }
+  .buzzer-ring.winner { border-color: var(--good); box-shadow: 0 0 0 8px var(--good-glow), 0 0 60px var(--good-glow); }
+  .buzzer-ring.late { border-color: var(--border); }
+  .buzzer-ring.locked { border-color: var(--border); }
 
   @keyframes ringPulse {
-    0%,100% { box-shadow: 0 0 0 8px var(--red-glow), 0 0 60px var(--red-glow); }
-    50% { box-shadow: 0 0 0 16px var(--red)22, 0 0 80px var(--red-glow); }
+    0%,100% { box-shadow: 0 0 0 8px var(--primary-glow), 0 0 60px var(--primary-glow); }
+    50% { box-shadow: 0 0 0 16px var(--primary-soft), 0 0 80px var(--primary-glow); }
   }
 
   .buzzer-btn {
-    width: 280px;
-    height: 280px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     border: none;
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 42px;
+    font-size: clamp(32px, 9vw, 42px);
     letter-spacing: 6px;
     cursor: pointer;
     transition: all 0.12s;
     position: relative;
     z-index: 1;
-    /* Gradient for 3D effect */
-    background: radial-gradient(circle at 35% 35%, #ff5252, #b71c1c);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    background: radial-gradient(circle at 35% 35%, var(--primary-hi), var(--primary-lo));
     color: #fff;
     box-shadow:
-      0 12px 40px #0008,
-      inset 0 2px 4px #ffffff33,
+      0 12px 40px var(--shadow),
+      inset 0 2px 4px #ffffff55,
       inset 0 -4px 8px #00000033;
   }
 
   .buzzer-btn:hover:not(:disabled) {
     transform: scale(1.04) translateY(-4px);
-    box-shadow: 0 20px 60px #0008, 0 0 40px var(--red-glow), inset 0 2px 4px #ffffff33;
+    box-shadow: 0 20px 60px var(--shadow), 0 0 40px var(--primary-glow), inset 0 2px 4px #ffffff55;
   }
 
   .buzzer-btn:active:not(:disabled) {
     transform: scale(0.96) translateY(2px);
-    box-shadow: 0 4px 16px #0008, inset 0 4px 8px #00000044;
+    box-shadow: 0 4px 16px var(--shadow), inset 0 4px 8px #00000044;
   }
 
   .buzzer-btn.winner {
     background: radial-gradient(circle at 35% 35%, #69f0ae, #00897b);
-    box-shadow: 0 12px 40px #0008, 0 0 60px var(--green-glow), inset 0 2px 4px #ffffff33;
+    box-shadow: 0 12px 40px var(--shadow), 0 0 60px var(--good-glow), inset 0 2px 4px #ffffff55;
     animation: winnerBounce 0.5s ease;
     cursor: default;
   }
 
   .buzzer-btn.late {
-    background: radial-gradient(circle at 35% 35%, #444, #222);
-    color: #555;
+    background: radial-gradient(circle at 35% 35%, var(--btn-late-hi), var(--btn-late-lo));
+    color: var(--btn-late-text);
     cursor: not-allowed;
-    box-shadow: 0 8px 24px #0008, inset 0 2px 4px #ffffff11;
+    box-shadow: 0 8px 24px var(--shadow), inset 0 2px 4px #ffffff22;
   }
 
   .buzzer-btn.locked {
-    background: radial-gradient(circle at 35% 35%, #1a1a2e, #0f0f1a);
-    color: #333;
+    background: radial-gradient(circle at 35% 35%, var(--btn-lock-hi), var(--btn-lock-lo));
+    color: var(--btn-lock-text);
     cursor: not-allowed;
-    box-shadow: 0 4px 16px #0004, inset 0 2px 4px #ffffff08;
+    box-shadow: 0 4px 16px var(--shadow), inset 0 2px 4px #ffffff11;
   }
 
   @keyframes winnerBounce {
@@ -366,17 +437,17 @@
     text-transform: uppercase;
     transition: color 0.3s;
   }
-  .status-text.ready { color: var(--red); font-weight: 600; }
-  .status-text.winner { color: var(--green); font-weight: 700; font-size: 20px; }
-  .status-text.late { color: #555; }
+  .status-text.ready { color: var(--primary); font-weight: 600; }
+  .status-text.winner { color: var(--good); font-weight: 700; font-size: 20px; }
+  .status-text.late { color: var(--muted); }
 
   /* Buzz result display */
   .buzz-display {
-    background: var(--surface2);
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 16px 24px;
-    min-width: 280px;
+    min-width: min(280px, 86vw);
     text-align: center;
     min-height: 70px;
     display: flex;
@@ -387,8 +458,8 @@
   }
 
   .buzz-display.has-winner {
-    border-color: var(--green)44;
-    background: var(--green)08;
+    border-color: var(--good-line);
+    background: color-mix(in srgb, var(--good) 8%, var(--surface));
   }
 
   .buzz-winner-label {
@@ -401,9 +472,9 @@
   .buzz-winner-name {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 32px;
-    color: var(--green);
+    color: var(--good);
     letter-spacing: 3px;
-    text-shadow: 0 0 20px var(--green-glow);
+    text-shadow: 0 0 20px var(--good-glow);
   }
 
   .buzz-order-pills {
@@ -418,16 +489,16 @@
     font-size: 11px;
     padding: 3px 10px;
     border-radius: 99px;
-    background: var(--surface);
+    background: var(--surface2);
     border: 1px solid var(--border);
     color: var(--muted);
   }
-  .buzz-pill.first { background: var(--green)22; border-color: var(--green)44; color: var(--green); }
+  .buzz-pill.first { background: var(--good-soft); border-color: var(--good-line); color: var(--good); }
 
   /* ── RIGHT PANEL - SCOREBOARD ── */
   .scoreboard-panel {
     border-left: 1px solid var(--border);
-    background: var(--surface)88;
+    background: color-mix(in srgb, var(--surface) 55%, transparent);
     backdrop-filter: blur(10px);
     display: flex;
     flex-direction: column;
@@ -448,20 +519,21 @@
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border-radius: 8px;
-    background: var(--surface2);
+    border-radius: 10px;
+    background: var(--surface);
     border: 1px solid var(--border);
+    margin-bottom: 8px;
     transition: all 0.2s;
   }
 
   .sb-row.me {
-    border-color: var(--red)44;
-    background: var(--red)0a;
+    border-color: var(--primary-line);
+    background: color-mix(in srgb, var(--primary) 10%, var(--surface));
   }
 
   .sb-row.leader {
-    border-color: var(--gold)44;
-    background: var(--gold)08;
+    border-color: var(--accent-line);
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   }
 
   .sb-rank {
@@ -471,7 +543,7 @@
     min-width: 24px;
     text-align: center;
   }
-  .sb-rank.gold { color: var(--gold); text-shadow: 0 0 10px var(--gold-glow); }
+  .sb-rank.gold { color: var(--primary); }
 
   .sb-info { flex: 1; min-width: 0; }
 
@@ -483,19 +555,19 @@
     text-overflow: ellipsis;
     color: var(--text);
   }
-  .sb-name.me-name { color: var(--red); }
+  .sb-name.me-name { color: var(--primary); }
 
   .sb-buzz-tag {
     font-size: 10px;
     color: var(--muted);
     letter-spacing: 1px;
   }
-  .sb-buzz-tag.first { color: var(--green); }
+  .sb-buzz-tag.first { color: var(--good); }
 
   .sb-score {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
-    color: var(--gold);
+    color: var(--score);
     min-width: 36px;
     text-align: right;
   }
@@ -509,8 +581,8 @@
     opacity: 0;
     transition: opacity 0.1s;
   }
-  .flash-overlay.flash-green { background: var(--green); animation: flashAnim 0.4s ease; }
-  .flash-overlay.flash-red   { background: var(--red);   animation: flashAnim 0.3s ease; }
+  .flash-overlay.flash-green { background: var(--good); animation: flashAnim 0.4s ease; }
+  .flash-overlay.flash-red   { background: var(--primary); animation: flashAnim 0.3s ease; }
   @keyframes flashAnim { 0%{opacity:0.4} 100%{opacity:0} }
 
   /* Waiting state empty scoreboard */
@@ -521,21 +593,43 @@
     text-align: center;
     padding: 20px 0;
   }
+
+  /* ── Phones ── */
+  @media (max-width: 800px) {
+    .game-content { grid-template-columns: 1fr; }
+    .scoreboard-panel { border-left: none; border-top: 1px solid var(--border); }
+    .buzzer-area { padding: 28px 16px; gap: 24px; }
+    .topbar { padding: 12px 16px; flex-wrap: wrap; row-gap: 8px; }
+    .topbar-left, .topbar-right { flex-wrap: nowrap; }
+    .topbar-right { margin-left: auto; }
+    .team-pill { max-width: 46vw; }
+    .event-name { font-size: 19px; letter-spacing: 3px; }
+    .scoreboard-panel { padding-bottom: 84px; }   /* keeps rows clear of the theme button */
+  }
 </style>
 </head>
 <body>
 
+<button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Switch light/dark theme" title="Switch theme">
+  <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
+  <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+</button>
+
 <div class="ambient" id="ambient"></div>
 <div class="flash-overlay" id="flash"></div>
 
-<!-- JOIN SCREEN -->
+<!-- JOIN SCREEN: locked until a valid team code is entered -->
 <div class="join-screen" id="join-screen">
   <div class="join-eyebrow">Inceptia Fest &mdash; Round 3</div>
-  <div class="join-title">CI<span>PH</span>ER</div>
+  <div class="join-title">MEME<span>-OFF</span></div>
   <div class="join-subtitle">Buzzer Beater Challenge</div>
   <div class="join-form">
-    <div class="join-label">Enter your team code</div>
-    <input class="join-input" id="team-input" placeholder="e.g. ALPHA" maxlength="30" autocomplete="off" />
+    <div class="join-label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Enter your team code
+    </div>
+    <input class="join-input" id="team-input" placeholder="TEAM CODE" maxlength="14"
+           autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" />
     <button class="join-btn" onclick="joinGame()">ENTER ARENA</button>
     <div class="join-error" id="join-error"></div>
   </div>
@@ -545,10 +639,13 @@
 <div class="game-screen" id="game-screen">
   <div class="topbar">
     <div class="topbar-left">
-      <div class="event-name">CI<span>PH</span>ER</div>
+      <div class="event-name">MEME<span>-OFF</span></div>
       <div class="round-pill" id="round-pill">Round 1</div>
     </div>
-    <div class="team-pill" id="team-pill"></div>
+    <div class="topbar-right">
+      <div class="team-pill" id="team-pill"></div>
+      <button class="leave-btn" onclick="leaveTeam()" title="Use a different team code">Leave</button>
+    </div>
   </div>
 
   <div class="game-content">
@@ -556,7 +653,7 @@
     <div class="buzzer-area">
       <div class="buzzer-outer">
         <div class="buzzer-ring locked" id="buzzer-ring"></div>
-        <button class="buzzer-btn locked" id="buzzer-btn" onclick="buzz()">BUZZ</button>
+        <button class="buzzer-btn locked" id="buzzer-btn" onpointerdown="buzz()" onclick="buzz()">BUZZ</button>
       </div>
 
       <div class="status-text" id="status-text">Waiting for host...</div>
@@ -577,12 +674,50 @@
 </div>
 
 <script>
-  let ws, myTeam = null, gameState = null;
+  // ── THEME ──
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('memeoff-theme', next); } catch (e) {}
+  }
+
+  // ── ENTRY (team code gate) ──
+  let ws = null, myTeam = null, myCode = null, gameState = null;
+  let entered = false, autoJoin = false, intentionalClose = false, reconnectTimer = null;
+
+  function cleanCode(s) { return s.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12); }
+
+  function saveCode(c)  { try { sessionStorage.setItem('memeoff-code', c); } catch (e) {} }
+  function clearCode()  { try { sessionStorage.removeItem('memeoff-code'); } catch (e) {} }
+
+  function showJoinMsg(text, isError) {
+    const el = document.getElementById('join-error');
+    el.textContent = text;
+    el.className = 'join-error' + (isError ? '' : ' info');
+    if (isError) {
+      const input = document.getElementById('team-input');
+      input.classList.remove('shake'); void input.offsetWidth; input.classList.add('shake');
+    }
+  }
+
+  function backToJoin(message) {
+    entered = false;
+    gameState = null;
+    document.getElementById('game-screen').style.display = 'none';
+    document.getElementById('join-screen').style.display = '';
+    document.getElementById('ambient').className = 'ambient';
+    showJoinMsg(message || '', !!message);
+  }
 
   function joinGame() {
-    const name = document.getElementById('team-input').value.trim().toUpperCase();
-    if (!name) { document.getElementById('join-error').textContent = 'Enter a team code'; return; }
-    myTeam = name;
+    const code = cleanCode(document.getElementById('team-input').value);
+    if (code.length < 4) { showJoinMsg('Enter your team code.', true); return; }
+    myCode = code;
+    autoJoin = false;
+    showJoinMsg('Checking code…', false);
+    if (ws && ws.readyState === 1) { ws.send(JSON.stringify({ type: 'join', code: myCode })); return; }
+    if (ws && ws.readyState === 0) return;           // still connecting: onopen sends the latest code
+    intentionalClose = false;
     connectWS();
   }
 
@@ -590,38 +725,66 @@
     if (e.key === 'Enter') joinGame();
   });
 
+  function leaveTeam() {
+    intentionalClose = true;
+    clearTimeout(reconnectTimer);
+    clearCode();
+    myCode = null; myTeam = null;
+    if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+    document.getElementById('team-input').value = '';
+    backToJoin('');
+  }
+
   function connectWS() {
+    clearTimeout(reconnectTimer);
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(`${proto}//${location.host}/ws`);
+    const sock = new WebSocket(`${proto}//${location.host}/ws`);
+    ws = sock;
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'join', team: myTeam }));
-      document.getElementById('join-screen').style.display = 'none';
-      document.getElementById('game-screen').style.display = 'flex';
-      document.getElementById('team-pill').textContent = myTeam;
-    };
+    sock.onopen = () => { if (myCode) sock.send(JSON.stringify({ type: 'join', code: myCode })); };
 
-    ws.onmessage = e => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'state') {
+    sock.onmessage = e => {
+      let data;
+      try { data = JSON.parse(e.data); } catch (_) { return; }
+
+      if (data.type === 'joined') {
+        entered = true;
+        myTeam = data.team;
+        saveCode(myCode);
+        document.getElementById('join-error').textContent = '';
+        document.getElementById('join-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        document.getElementById('team-pill').textContent = myTeam;
+      } else if (data.type === 'join_error') {
+        if (entered || autoJoin) { clearCode(); myCode = null; backToJoin(data.msg || 'Could not enter.'); }
+        else showJoinMsg(data.msg || 'Could not enter.', true);
+      } else if (data.type === 'kicked') {
+        clearCode(); myCode = null;
+        backToJoin(data.msg || 'You were removed.');
+      } else if (data.type === 'state') {
         const prev = gameState;
         gameState = data.state;
-        // Detect new buzz
-        if (prev && gameState.buzz_order.length > prev?.buzz_order?.length) {
-          const winner = gameState.buzz_order[0];
-          triggerFlash(winner === myTeam ? 'green' : 'red');
+        // Flash once, when the very first buzz of a question lands
+        if (prev && prev.buzz_order.length === 0 && gameState.buzz_order.length > 0) {
+          triggerFlash(gameState.buzz_order[0] === myTeam ? 'green' : 'red');
         }
         updateUI();
       }
     };
 
-    ws.onclose = () => setTimeout(connectWS, 2000);
+    sock.onclose = () => {
+      if (sock !== ws || intentionalClose) return;   // replaced, or we left on purpose
+      if (entered) document.getElementById('status-text').textContent = 'Reconnecting…';
+      else showJoinMsg('Connecting…', false);
+      reconnectTimer = setTimeout(connectWS, 2000);
+    };
   }
 
   function buzz() {
-    if (!gameState || gameState.locked) return;
+    if (!entered || !gameState || gameState.locked) return;
     if (gameState.buzz_order.includes(myTeam)) return;
-    ws.send(JSON.stringify({ type: 'buzz', team: myTeam }));
+    if (!ws || ws.readyState !== 1) return;
+    ws.send(JSON.stringify({ type: 'buzz' }));       // the server knows which team this device is
   }
 
   function triggerFlash(color) {
@@ -710,6 +873,18 @@
       </div>`;
     }).join('');
   }
+
+  // Page reload / brief tab close: re-enter automatically with the code used earlier in this tab
+  (function resume() {
+    let saved = null;
+    try { saved = sessionStorage.getItem('memeoff-code'); } catch (e) {}
+    if (saved && cleanCode(saved).length >= 4) {
+      myCode = cleanCode(saved);
+      autoJoin = true;
+      showJoinMsg('Reconnecting…', false);
+      connectWS();
+    }
+  })();
 </script>
 </body>
 </html>
