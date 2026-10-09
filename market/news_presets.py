@@ -1,304 +1,635 @@
 """
-news_presets.py — Market Mayhem
+news_presets.py — Market Mayhem (APEX-20 roster)
 
-Ready-made headline text for the host's manual "Inject News" tab, organised by
-stock id and direction ("up" / "down"). main.py's /api/host/inject_news picks
-one at random when the host leaves the text box blank.
-
-Every headline is grounded in the organiser dossier (fictional_stock_exchange_dossiers.docx):
-real plot threads, company history and "watch-list hooks" only — nothing here
-contradicts the established backstory.
-
-Separate from NEWS_POOL in main.py (the automatic round-start headlines, which
-never repeat within a game). This file can repeat across a session.
-
-ORGANISER_NOTES at the bottom is HOST-ONLY: it's served by a password-protected
-endpoint and is never sent to players.
+NEWS_POOL      Round-start news, drawn at random, never repeated within a game. Everything in it is TRUE
+               (it moves the price as stated). Entries marked src="rumour" are rumours that turn out to be
+               correct; players see them as ordinary news — no verified/unverified labels anywhere.
+FALSE_RUMOURS  Rumours that are NOT true. Used ONLY in the Truth-or-False chaos event (one round); the
+               host alone knows which headlines are real.
+NEWS_PRESETS   Ready-made headlines for the host's "Inject News" tab, per company and direction.
+PLOT_GROUPS    Mutually exclusive outcomes of one storyline — once one has run, its opposite is retired.
+ORGANISER_NOTES  Host-only notes, never sent to players.
 """
 
 NEWS_PRESETS = {
 
-    # ── NEXUS TECHNOLOGIES (IT / Software Services) ─────────────────────
-    "nexus": {
+    # ── ZENITH DYNAMICS LTD. (ZNDY) ──
+    "zndy": {
         "up": [
-            "Nexus Technologies wins a fresh multi-year AI-modernisation contract from a large US client.",
-            "Nexus upgrades FY27 revenue guidance, citing strong demand for enterprise AI integration.",
-            "Rupee weakens against the dollar — analysts expect a margin tailwind for Nexus's domestic-cost base.",
-            "Nexus's AI Delivery Center in Pune gets a green light for expansion.",
-            "Brokerages raise Nexus's target price after another quarter of double-digit deal-win growth.",
-            "Nexus's cybersecurity arm, acquired in 2025, lands its first marquee banking client.",
-            "US client budgets for IT modernisation come in stronger than feared, lifting the whole mid-tier IT pack.",
-            "Nexus's DPDP-compliance advisory line signs a dozen large Indian enterprises in a single quarter.",
-            "Nexus reportedly in talks to bid for a mid-sized European IT firm; market reads it as growth intent.",
-            "Nexus is cleared in the US visa-compliance review with no further penalties.",
+            "Zenith's Southeast Asian export pact is extended with Zenith as lead supplier.",
+            "Zenith Dynamics reports record order inflow as global security budgets keep rising.",
+            "Institutional defence funds raise their stake in Zenith ahead of the defence budget.",
+            "Zenith's second production hub clears a Level-4 security audit, unlocking new classified work.",
+            "Defence ministry confirms Zenith as Tier-1 contractor for the next tactical actuator cycle.",
         ],
         "down": [
-            "US lawmakers revive 'hire local' proposals aimed at outsourced IT contracts; Nexus most exposed among mid-tier names.",
-            "A large US insurance client trims discretionary tech spend, pushing back part of Nexus's AI project.",
-            "Rupee strengthens sharply, raising fears of margin pressure at Nexus.",
-            "Nexus's effective tax rate creeps higher as remaining IT-SEZ benefits expire.",
-            "Rival mid-tier IT firm undercuts Nexus on a major deal, snatching a contract it was expected to win.",
-            "Nexus's AI Delivery Center expansion is deferred, raising questions on the AI-first strategy.",
-            "Key Nexus executives depart for a global consulting major, reviving succession worries.",
-            "Analysts warn integration costs of Nexus's US cybersecurity acquisition may weigh on next quarter.",
-            "A fresh whistleblower complaint on visa compliance surfaces; Nexus says it is reviewing the claims.",
-            "Global tech sell-off dents IT valuations; Nexus falls with the sector.",
+            "Zenith's Southeast Asian export pact is shelved after a political reshuffle.",
+            "Eastern European titanium shipments are held up again; Zenith warns of slipping deliveries.",
+            "A supplementary review trims the defence capital budget; Zenith is the most exposed listed name.",
+            "Saab and Thales undercut Zenith on a neutral-market export tender in the Middle East.",
+            "Optical-microchip sanctions tighten, raising Zenith's input costs.",
         ],
     },
 
-    # ── PIONEER TRUST BANK (Private Banking) ────────────────────────────
-    "pioneer": {
+    # ── AURA BIOPHARMA SCIENCES (ABPH) ──
+    "abph": {
         "up": [
-            "Pioneer Trust Bank's digital lending book grows faster than expected; credit-rating outlook improves.",
-            "RBI clears Pioneer's digital lending partnerships after a routine review.",
-            "Pioneer reports a fall in gross NPAs as the merged regional bank's loan book keeps improving.",
-            "Government credit-guarantee scheme boosts demand for Pioneer's SME loans.",
-            "Pioneer's CASA ratio improves, cutting its funding costs versus peers.",
-            "Pioneer is said to be eyeing a bolt-on acquisition of a small NBFC — the market likes the consolidator story.",
-            "Pioneer announces a capital raise at a premium, signalling confidence in growth.",
-            "A rate-hike cycle expectation lifts net-interest-margin forecasts for banks like Pioneer.",
-            "Pioneer's vehicle and small-business NBFC arm posts record disbursements.",
-            "Pioneer declares a higher dividend after its strongest profit in years.",
+            "Aura BioPharma's Baddi unit clears its re-inspection, ending the import alert.",
+            "Government raises PLI incentives for specialty APIs; Aura is a prime beneficiary.",
+            "Aura's HPAPI pipeline lands two new commercial orders in Germany.",
+            "Aura adds a fourth GMP-certified line at its Genome Valley campus.",
+            "Chinese fermentation plants lose their power subsidy, easing price pressure on Aura.",
         ],
         "down": [
-            "RBI opens a review of Pioneer's digital-lending partnerships, citing customer-protection concerns.",
-            "Pioneer reports a jump in provisioning on inherited loans from the merged regional bank.",
-            "RBI cuts the repo rate; analysts flag near-term margin compression for Pioneer.",
-            "Stricter unsecured-lending norms slow Pioneer's personal-loan growth again.",
-            "Pioneer's capital-raise plan raises dilution fears among shareholders.",
-            "A large SME borrower defaults, hitting Pioneer's asset-quality numbers.",
-            "Global fintech-backed lenders undercut Pioneer's rates in unsecured retail lending.",
-            "Reports that Pioneer overpaid for a small NBFC target unsettle investors.",
-            "Deposit growth slows for Pioneer as rivals raise fixed-deposit rates.",
-            "Pioneer flags higher-than-expected integration costs on its digital banking upgrade.",
+            "US-FDA officials say Aura's Baddi unit fails its re-inspection, prolonging the import alert.",
+            "NPPA widens price caps on essential medicines, hitting Aura's domestic portfolio.",
+            "Subsidised Chinese APIs flood the market, squeezing Aura's pricing.",
+            "A key German distributor shifts part of its order to a rival supplier.",
+            "Aura slides as the market braces for a rough inspection season.",
         ],
     },
 
-    # ── GENESIS LIFE SCIENCES (Pharmaceuticals) ─────────────────────────
-    "genesis": {
+    # ── VOLTIX ENERGY TECHNOLOGIES (VTXE) ──
+    "vtxe": {
         "up": [
-            "USFDA clears Genesis's third manufacturing facility after a clean re-inspection.",
-            "Genesis wins early US launch of a high-margin generic after a patent ruling in its favour.",
-            "Genesis's new vaccine facility wins large contract-manufacturing orders.",
-            "Genesis signs an in-licensing deal for a promising biosimilar, widening its specialty pipeline.",
-            "Arbitration panel rules in Genesis's favour in its African government supply dispute.",
-            "Genesis reports strong US generic sales as a competitor exits a key product line.",
-            "Genesis's dividend yield climbs as management signals a higher payout.",
-            "Global vaccine demand surges; Genesis's contract capacity is seen as a major beneficiary.",
-            "Genesis clears remaining remediation items at both previously flagged plants.",
-            "Analysts upgrade Genesis, saying quality-control worries are firmly in the past.",
+            "Voltix's safety clearances are reissued in full, reopening its stalled utility orders.",
+            "Voltix lands a second state-utility battery tender on the back of renewable mandates.",
+            "Custom-duty waivers on imported lithium cells are extended, protecting Voltix's margins.",
+            "Brokerages upgrade Voltix on record revenue growth and widening profits.",
+            "Voltix signs a new battery-management software licensing deal with a data-centre operator.",
         ],
         "down": [
-            "USFDA issues a fresh observation at a Genesis facility during a re-inspection.",
-            "Genesis receives a warning letter over manufacturing-quality lapses; US exports from that plant halted.",
-            "A patent ruling goes against Genesis, delaying a planned US launch.",
-            "Arbitration over an African government supply contract turns against Genesis.",
-            "US generic pricing pressure squeezes Genesis's margins this quarter.",
-            "Genesis's biosimilar in-licensing talks collapse over terms.",
-            "A batch recall of a Genesis formulation triggers fresh quality-control worries.",
-            "Genesis's new vaccine facility faces a commissioning delay.",
-            "Rival generics maker launches a cheaper version of Genesis's key US product.",
-            "Regulators in an export market flag documentation issues with Genesis shipments.",
+            "Regulators extend the safety probe into Voltix's installations; new orders are paused.",
+            "Basic customs duty on lithium cells is hiked; Voltix warns of margin compression.",
+            "CATL and BYD slash prices on fully assembled storage containers, pressuring Voltix.",
+            "Voltix's cash burn worries investors as capex climbs again.",
+            "A key cell supplier delays shipments to Voltix by two months.",
         ],
     },
 
-    # ── APEX MOBILITY (Automobile / EV) ─────────────────────────────────
-    "apex": {
+    # ── APEX MERCANTILE BANK (APMB) ──
+    "apmb": {
         "up": [
-            "Apex's EV sales jump to a record month, ahead of every analyst estimate.",
-            "Government revises the FAME subsidy scheme in a way that favours Apex's EV lineup.",
-            "Apex's battery-cell joint venture confirms local production remains on track for 2027.",
-            "Apex's new dedicated EV plant hits full production ahead of schedule.",
-            "Apex's EV passenger car tops its segment's sales chart for the quarter.",
-            "Apex secures a large fleet order from a leading ride-hailing operator.",
-            "Independent safety testing awards Apex's newest EV a top rating, easing battery-fire fears.",
-            "Apex's export shipments of electric two-wheelers ramp up sharply.",
-            "Apex announces a price-competitive new EV model aimed at the mass market.",
-            "Fuel prices spike, pushing more buyers to Apex's electric range.",
+            "Apex Mercantile Bank announces a larger final dividend after a record profit year.",
+            "Credit-rating agency upgrades Apex Mercantile's outlook on asset quality.",
+            "Retail loan growth beats expectations at Apex Mercantile for a third straight quarter.",
+            "Foreign institutions return to Indian banks; Apex Mercantile is a top beneficiary.",
+            "Apex Mercantile's net interest margin widens as deposit costs ease.",
         ],
         "down": [
-            "Apex announces a voluntary recall of an EV batch after a battery-related incident.",
-            "A foreign EV brand confirms its India entry with aggressive pricing, worrying Apex investors.",
-            "Government signals a cut to EV subsidies; Apex is among the most exposed.",
-            "Apex's battery-cell joint venture slips its production timeline.",
-            "Apex reports a sharp month-on-month fall in EV sales.",
-            "A video of an Apex EV fire circulates widely on social media.",
-            "Apex's legacy petrol two-wheeler sales decline faster than expected.",
-            "Rising lithium and cell prices squeeze Apex's EV margins.",
-            "Apex's EV plant hit by a supply-chain disruption for key components.",
-            "Analysts cut Apex's target price, citing heavy capital spending with uncertain returns.",
+            "Central Bank signals further reserve-ratio hikes, a drag on Apex Mercantile.",
+            "Priority Sector Lending norms tighten; Apex Mercantile's returns face pressure.",
+            "A US bond sell-off triggers FII outflows from banking stocks, led by Apex Mercantile.",
+            "Apex Mercantile's wholesale book shows early signs of stress.",
+            "Repo-rate cut expectations squeeze Apex Mercantile's margin outlook.",
         ],
     },
 
-    # ── VORTEX CLEAN ENERGY (Renewable Energy) ──────────────────────────
-    "vortex": {
+    # ── HARBORLOGIX INFRASTRUCTURE (HBLX) ──
+    "hblx": {
         "up": [
-            "Vortex wins a large new power-purchase-agreement tender from a state utility.",
-            "Vortex signs a green-hydrogen off-take agreement, validating its pilot plant.",
-            "Rating agency upgrades Vortex's debt, lowering its borrowing costs.",
-            "Government hikes solar import duties, boosting the case for domestic-linked projects like Vortex's.",
-            "RBI signals rate cuts — good news for debt-heavy Vortex.",
-            "Vortex commissions a large new wind farm ahead of schedule.",
-            "New renewable-energy subsidies announced, with Vortex among the biggest expected beneficiaries.",
-            "Global solar panel prices stabilise, ending a long margin squeeze for Vortex.",
-            "Vortex's green-hydrogen pilot plant meets its output targets for the quarter.",
-            "A large industrial buyer signs a long-term clean power deal with Vortex.",
+            "HarborLogix raises its dividend again, a boost for pension-fund holders.",
+            "Maritime Regulatory Authority approves an inflation-linked tariff hike for HarborLogix.",
+            "HarborLogix adds container rakes to its fleet as volumes climb.",
+            "Infrastructure-bond access cuts HarborLogix's borrowing costs.",
+            "A new shipping alliance signs a long-term take-or-pay agreement with HarborLogix.",
         ],
         "down": [
-            "Vortex loses out on a major PPA tender it was widely expected to win.",
-            "Interest rates rise — heavy debt makes Vortex especially vulnerable.",
-            "Global solar panel prices crash again on Chinese oversupply, squeezing Vortex's margins.",
-            "Green-hydrogen off-take talks stall; the pilot plant's commercial future looks uncertain.",
-            "State utility delays payments to Vortex, straining working capital.",
-            "Government rolls back a key renewable-energy incentive.",
-            "A wind-farm equipment failure cuts Vortex's output for the quarter.",
-            "Possible new solar import duty hike raises Vortex's project costs.",
-            "Analysts warn Vortex's balance sheet is stretched by its capex plans.",
-            "Weak wind conditions drag down Vortex's generation this quarter.",
+            "Maritime Regulatory Authority freezes port tariffs for a year, a blow to HarborLogix.",
+            "Trade-bloc tariffs escalate; analysts cut HarborLogix's container-volume forecasts.",
+            "A rival port wins a long-haul transshipment contract away from HarborLogix.",
+            "Rail corridor congestion delays HarborLogix's freight transfers.",
+            "Shipping-lane disruptions dent HarborLogix's throughput this quarter.",
         ],
     },
 
-    # ── AURA DAILY ESSENTIALS (FMCG) ────────────────────────────────────
-    "aura": {
+    # ── VERVE CONSUMER BRANDS (VRVE) ──
+    "vrve": {
         "up": [
-            "A good monsoon forecast lifts expectations for rural demand, a key market for Aura.",
-            "Palm-oil and crude-derivative prices ease, improving Aura's margins.",
-            "Aura's rural distribution platform reaches thousands more small-town retailers.",
-            "Aura's relaunched legacy brands gain market share for a second straight quarter.",
-            "Government keeps GST on Aura's key product category unchanged.",
-            "Aura is said to be acquiring a challenger D2C brand to boost its modern portfolio.",
-            "Aura declares its usual steady dividend; defensive investors take comfort.",
-            "Aura's volume growth beats expectations on a rural demand recovery.",
-            "Investors rotate into defensives as markets wobble, supporting Aura.",
-            "Aura's packaged-foods range posts its strongest quarter in years.",
+            "Verve Consumer Brands lifts its dividend again after a strong monsoon-led quarter.",
+            "Verve's baby-care range gains share in metro quick-commerce.",
+            "Palm oil prices fall; analysts expect margin expansion at Verve.",
+            "Verve widens its direct retail reach beyond 4.2 million stores.",
+            "Verve's co-manufacturing model lowers costs on standard packaging.",
         ],
         "down": [
-            "Poor monsoon forecast raises worries about rural incomes and Aura's volumes.",
-            "Palm-oil and crude-derivative prices spike, threatening Aura's margins.",
-            "GST slab reclassification proposed for one of Aura's key product categories.",
-            "D2C challenger brands eat into Aura's share in personal care.",
-            "Aura announces price hikes, and analysts fear it will dent volumes.",
-            "Aura's acquisition of a challenger brand is seen as overpriced by some analysts.",
-            "A rural distribution glitch delays Aura's new product launches.",
-            "Aura's quarterly volume growth misses estimates by a small margin.",
-            "Rival FMCG giant launches an aggressive discount campaign against Aura's soaps.",
-            "Input-cost inflation returns, and analysts trim Aura's margin forecasts.",
+            "Rural slowdown deepens as monsoon disappoints; Verve warns on volumes.",
+            "FSSAI tightens nutritional labelling norms; Verve faces higher compliance costs.",
+            "Global FMCG rivals ramp up ad spending, pressuring Verve's market share.",
+            "Crude palm oil prices spike, squeezing Verve's input costs.",
+            "A GST adjustment raises prices on Verve's packaged foods.",
         ],
     },
 
-    # ── SKYLINE INFRAPROJECTS (Infrastructure / Real Estate) ────────────
-    "skyline": {
+    # ── KRYOS SEMI-CONDUCTORS LTD. (KRYS) ──
+    "krys": {
         "up": [
-            "Skyline wins a large new national highway contract.",
-            "Court rules in Skyline's favour in the land-dispute case on its stalled project.",
-            "Skyline shortlisted in a major metro-adjacent tender.",
-            "RBI signals rate cuts — welcome relief for debt-heavy Skyline.",
-            "Skyline's tier-2 city real estate launches sell out ahead of schedule.",
-            "Skyline completes a major highway stretch ahead of the deadline, earning a bonus.",
-            "Government announces a big infrastructure spending push, with highways a priority.",
-            "Skyline's order book reaches an all-time high.",
-            "Rating agency upgrades Skyline after its debt restructuring is fully resolved.",
-            "Skyline signs a large anchor tenant for its commercial real estate development.",
+            "Kryos Semi-Conductors expands its smart-meter chip share past 40%.",
+            "National Semiconductor Mission approves fresh tape-out subsidies for Kryos.",
+            "Kryos ramps a new motor-drive controller chip to volume production.",
+            "A global chip-inventory glut clears; Kryos guides to stronger demand.",
+            "Kryos's IoT silicon wins design slots at a leading smart-meter maker.",
         ],
         "down": [
-            "Court rules against Skyline in the land-dispute case, keeping its stalled project on hold.",
-            "Skyline loses a major highway tender to a rival.",
-            "Interest rates rise, and analysts flag debt-heavy Skyline as most exposed.",
-            "Contractual penalty clauses triggered on a delayed Skyline project.",
-            "Skyline's tier-2 real estate launch draws weaker-than-expected demand.",
-            "Cement and steel prices spike, squeezing margins on Skyline's fixed-price contracts.",
-            "Government delays infrastructure payments, straining Skyline's cash flow.",
-            "A fresh land-acquisition dispute halts work on another Skyline site.",
-            "Skyline's lenders ask for additional guarantees after slow project execution.",
-            "Analysts warn Skyline's real estate expansion is stretching its balance sheet.",
+            "Taiwan Strait tensions escalate; Kryos falls on foundry-access fears.",
+            "Chip-design software restrictions tighten; Kryos warns of delays.",
+            "A glut of microcontrollers reappears, pushing down Kryos's selling prices.",
+            "Kryos loses a smart-meter tender to a rival.",
+            "Tech valuations compress and Kryos falls with the sector.",
         ],
     },
 
-    # ── PULSE TELECOM (Telecom) ─────────────────────────────────────────
-    "pulse": {
+    # ── TERRAFIRM CEMENT & MATERIALS (TRFM) ──
+    "trfm": {
         "up": [
-            "All three major telecom operators announce tariff hikes; Pulse leads the move.",
-            "Pulse adds millions of 5G subscribers, beating estimates.",
-            "Supreme Court gives relief on Pulse's remaining AGR dues.",
-            "Pulse sells a further stake in its tower subsidiary at a strong valuation, cutting debt.",
-            "Government announces a spectrum auction on terms friendly to existing operators.",
-            "Pulse's average revenue per user climbs for the fifth straight quarter.",
-            "Pulse raises its dividend, following its resumption after years.",
-            "Pulse signs a large enterprise-connectivity contract with a national bank.",
-            "Analysts upgrade Pulse, citing disciplined industry pricing.",
-            "Pulse's broadband arm posts record customer additions.",
+            "TerraFirm Cement says it is not in sale talks, but a bid is widely expected.",
+            "Affordable-housing push lifts cement demand; TerraFirm gains.",
+            "Coal prices ease, improving TerraFirm's cost position.",
+            "TerraFirm commissions a new grinding line ahead of the road-building season.",
+            "Highway awards accelerate, a tailwind for TerraFirm.",
         ],
         "down": [
-            "Supreme Court review goes against telecom operators on remaining AGR dues; Pulse faces a fresh bill.",
-            "A rival launches a surprise price cut, reviving fears of a tariff war.",
-            "Government announces a spectrum auction with steep reserve prices.",
-            "Pulse's subscriber additions slow as 5G adoption plateaus.",
-            "Rumoured tower-stake sale falls through, leaving debt reduction plans in doubt.",
-            "Regulator proposes tougher quality-of-service penalties for telecom operators.",
-            "Pulse suffers a large network outage, triggering customer complaints and regulator scrutiny.",
-            "Tariff-hike plans are delayed after a rival refuses to follow.",
-            "Pulse's capex needs for 5G rollout are higher than analysts expected.",
-            "Global equipment supplier delays deliveries to Pulse's 5G rollout.",
+            "TerraFirm Cement shares fall as hopes of a takeover bid fade.",
+            "Imported slag tariffs trim TerraFirm's pricing power.",
+            "Public infrastructure spending slows; cement stocks, including TerraFirm, fall.",
+            "A capacity glut forces cement price cuts; TerraFirm warns on margins.",
+            "Sea-borne coal prices jump again, hitting TerraFirm's costs.",
+        ],
+    },
+
+    # ── NOVASTEEL ALLOYS (NVST) ──
+    "nvst": {
+        "up": [
+            "NovaSteel's green-steel pilot gets a premium offtake commitment from an auto customer.",
+            "Auto production rebounds; NovaSteel lifts its output guidance.",
+            "Coking-coal prices ease, improving NovaSteel's margin outlook.",
+            "Government extends safeguard duties on steel imports, a plus for NovaSteel.",
+            "NovaSteel completes its debottlenecking, raising cold-rolled capacity.",
+        ],
+        "down": [
+            "Steel safeguard duties lapse, exposing NovaSteel to a new wave of imports.",
+            "Auto production slows sharply; NovaSteel cuts its volume guidance.",
+            "Coking-coal prices spike on supply disruptions, hitting NovaSteel.",
+            "A rival's capacity expansion triggers a price war in cold-rolled steel.",
+            "Global steel prices weaken; NovaSteel slips with the sector.",
+        ],
+    },
+
+    # ── QUANTIX CLOUD SYSTEMS (QNTX) ──
+    "qntx": {
+        "up": [
+            "Quantix Cloud Systems announces a buyback after another quarter of 32%-plus operating margins.",
+            "Global tech earnings beat; Quantix rallies on the sector lift.",
+            "Quantix wins a flagship contract with a government agency.",
+            "Brokerages raise targets on Quantix as subscription revenue accelerates.",
+            "Quantix cloud-security product wins an industry award.",
+        ],
+        "down": [
+            "Quantix Cloud Systems falls as a competitor undercuts it on enterprise security pricing.",
+            "Global tech earnings disappoint; Quantix drops with the sector.",
+            "An AI-driven rival product launch raises worries about Quantix's moat.",
+            "A rate-hike scare hits growth valuations; Quantix is sold off.",
+            "A data-sovereignty rule complicates Quantix's cloud deployments.",
+        ],
+    },
+
+    # ── PRIMUS AUTOWORKS (PRMA) ──
+    "prma": {
+        "up": [
+            "EV incentives are extended another five years; Primus is the biggest winner.",
+            "Primus AutoWorks' Pune plant doubles chassis output ahead of schedule.",
+            "Lithium prices slump, boosting Primus's margin outlook.",
+            "A major delivery fleet orders thousands of Primus electric vans.",
+            "Primus's profit more than doubles; brokerages raise targets.",
+        ],
+        "down": [
+            "EV incentives are cut sharply; Primus warns of lower order flow.",
+            "Lithium prices jump; Primus flags margin pressure.",
+            "Chinese EV makers cut prices in commercial EVs, pressuring Primus.",
+            "A state delays payments to Primus, hurting working capital.",
+            "Primus's shares slide as bus tender rules are rewritten.",
+        ],
+    },
+
+    # ── GLOTECH TELECOM LTD. (GLTL) ──
+    "gltl": {
+        "up": [
+            "Glotech Telecom prepays a chunk of debt, easing its interest burden.",
+            "Regulator approves higher fibre-lease tariffs for Glotech.",
+            "A second carrier commits to an exclusive long-term fibre contract with Glotech.",
+            "Glotech's tenancy ratio rises as 5G sites multiply.",
+            "Rate cuts bring Glotech's financing costs lower.",
+        ],
+        "down": [
+            "Regulator imposes new tower-sharing caps; Glotech's outlook dims.",
+            "Rising interest rates weigh on Glotech's heavily indebted balance sheet.",
+            "A tenant carrier delays payments to Glotech.",
+            "Equipment-vendor bans slow 5G site rollouts, hitting Glotech.",
+            "Glotech's shares drop as rating agencies flag its debt load.",
+        ],
+    },
+
+    # ── URBANGRID POWER UTILITY (URBN) ──
+    "urbn": {
+        "up": [
+            "UrbanGrid Power raises its dividend again, the highest yield on the exchange.",
+            "Regulator approves UrbanGrid's capital-expenditure plan for its metro zones.",
+            "UrbanGrid's distribution losses fall to a record low after smart-meter upgrades.",
+            "Power demand surges in a heatwave, lifting UrbanGrid's volumes.",
+            "A green-bond issue lowers UrbanGrid's cost of capital.",
+        ],
+        "down": [
+            "Regulator rejects UrbanGrid's tariff petition; the dividend outlook is questioned.",
+            "Peak-season grid failures draw regulator fines for UrbanGrid.",
+            "ESG funds exit UrbanGrid on coal-asset concerns.",
+            "Coal-linked power-purchase costs jump, eating into UrbanGrid's margins.",
+            "UrbanGrid's shares drop as rate-of-return rules are reviewed.",
+        ],
+    },
+
+    # ── SOLARIS AGROCHEMICALS (SLRA) ──
+    "slra": {
+        "up": [
+            "Solaris Agrochemicals's subsidy arrears are cleared in full, easing its working capital.",
+            "Early monsoon onset lifts sowing and fertiliser offtake; Solaris gains.",
+            "Gas prices fall, widening Solaris's urea margins.",
+            "Solaris's crop-protection exports win new registrations in Latin America.",
+            "Solaris commissions a new NPK complex line, lifting margins.",
+        ],
+        "down": [
+            "Subsidy payments to Solaris are delayed again, straining its working capital.",
+            "Monsoon deficit widens; fertiliser sales slump and Solaris falls.",
+            "Gas prices spike on global supply fears; Solaris's margins narrow.",
+            "EU residue bans curb Solaris's pesticide exports.",
+            "Urea price controls are tightened, capping Solaris's returns.",
+        ],
+    },
+
+    # ── MEDVANTAGE HOSPITALS (MEDV) ──
+    "medv": {
+        "up": [
+            "MedVantage Hospitals reports record occupancy as oncology and transplant volumes climb.",
+            "Medical-visa fast-tracking boosts international patient inflows at MedVantage.",
+            "MedVantage opens a new cancer centre, expanding high-margin capacity.",
+            "Health-insurance penetration rises, lifting MedVantage's volumes.",
+            "A leading transplant surgeon team joins MedVantage from a rival.",
+        ],
+        "down": [
+            "Price caps on cardiac and orthopaedic procedures are widened; MedVantage slips.",
+            "A key oncology team resigns from MedVantage.",
+            "Insurers delay claims settlement to MedVantage, stretching receivables.",
+            "Medical-tourism visas are tightened, trimming MedVantage's inflows.",
+            "A regulatory probe into a MedVantage hospital weighs on sentiment.",
+        ],
+    },
+
+    # ── NEXTGEN RETAIL MALLS (NXGN) ──
+    "nxgn": {
+        "up": [
+            "NextGen Retail Malls hikes its distribution per unit as occupancy edges up.",
+            "Interest rates are cut; REIT yields look more attractive and NextGen gains.",
+            "NextGen's food-and-experience zones push tenant sales to a fresh record.",
+            "NextGen adds a new multiplex tenant at a flagship mall.",
+            "A refinancing at lower rates trims NextGen's interest costs.",
+        ],
+        "down": [
+            "Rates move higher; NextGen's distribution yield looks less attractive.",
+            "Anchor tenant announces exit at a NextGen mall; the owner scrambles to re-let.",
+            "E-commerce giants step up discounts; mall footfall dips at NextGen.",
+            "Tenant sales soften at NextGen malls in a weak consumption quarter.",
+            "NextGen units fall as property-sector sentiment sours.",
+        ],
+    },
+
+    # ── OCEANAIR CARGO EXPRESS (OCNA) ──
+    "ocna": {
+        "up": [
+            "Global shipping choke-point crisis diverts a wave of cargo to OceanAir.",
+            "OceanAir signs a cold-chain deal for next-generation biologics.",
+            "Jet-fuel prices ease, widening OceanAir's operating margin.",
+            "OceanAir adds a freighter aircraft and launches a new express route.",
+            "Pharma exports hit a record, boosting OceanAir's volumes.",
+        ],
+        "down": [
+            "A shipping choke-point reopens; sea freight rates collapse and OceanAir loses its edge.",
+            "Jet-fuel prices jump; OceanAir warns on margins.",
+            "A global trade slowdown cuts air-cargo volumes at OceanAir.",
+            "A key e-commerce customer shifts volume to a rival carrier.",
+            "Airport slot-fee hikes trim OceanAir's profit outlook.",
+        ],
+    },
+
+    # ── FLEXWARE TEXTILES & POLYMERS (FLXW) ──
+    "flxw": {
+        "up": [
+            "Crude oil falls sharply, cutting FlexWare's raw-material costs.",
+            "FlexWare's export orders climb on a weaker rupee.",
+            "Anti-dumping duties are enforced strictly, protecting FlexWare's domestic prices.",
+            "FlexWare commissions a new high-speed extrusion line.",
+            "A global brand picks FlexWare for recycled-packaging supply.",
+        ],
+        "down": [
+            "Crude oil jumps again; FlexWare's margin outlook weakens.",
+            "Plastic regulation tightens; FlexWare faces higher compliance costs.",
+            "Cheap imports flood in as anti-dumping enforcement lapses; FlexWare falls.",
+            "Export demand slumps; FlexWare warns on volumes.",
+            "FlexWare slips as the textile cycle turns down.",
+        ],
+    },
+
+    # ── ORBIT AEROSPACE SENSORS (ORBT) ──
+    "orbt": {
+        "up": [
+            "Orbit Aerospace's constellation launch succeeds; imagery revisit time halves.",
+            "Government grants Orbit a wider licence to sell high-resolution imagery.",
+            "Orbit signs a shipping-lane monitoring contract with a global logistics giant.",
+            "Orbit's subscription revenue accelerates as agricultural clients renew.",
+            "Orbit's profit margin widens as subscription revenue scales.",
+        ],
+        "down": [
+            "Orbit Aerospace's launch fails; two satellites are lost.",
+            "Orbit's launch partner grounds its rocket; the next deployment is delayed indefinitely.",
+            "Licensing curbs on imagery resolution hit Orbit's defence revenue.",
+            "A rival constellation undercuts Orbit's subscription pricing.",
+            "Orbit's shares drop as R&D spending outpaces revenue.",
+        ],
+    },
+
+    # ── AQUAPURE ENVIRONMENTAL (AQUA) ──
+    "aqua": {
+        "up": [
+            "AquaPure Environmental clears a large batch of pending municipal bills.",
+            "Zero-liquid-discharge enforcement widens, driving orders to AquaPure.",
+            "AquaPure signs a desalination O&M contract with a coastal state.",
+            "Government raises water-recycling targets; AquaPure's order book swells.",
+            "AquaPure raises its dividend on strong order execution.",
+        ],
+        "down": [
+            "Municipal payments to AquaPure slip further; its receivables swell.",
+            "Environmental enforcement is relaxed; AquaPure's order pipeline thins.",
+            "Imported membrane costs surge, squeezing AquaPure's margins.",
+            "A major project is cancelled; AquaPure writes down its backlog.",
+            "AquaPure shares drop on slower tender awards.",
         ],
     },
 }
 
+NEWS_POOL = [   # all TRUE
+    # ── ZNDY ──
+    {"src":"news", "affects":"zndy", "direction": 1, "strength":0.08, "real":True, "text":"Zenith Dynamics wins a multi-year radar guidance order from the Ministry of Defense, its largest this decade."},
+    {"src":"news", "affects":"zndy", "direction": 1, "strength":0.06, "real":True, "text":"Government widens the 'Make in India' defence import-ban list to cover Zenith's counter-drone nodes."},
+    {"src":"news", "affects":"zndy", "direction":-1, "strength":0.08, "real":True, "text":"Titanium alloy shipments to Zenith Dynamics are delayed again, stalling airframe output at one hub."},
+    {"src":"news", "affects":"zndy", "direction":-1, "strength":0.07, "real":True, "text":"Western export curbs on high-bandwidth optical microchips threaten Zenith's next-generation UAV sensors."},
+    {"src":"rumour", "affects":"zndy", "direction": 1, "strength":0.06, "real":True, "text":"Whispers: Zenith is close to a second export pact with a Middle East defence department."},
+    {"src":"rumour", "affects":"zndy", "direction":-1, "strength":0.06, "real":True, "text":"Word is a key Zenith radar programme faces a six-month certification delay."},
+    # ── ABPH ──
+    {"src":"news", "affects":"abph", "direction": 1, "strength":0.1, "real":True, "text":"Aura BioPharma passes a US-FDA inspection with zero observations at its flagship plant."},
+    {"src":"news", "affects":"abph", "direction": 1, "strength":0.08, "real":True, "text":"Aura BioPharma wins a multi-year oncology biosimilar supply deal with a top North American distributor."},
+    {"src":"news", "affects":"abph", "direction":-1, "strength":0.1, "real":True, "text":"US-FDA issues an import alert on Aura BioPharma's secondary fermentation unit in Baddi."},
+    {"src":"news", "affects":"abph", "direction":-1, "strength":0.09, "real":True, "text":"An NPPA price cap on an essential medicine cuts into Aura BioPharma's domestic margins."},
+    {"src":"rumour", "affects":"abph", "direction": 1, "strength":0.08, "real":True, "text":"Whispers: Aura is close to a Brazilian distribution deal for its HPAPI range."},
+    {"src":"rumour", "affects":"abph", "direction":-1, "strength":0.08, "real":True, "text":"Word is Aura's next US-FDA inspection is imminent and not expected to be clean."},
+    # ── VTXE ──
+    {"src":"news", "affects":"vtxe", "direction": 1, "strength":0.17, "real":True, "text":"Voltix Energy lands a 500 MWh grid-storage tender, its biggest order yet."},
+    {"src":"news", "affects":"vtxe", "direction": 1, "strength":0.14, "real":True, "text":"Voltix's Gujarat plant hits full run-rate on its 3.5 GWh automated pack line."},
+    {"src":"news", "affects":"vtxe", "direction":-1, "strength":0.17, "real":True, "text":"A thermal-runaway incident at a Voltix-supplied solar farm triggers a safety probe."},
+    {"src":"news", "affects":"vtxe", "direction":-1, "strength":0.15, "real":True, "text":"Government raises basic customs duty on imported lithium cells, squeezing Voltix's margins."},
+    {"src":"rumour", "affects":"vtxe", "direction": 1, "strength":0.13, "real":True, "text":"Whispers: Voltix is close to a data-centre storage deal worth several hundred crore."},
+    {"src":"rumour", "affects":"vtxe", "direction":-1, "strength":0.13, "real":True, "text":"Word is Voltix's Korean cell supplier may raise prices next quarter."},
+    # ── APMB ──
+    {"src":"news", "affects":"apmb", "direction": 1, "strength":0.05, "real":True, "text":"Apex Mercantile Bank reports 18% loan growth with GNPA still below 2%."},
+    {"src":"news", "affects":"apmb", "direction": 1, "strength":0.04, "real":True, "text":"Apex Mercantile's low-cost deposit base widens again, cutting its funding costs."},
+    {"src":"news", "affects":"apmb", "direction":-1, "strength":0.05, "real":True, "text":"The Central Bank raises cash reserve ratios, trimming Apex Mercantile's lendable funds."},
+    {"src":"news", "affects":"apmb", "direction":-1, "strength":0.05, "real":True, "text":"Foreign investors pull money from banks as US sovereign yields jump; Apex Mercantile slips."},
+    {"src":"rumour", "affects":"apmb", "direction": 1, "strength":0.04, "real":True, "text":"Buzz: Apex Mercantile is planning a large new tranche of branch openings."},
+    {"src":"rumour", "affects":"apmb", "direction":-1, "strength":0.04, "real":True, "text":"Word is Priority Sector Lending targets will be raised again, squeezing Apex Mercantile."},
+    # ── HBLX ──
+    {"src":"news", "affects":"hblx", "direction": 1, "strength":0.05, "real":True, "text":"HarborLogix wins a 30-year operating lease for a chemical terminal."},
+    {"src":"news", "affects":"hblx", "direction": 1, "strength":0.04, "real":True, "text":"Container volumes across Asia rebound, lifting throughput at HarborLogix's deep-water berths."},
+    {"src":"news", "affects":"hblx", "direction":-1, "strength":0.05, "real":True, "text":"Red Sea disruptions force shipping alliances to reroute away from HarborLogix's berths."},
+    {"src":"news", "affects":"hblx", "direction":-1, "strength":0.05, "real":True, "text":"The Maritime Regulatory Authority orders a review of HarborLogix's port tariffs."},
+    {"src":"rumour", "affects":"hblx", "direction": 1, "strength":0.04, "real":True, "text":"Whispers: HarborLogix is bidding for a new rail corridor concession."},
+    {"src":"rumour", "affects":"hblx", "direction":-1, "strength":0.04, "real":True, "text":"Word is a major shipping alliance is shifting volume to a rival port."},
+    # ── VRVE ──
+    {"src":"news", "affects":"vrve", "direction": 1, "strength":0.05, "real":True, "text":"Verve Consumer Brands posts steady growth as quick-commerce sales jump in metro cities."},
+    {"src":"news", "affects":"vrve", "direction": 1, "strength":0.04, "real":True, "text":"Falling palm-oil and packaging-plastic prices ease margin pressure at Verve."},
+    {"src":"news", "affects":"vrve", "direction":-1, "strength":0.05, "real":True, "text":"Weak rural demand dents Verve Consumer Brands' volumes this quarter."},
+    {"src":"news", "affects":"vrve", "direction":-1, "strength":0.05, "real":True, "text":"A new front-of-pack labelling rule forces costly packaging changes at Verve."},
+    {"src":"rumour", "affects":"vrve", "direction": 1, "strength":0.04, "real":True, "text":"Buzz: Verve is looking to acquire a challenger packaged-foods brand."},
+    {"src":"rumour", "affects":"vrve", "direction":-1, "strength":0.04, "real":True, "text":"Word is a GST slab change could hit one of Verve's core categories."},
+    # ── KRYS ──
+    {"src":"news", "affects":"krys", "direction": 1, "strength":0.13, "real":True, "text":"Kryos Semi-Conductors wins an automotive design from a European automaker."},
+    {"src":"news", "affects":"krys", "direction": 1, "strength":0.1, "real":True, "text":"Government fast-tracks smart-meter rollout, lifting Kryos's order book."},
+    {"src":"news", "affects":"krys", "direction":-1, "strength":0.13, "real":True, "text":"Taiwan Strait tensions delay wafer shipments to Kryos's foundry partners."},
+    {"src":"news", "affects":"krys", "direction":-1, "strength":0.12, "real":True, "text":"US-China export-control changes restrict Kryos's access to advanced design software."},
+    {"src":"rumour", "affects":"krys", "direction": 1, "strength":0.1, "real":True, "text":"Whispers: Kryos is close to a second European automotive design win."},
+    {"src":"rumour", "affects":"krys", "direction":-1, "strength":0.1, "real":True, "text":"Word is Kryos's Taiwanese foundry will raise wafer prices sharply."},
+    # ── TRFM ──
+    {"src":"news", "affects":"trfm", "direction": 1, "strength":0.08, "real":True, "text":"TerraFirm Cement benefits as the government lifts highway construction outlays."},
+    {"src":"news", "affects":"trfm", "direction": 1, "strength":0.06, "real":True, "text":"TerraFirm's waste-heat recovery plants cut its power bill, lifting margins."},
+    {"src":"news", "affects":"trfm", "direction":-1, "strength":0.08, "real":True, "text":"Imported thermal-coal prices spike, squeezing TerraFirm's margins."},
+    {"src":"news", "affects":"trfm", "direction":-1, "strength":0.07, "real":True, "text":"The Competition Commission opens a price-fixing inquiry into cement makers, including TerraFirm."},
+    {"src":"rumour", "affects":"trfm", "direction": 1, "strength":0.06, "real":True, "text":"Rumour mill: an international conglomerate is eyeing a bid for TerraFirm."},
+    {"src":"rumour", "affects":"trfm", "direction":-1, "strength":0.06, "real":True, "text":"Word is a new limestone royalty hike is coming for cement makers."},
+    # ── NVST ──
+    {"src":"news", "affects":"nvst", "direction": 1, "strength":0.1, "real":True, "text":"NovaSteel wins a long-term supply contract with a leading auto maker for cold-rolled coil."},
+    {"src":"news", "affects":"nvst", "direction": 1, "strength":0.08, "real":True, "text":"Anti-dumping duties on cheap imported steel take effect, protecting NovaSteel's pricing."},
+    {"src":"news", "affects":"nvst", "direction":-1, "strength":0.1, "real":True, "text":"Coking-coal prices surge, squeezing NovaSteel's margins."},
+    {"src":"news", "affects":"nvst", "direction":-1, "strength":0.09, "real":True, "text":"Cheap steel imports from abroad resurface, forcing NovaSteel to cut prices."},
+    {"src":"rumour", "affects":"nvst", "direction": 1, "strength":0.08, "real":True, "text":"Whispers: NovaSteel is close to a green-steel offtake deal with a European carmaker."},
+    {"src":"rumour", "affects":"nvst", "direction":-1, "strength":0.08, "real":True, "text":"Word is auto demand is softening, which could dent NovaSteel's order book."},
+    # ── QNTX ──
+    {"src":"news", "affects":"qntx", "direction": 1, "strength":0.13, "real":True, "text":"Quantix Cloud Systems beats guidance as enterprise renewals hit a record."},
+    {"src":"news", "affects":"qntx", "direction": 1, "strength":0.1, "real":True, "text":"Quantix launches a new zero-trust platform with a large multinational anchor customer."},
+    {"src":"news", "affects":"qntx", "direction":-1, "strength":0.13, "real":True, "text":"Quantix Cloud Systems trims guidance, citing delayed enterprise deal signings."},
+    {"src":"news", "affects":"qntx", "direction":-1, "strength":0.12, "real":True, "text":"A rate-hike scare hits long-duration tech valuations; Quantix is sold off."},
+    {"src":"rumour", "affects":"qntx", "direction": 1, "strength":0.1, "real":True, "text":"Whispers: Quantix is about to announce a large cybersecurity acquisition."},
+    {"src":"rumour", "affects":"qntx", "direction":-1, "strength":0.1, "real":True, "text":"Word is a big customer is moving a Quantix workload in-house."},
+    # ── PRMA ──
+    {"src":"news", "affects":"prma", "direction": 1, "strength":0.13, "real":True, "text":"Primus AutoWorks wins a state order for 2,000 electric buses."},
+    {"src":"news", "affects":"prma", "direction": 1, "strength":0.1, "real":True, "text":"Battery-cell prices fall, easing margin pressure on Primus."},
+    {"src":"news", "affects":"prma", "direction":-1, "strength":0.13, "real":True, "text":"EV subsidies are scaled back in the latest budget; Primus is most exposed."},
+    {"src":"news", "affects":"prma", "direction":-1, "strength":0.12, "real":True, "text":"Lithium prices spike, squeezing Primus's cost of cells."},
+    {"src":"rumour", "affects":"prma", "direction": 1, "strength":0.1, "real":True, "text":"Whispers: Primus is about to sign a battery-swap partnership with a delivery giant."},
+    {"src":"rumour", "affects":"prma", "direction":-1, "strength":0.1, "real":True, "text":"Word is a major state may delay payments for its electric bus fleet."},
+    # ── GLTL ──
+    {"src":"news", "affects":"gltl", "direction": 1, "strength":0.1, "real":True, "text":"Glotech Telecom signs a five-year tower and fibre lease with a major 5G carrier."},
+    {"src":"news", "affects":"gltl", "direction": 1, "strength":0.08, "real":True, "text":"Spectrum-auction results leave Glotech's tenants with more capacity to roll out."},
+    {"src":"news", "affects":"gltl", "direction":-1, "strength":0.1, "real":True, "text":"The telecom regulator caps tower-lease pricing, a blow to Glotech."},
+    {"src":"news", "affects":"gltl", "direction":-1, "strength":0.09, "real":True, "text":"Interest rates rise, increasing Glotech's debt-servicing burden."},
+    {"src":"rumour", "affects":"gltl", "direction": 1, "strength":0.08, "real":True, "text":"Whispers: Glotech is nearing a deal to acquire a regional fibre network."},
+    {"src":"rumour", "affects":"gltl", "direction":-1, "strength":0.08, "real":True, "text":"Word is a tenant carrier may merge with a rival, cutting Glotech's tenancy ratio."},
+    # ── URBN ──
+    {"src":"news", "affects":"urbn", "direction": 1, "strength":0.05, "real":True, "text":"UrbanGrid Power gets a regulator-approved tariff hike, protecting its 15.5% return."},
+    {"src":"news", "affects":"urbn", "direction": 1, "strength":0.04, "real":True, "text":"UrbanGrid's smart-meter rollout cuts distribution losses, lifting profit."},
+    {"src":"news", "affects":"urbn", "direction":-1, "strength":0.05, "real":True, "text":"The power regulator delays UrbanGrid's tariff revision, hitting cash flow."},
+    {"src":"news", "affects":"urbn", "direction":-1, "strength":0.05, "real":True, "text":"ESG funds sell down UrbanGrid because of its coal-fired generation assets."},
+    {"src":"rumour", "affects":"urbn", "direction": 1, "strength":0.04, "real":True, "text":"Buzz: UrbanGrid is exploring a rooftop-solar partnership in its metro zones."},
+    {"src":"rumour", "affects":"urbn", "direction":-1, "strength":0.04, "real":True, "text":"Word is the regulator may cap future returns for grid monopolies."},
+    # ── SLRA ──
+    {"src":"news", "affects":"slra", "direction": 1, "strength":0.1, "real":True, "text":"Solaris Agrochemicals benefits as a strong monsoon lifts fertiliser demand."},
+    {"src":"news", "affects":"slra", "direction": 1, "strength":0.08, "real":True, "text":"Government clears pending subsidy payments owed to Solaris."},
+    {"src":"news", "affects":"slra", "direction":-1, "strength":0.1, "real":True, "text":"Monsoon fails in key states, cutting fertiliser demand for Solaris."},
+    {"src":"news", "affects":"slra", "direction":-1, "strength":0.09, "real":True, "text":"Natural-gas prices spike, squeezing Solaris's urea margins."},
+    {"src":"rumour", "affects":"slra", "direction": 1, "strength":0.08, "real":True, "text":"Whispers: Solaris is close to a long-term gas-supply deal that locks in costs."},
+    {"src":"rumour", "affects":"slra", "direction":-1, "strength":0.08, "real":True, "text":"Word is the EU will extend its pesticide-residue ban to Solaris's core exports."},
+    # ── MEDV ──
+    {"src":"news", "affects":"medv", "direction": 1, "strength":0.08, "real":True, "text":"MedVantage Hospitals reports record oncology and transplant volumes."},
+    {"src":"news", "affects":"medv", "direction": 1, "strength":0.06, "real":True, "text":"MedVantage's medical-tourism arrivals jump 20% year on year."},
+    {"src":"news", "affects":"medv", "direction":-1, "strength":0.08, "real":True, "text":"Government extends price caps on stents and ICU beds, trimming MedVantage's margins."},
+    {"src":"news", "affects":"medv", "direction":-1, "strength":0.07, "real":True, "text":"A malpractice ruling puts MedVantage under regulatory scrutiny."},
+    {"src":"rumour", "affects":"medv", "direction": 1, "strength":0.06, "real":True, "text":"Whispers: MedVantage is close to opening a flagship hospital in a new metro."},
+    {"src":"rumour", "affects":"medv", "direction":-1, "strength":0.06, "real":True, "text":"Word is insurers will push back hard on MedVantage's tariff increases."},
+    # ── NXGN ──
+    {"src":"news", "affects":"nxgn", "direction": 1, "strength":0.08, "real":True, "text":"NextGen Retail Malls signs a marquee anchor tenant at its flagship Tier-1 mall."},
+    {"src":"news", "affects":"nxgn", "direction": 1, "strength":0.06, "real":True, "text":"NextGen's footfall and tenant sales hit a record, lifting its variable rent."},
+    {"src":"news", "affects":"nxgn", "direction":-1, "strength":0.08, "real":True, "text":"Bond yields jump, making NextGen's distributions look less attractive."},
+    {"src":"news", "affects":"nxgn", "direction":-1, "strength":0.07, "real":True, "text":"A rival mall opens nearby, pulling footfall from one of NextGen's top assets."},
+    {"src":"rumour", "affects":"nxgn", "direction": 1, "strength":0.06, "real":True, "text":"Whispers: NextGen is eyeing a new mall acquisition funded by fresh units."},
+    {"src":"rumour", "affects":"nxgn", "direction":-1, "strength":0.06, "real":True, "text":"Word is an anchor tenant may exit one of NextGen's malls at lease end."},
+    # ── OCNA ──
+    {"src":"news", "affects":"ocna", "direction": 1, "strength":0.1, "real":True, "text":"OceanAir Cargo wins a multi-year pharma cold-chain contract."},
+    {"src":"news", "affects":"ocna", "direction": 1, "strength":0.08, "real":True, "text":"Shipping disruptions at sea push more cargo onto OceanAir's freighters."},
+    {"src":"news", "affects":"ocna", "direction":-1, "strength":0.1, "real":True, "text":"Jet-fuel prices spike, squeezing OceanAir's margins."},
+    {"src":"news", "affects":"ocna", "direction":-1, "strength":0.09, "real":True, "text":"Airport slot fees are raised, adding to OceanAir's costs."},
+    {"src":"rumour", "affects":"ocna", "direction": 1, "strength":0.08, "real":True, "text":"Whispers: OceanAir is close to ordering new converted freighters."},
+    {"src":"rumour", "affects":"ocna", "direction":-1, "strength":0.08, "real":True, "text":"Word is a major e-commerce partner may build its own air fleet."},
+    # ── FLXW ──
+    {"src":"news", "affects":"flxw", "direction": 1, "strength":0.1, "real":True, "text":"FlexWare Textiles signs a long-term supply deal for technical textiles with a European buyer."},
+    {"src":"news", "affects":"flxw", "direction": 1, "strength":0.08, "real":True, "text":"FlexWare's recycled-packaging range gets a new anchor customer."},
+    {"src":"news", "affects":"flxw", "direction":-1, "strength":0.1, "real":True, "text":"Crude oil spikes, raising FlexWare's polymer feedstock costs."},
+    {"src":"news", "affects":"flxw", "direction":-1, "strength":0.09, "real":True, "text":"Anti-dumping rules fail to stop cheap imports, hitting FlexWare's pricing."},
+    {"src":"rumour", "affects":"flxw", "direction": 1, "strength":0.08, "real":True, "text":"Whispers: FlexWare is about to win a large export order for technical textiles."},
+    {"src":"rumour", "affects":"flxw", "direction":-1, "strength":0.08, "real":True, "text":"Word is single-use plastic rules will be tightened for FlexWare's core packaging."},
+    # ── ORBT ──
+    {"src":"news", "affects":"orbt", "direction": 1, "strength":0.17, "real":True, "text":"Orbit Aerospace's latest imaging satellite deploys successfully, expanding its constellation."},
+    {"src":"news", "affects":"orbt", "direction": 1, "strength":0.14, "real":True, "text":"Orbit signs a multi-year geospatial-analytics contract with a defence agency."},
+    {"src":"news", "affects":"orbt", "direction":-1, "strength":0.17, "real":True, "text":"Orbit Aerospace's launch is delayed after a third-party rocket fails."},
+    {"src":"news", "affects":"orbt", "direction":-1, "strength":0.15, "real":True, "text":"A government licensing hold stops Orbit from selling high-resolution imagery."},
+    {"src":"rumour", "affects":"orbt", "direction": 1, "strength":0.13, "real":True, "text":"Whispers: Orbit is about to sign a large agri-insurance data deal."},
+    {"src":"rumour", "affects":"orbt", "direction":-1, "strength":0.13, "real":True, "text":"Word is Orbit's next launch window may slip by months."},
+    # ── AQUA ──
+    {"src":"news", "affects":"aqua", "direction": 1, "strength":0.08, "real":True, "text":"AquaPure Environmental wins a municipal desalination plant order."},
+    {"src":"news", "affects":"aqua", "direction": 1, "strength":0.06, "real":True, "text":"A river-cleaning mandate lifts AquaPure's order book."},
+    {"src":"news", "affects":"aqua", "direction":-1, "strength":0.08, "real":True, "text":"Municipal clients delay payments to AquaPure, stretching its working capital."},
+    {"src":"news", "affects":"aqua", "direction":-1, "strength":0.07, "real":True, "text":"Import duties on membranes raise AquaPure's project costs."},
+    {"src":"rumour", "affects":"aqua", "direction": 1, "strength":0.06, "real":True, "text":"Whispers: AquaPure is shortlisted for a big industrial water-recycling project."},
+    {"src":"rumour", "affects":"aqua", "direction":-1, "strength":0.06, "real":True, "text":"Word is the environment regulator will soften discharge norms, hurting AquaPure's demand."},
+]
+
+FALSE_RUMOURS = [   # NOT true — Truth-or-False event only
+    {"src":"rumour", "affects":"zndy", "direction": 1, "strength":0.06, "real":False, "text":"Chatter: Zenith has secured a classified ₹5,000 crore interceptor contract."},
+    {"src":"rumour", "affects":"zndy", "direction":-1, "strength":0.06, "real":False, "text":"Talk that the Ministry of Defense plans to cut Zenith's actuator orders by a third."},
+    {"src":"rumour", "affects":"abph", "direction": 1, "strength":0.08, "real":False, "text":"Chatter: Aura is about to be named a top PLI scheme beneficiary with a huge payout."},
+    {"src":"rumour", "affects":"abph", "direction":-1, "strength":0.08, "real":False, "text":"Talk that a Chinese rival will slash API prices by 40% across Aura's core molecules."},
+    {"src":"rumour", "affects":"vtxe", "direction": 1, "strength":0.13, "real":False, "text":"Chatter: Voltix is about to announce its first-ever dividend."},
+    {"src":"rumour", "affects":"vtxe", "direction":-1, "strength":0.13, "real":False, "text":"Talk that a Chinese giant will undercut Voltix on every utility tender this year."},
+    {"src":"rumour", "affects":"apmb", "direction": 1, "strength":0.04, "real":False, "text":"Chatter: Apex Mercantile is about to declare a bumper special dividend."},
+    {"src":"rumour", "affects":"apmb", "direction":-1, "strength":0.04, "real":False, "text":"Talk of a sudden jump in bad loans in Apex Mercantile's wholesale book."},
+    {"src":"rumour", "affects":"hblx", "direction": 1, "strength":0.04, "real":False, "text":"Chatter: HarborLogix has won an exclusive new take-or-pay deal worth thousands of crores."},
+    {"src":"rumour", "affects":"hblx", "direction":-1, "strength":0.04, "real":False, "text":"Talk that unilateral tariffs will cut container volumes at HarborLogix by a fifth."},
+    {"src":"rumour", "affects":"vrve", "direction": 1, "strength":0.04, "real":False, "text":"Chatter: Verve is about to announce a large share buyback."},
+    {"src":"rumour", "affects":"vrve", "direction":-1, "strength":0.04, "real":False, "text":"Talk that Verve will hike prices across its hygiene range by double digits."},
+    {"src":"rumour", "affects":"krys", "direction": 1, "strength":0.1, "real":False, "text":"Chatter: Kryos is about to announce a ₹3,000 crore smart-grid chip order."},
+    {"src":"rumour", "affects":"krys", "direction":-1, "strength":0.1, "real":False, "text":"Talk that a rival is about to win Kryos's smart-meter incumbency."},
+    {"src":"rumour", "affects":"trfm", "direction": 1, "strength":0.06, "real":False, "text":"Chatter: TerraFirm has locked in a multi-year government housing supply deal."},
+    {"src":"rumour", "affects":"trfm", "direction":-1, "strength":0.06, "real":False, "text":"Talk that TerraFirm will shut a grinding unit for six months."},
+    {"src":"rumour", "affects":"nvst", "direction": 1, "strength":0.08, "real":False, "text":"Chatter: NovaSteel will win a giant railway-wagon steel order."},
+    {"src":"rumour", "affects":"nvst", "direction":-1, "strength":0.08, "real":False, "text":"Talk that NovaSteel's captive iron-ore lease will not be renewed."},
+    {"src":"rumour", "affects":"qntx", "direction": 1, "strength":0.1, "real":False, "text":"Chatter: Quantix has been shortlisted for a billion-dollar government cloud contract."},
+    {"src":"rumour", "affects":"qntx", "direction":-1, "strength":0.1, "real":False, "text":"Talk that Quantix's CEO may step down next quarter."},
+    {"src":"rumour", "affects":"prma", "direction": 1, "strength":0.1, "real":False, "text":"Chatter: Primus has secured a mega order of 10,000 buses from one city."},
+    {"src":"rumour", "affects":"prma", "direction":-1, "strength":0.1, "real":False, "text":"Talk that Primus will recall a bus model over a battery fault."},
+    {"src":"rumour", "affects":"gltl", "direction": 1, "strength":0.08, "real":False, "text":"Chatter: Glotech's debt will be refinanced at half its current rate."},
+    {"src":"rumour", "affects":"gltl", "direction":-1, "strength":0.08, "real":False, "text":"Talk that equipment-vendor sanctions will halt Glotech's 5G rollout."},
+    {"src":"rumour", "affects":"urbn", "direction": 1, "strength":0.04, "real":False, "text":"Chatter: UrbanGrid will announce a huge special dividend."},
+    {"src":"rumour", "affects":"urbn", "direction":-1, "strength":0.04, "real":False, "text":"Talk that UrbanGrid will lose one metro-zone licence at renewal."},
+    {"src":"rumour", "affects":"slra", "direction": 1, "strength":0.08, "real":False, "text":"Chatter: Solaris will receive a ₹2,000 crore subsidy arrears payout next week."},
+    {"src":"rumour", "affects":"slra", "direction":-1, "strength":0.08, "real":False, "text":"Talk that a plant explosion has shut down one of Solaris's urea units."},
+    {"src":"rumour", "affects":"medv", "direction": 1, "strength":0.06, "real":False, "text":"Chatter: MedVantage will be acquired by a global hospital chain."},
+    {"src":"rumour", "affects":"medv", "direction":-1, "strength":0.06, "real":False, "text":"Talk that a major oncology surgeon team is leaving MedVantage."},
+    {"src":"rumour", "affects":"nxgn", "direction": 1, "strength":0.06, "real":False, "text":"Chatter: NextGen will announce a huge special distribution."},
+    {"src":"rumour", "affects":"nxgn", "direction":-1, "strength":0.06, "real":False, "text":"Talk that NextGen will face a major rent-relief demand from tenants."},
+    {"src":"rumour", "affects":"ocna", "direction": 1, "strength":0.08, "real":False, "text":"Chatter: OceanAir will sign an exclusive deal with a global pharma giant."},
+    {"src":"rumour", "affects":"ocna", "direction":-1, "strength":0.08, "real":False, "text":"Talk that OceanAir will ground part of its fleet for inspection."},
+    {"src":"rumour", "affects":"flxw", "direction": 1, "strength":0.08, "real":False, "text":"Chatter: FlexWare will be added to a major index."},
+    {"src":"rumour", "affects":"flxw", "direction":-1, "strength":0.08, "real":False, "text":"Talk that a polymer plant fire has shut a FlexWare unit."},
+    {"src":"rumour", "affects":"orbt", "direction": 1, "strength":0.13, "real":False, "text":"Chatter: Orbit has been picked for a billion-dollar national surveillance programme."},
+    {"src":"rumour", "affects":"orbt", "direction":-1, "strength":0.13, "real":False, "text":"Talk that one of Orbit's satellites has lost contact."},
+    {"src":"rumour", "affects":"aqua", "direction": 1, "strength":0.06, "real":False, "text":"Chatter: AquaPure will win the nation's largest sewage-treatment contract."},
+    {"src":"rumour", "affects":"aqua", "direction":-1, "strength":0.06, "real":False, "text":"Talk that AquaPure's key membrane supplier is halting shipments."},
+]
+
 
 # ─────────────────────────────────────────────────────────────────────────
 #  HOST / ORGANISER ONLY — never sent to players.
-#  Cross-links and unresolved plot hooks from the dossier, for planning
+#  Cross-links and unresolved plot hooks from the company list, for planning
 #  manual news drops and chaos events.
 # ─────────────────────────────────────────────────────────────────────────
 ORGANISER_NOTES = {
     "cross_linkages": [
-        "RBI rate moves hit Pioneer, Skyline (debt-heavy) and Vortex (capex-heavy) together — one headline can move three stocks. Aura barely reacts to interest rates.",
-        "Genesis's unique lever is FDA/regulatory shocks. Apex and Vortex are driven by subsidy/policy shocks. Pulse moves on tariff-hike headlines. Skyline moves on contract wins/losses.",
-        "Aura is the deliberate low-volatility anchor — a benchmark showing not every stock swings 20% on news.",
+        "Interest-rate and bond-yield headlines hit NextGen (REIT), Glotech (debt-heavy), Apex Mercantile (margins) and Quantix (valuation) together. UrbanGrid, Verve and MedVantage barely react.",
+        "Crude oil is a shared lever: FlexWare and OceanAir fall when it spikes; Solaris reacts to gas, TerraFirm and NovaSteel to coal and coking coal.",
+        "Lithium-cell and customs-duty news moves Voltix and Primus together (both buy imported cells). Chinese price cuts (CATL/BYD) hurt both.",
+        "Taiwan / export-control headlines hit Kryos, Zenith (optical chips) and Quantix (visa and data rules) in different ways.",
+        "Shipping-lane crises are good for OceanAir and bad for HarborLogix — the one stock helped by chaos at sea, the other hurt.",
+        "Healthcare moves together on drug-pricing or inspection headlines: Aura BioPharma (US-FDA) and MedVantage (price caps).",
+        "Verve, UrbanGrid and HarborLogix are the deliberate low-volatility anchors; Voltix and Orbit are the highest-beta new listings.",
     ],
     "watch_list_hooks": {
-        "nexus":   ["Pending US visa policy review", "Rumoured bid for a mid-sized European IT firm", "AI Delivery Center expansion decision due late 2026"],
-        "pioneer": ["Rumoured acquisition of a small NBFC", "RBI review of digital lending partnerships", "Upcoming capital-raise decision"],
-        "genesis": ["Pending FDA re-inspection of a third facility", "Ongoing arbitration over an African government supply contract", "Possible in-licensing deal for a biosimilar"],
-        "apex":    ["Battery JV cell-production timeline", "Rumoured foreign EV brand India entry", "Possible FAME subsidy scheme revision"],
-        "vortex":  ["Green hydrogen off-take agreement talks", "Possible further solar import duty hikes", "A large new PPA tender it is bidding for"],
-        "aura":    ["Possible GST slab reclassification", "Monsoon forecast (rural income and demand)", "Rumoured challenger-brand acquisition for the D2C portfolio"],
-        "skyline": ["Outcome of pending land-dispute court case", "A large new metro-adjacent tender", "Progress of tier-2 real estate bet"],
-        "pulse":   ["Possible fourth spectrum auction", "Pending Supreme Court review of remaining AGR dues", "Rumoured further stake sale in the tower subsidiary"],
+        "zndy": ["Titanium alloy shipment delays from Eastern Europe", "Western sanctions on optical microchips", "Extension of the Southeast Asian export pact"],
+        "abph": ["Next US-FDA inspection of the Baddi unit", "Chinese API price war", "PLI incentives for specialty APIs"],
+        "vtxe": ["Customs duty on imported lithium cells", "Safety / thermal-runaway incidents", "A large utility storage tender"],
+        "apmb": ["Reserve-ratio changes", "Priority-sector lending targets", "Foreign investor flows"],
+        "hblx": ["Red Sea / shipping-lane disruptions", "Maritime Regulatory Authority tariff review", "Tariffs between trading blocs"],
+        "vrve": ["Monsoon and rural demand", "Palm-oil and packaging costs", "FSSAI labelling rules and GST slabs"],
+        "krys": ["Taiwan Strait tensions", "National smart-meter mandate", "Semiconductor Mission subsidies"],
+        "trfm": ["Rumoured international takeover bid", "Coal prices", "Competition Commission price-fixing inquiry"],
+        "nvst": ["Coking-coal prices", "Anti-dumping / safeguard duties", "Green-steel offtake"],
+        "qntx": ["Missed-guidance risk", "Data-localization law fines", "H-1B visa restrictions"],
+        "prma": ["EV subsidy scheme revision", "Lithium cell prices", "State bus-tender payments"],
+        "gltl": ["Spectrum-auction debt", "Tower / fibre tariff caps", "Equipment-vendor sanctions"],
+        "urbn": ["Tariff-revision approvals", "ESG selling of coal assets", "Heatwave demand"],
+        "slra": ["Monsoon timing", "Late DBT subsidy payouts", "EU insecticide bans (18% of exports)"],
+        "medv": ["Stent / ICU price caps", "Medical-tourism visas", "Competition from Thailand and Singapore"],
+        "nxgn": ["Interest rates", "FDI rules for multi-brand retail", "Anchor-tenant exits"],
+        "ocna": ["Jet-fuel prices", "Slot fees", "Sea-freight disruptions"],
+        "flxw": ["Crude oil", "Plastic regulation", "Anti-dumping enforcement"],
+        "orbt": ["Third-party launch outcomes", "Ministry of Defense licensing", "Planet Labs competition"],
+        "aqua": ["Municipal payment delays", "Membrane import duties", "Environmental enforcement"],
     },
     "game_schedule": [
-        "Round 1: normal, no chaos.",
-        "Round 2 start: Vortex lists (automatic).",
-        "Round 3 start: Skyline lists + dividends on Nexus, Pioneer, Genesis, Apex, Aura (automatic).",
-        "Round 4 start: dividends on all listed stocks (automatic); Nexus/Pulse acquisition rumour at the 5-minute mark, correlating the two prices for the last 15 minutes (automatic).",
+        "6 rounds of 20 minutes. Rounds 1-2: normal, no chaos events. Rounds 3-6: exactly one chaos event each.",
+        "Round 3 — IPO Drop: Voltix Energy and Orbit Aerospace (different sectors) list at round start. Until then they do not exist on the exchange.",
+        "Round 4 — Dividend Payout: the 8 dividend payers pay at round start AND again at the 10-minute mark.",
+        "Round 5 — Acquisition Rumour: at the 5-minute mark Quantix and Glotech (different sectors) become linked and both move to High volatility until the round ends.",
+        "Round 6 — Truth or False: real news and rumours are dropped every 4 minutes, all shown to players as ordinary news. Only the host panel shows which are TRUE and which are FALSE.",
     ],
 }
 
 
 # ─────────────────────────────────────────────────────────────────────────
 #  PLOT GROUPS — mutually exclusive outcomes of the SAME storyline.
-#  Once ANY headline in a group has run (auto-headline, host-injected preset, or the
-#  round-start news pool), every other headline in that group is retired for the rest
-#  of the game. That's what stops one game from containing both "Court rules in
-#  Skyline's favour" and, later, "Court rules against Skyline".
-#  Each entry is a substring that identifies a headline.
 # ─────────────────────────────────────────────────────────────────────────
 PLOT_GROUPS = {
-    "skyline_court":       ["Court rules in Skyline's favour", "Court rules against Skyline"],
-    "genesis_arbitration": ["Arbitration panel rules in Genesis's favour", "Arbitration over an African government supply contract turns against Genesis"],
-    "genesis_fda":         ["USFDA clears Genesis's third", "USFDA issues a fresh observation at a Genesis",
-                            "Genesis receives a warning letter over manufacturing", "Genesis Life Sciences receives an FDA warning letter"],
-    "genesis_biosimilar":  ["Genesis signs an in-licensing deal", "in-licensing talks collapse"],
-    "pulse_agr":           ["Supreme Court gives relief on Pulse", "Supreme Court review goes against telecom operators"],
-    "pulse_tower":         ["Pulse sells a further stake in its tower", "Rumoured tower-stake sale falls through"],
-    "pulse_spectrum":      ["spectrum auction on terms friendly", "spectrum auction with steep reserve prices"],
-    "vortex_ppa":          ["Vortex wins a large new power-purchase-agreement tender", "Vortex loses out on a major PPA tender", "wins a 400MW solar tender"],
-    "vortex_hydrogen":     ["signs a green-hydrogen off-take agreement", "Green-hydrogen off-take talks stall"],
-    "apex_battery_jv":     ["battery-cell joint venture confirms local production remains on track", "battery-cell joint venture slips its production timeline"],
-    "apex_recall":         ["Apex announces a voluntary recall of an EV batch", "Apex Mobility recalls a batch of its flagship EV"],
-    "nexus_visa":          ["Nexus is cleared in the US visa-compliance review", "fresh whistleblower complaint on visa compliance"],
-    "nexus_ai_center":     ["AI Delivery Center in Pune gets a green light", "AI Delivery Center expansion is deferred"],
-    "pioneer_rbi_review":  ["RBI clears Pioneer's digital lending partnerships", "RBI opens a review of Pioneer's digital-lending"],
-    "pioneer_capital":     ["Pioneer announces a capital raise at a premium", "Pioneer's capital-raise plan raises dilution fears"],
-    "pioneer_nbfc":        ["Pioneer is said to be eyeing a bolt-on acquisition", "Reports that Pioneer overpaid for a small NBFC"],
-    "aura_gst":            ["Government keeps GST on Aura", "GST slab reclassification proposed for one of Aura"],
+    "zndy_story": ["Southeast Asian export pact is extended", "Southeast Asian export pact is shelved"],
+    "abph_story": ["Baddi unit clears its re-inspection", "Baddi unit fails its re-inspection"],
+    "vtxe_story": ["safety clearances are reissued in full", "extend the safety probe into Voltix"],
+    "apmb_story": ["dividend after a record profit year", "signals further reserve-ratio hikes"],
+    "hblx_story": ["HarborLogix raises its dividend again", "freezes port tariffs for a year"],
+    "vrve_story": ["lifts its dividend again after a strong", "tightens nutritional labelling norms"],
+    "krys_story": ["expands its smart-meter chip share", "Taiwan Strait tensions escalate"],
+    "trfm_story": ["a bid is widely expected", "hopes of a takeover bid fade"],
+    "nvst_story": ["extends safeguard duties on steel imports", "safeguard duties lapse"],
+    "qntx_story": ["announces a buyback", "competitor undercuts it"],
+    "prma_story": ["incentives are extended another five years", "incentives are cut sharply"],
+    "gltl_story": ["prepays a chunk of debt", "imposes new tower-sharing caps"],
+    "urbn_story": ["raises its dividend again, the highest", "rejects UrbanGrid's tariff petition"],
+    "slra_story": ["subsidy arrears are cleared in full", "payments to Solaris are delayed again"],
+    "medv_story": ["reports record occupancy as oncology", "Price caps on cardiac and orthopaedic procedures are widened"],
+    "nxgn_story": ["hikes its distribution per unit", "Anchor tenant announces exit"],
+    "ocna_story": ["cargo to OceanAir", "sea freight rates collapse"],
+    "flxw_story": ["export orders climb on a weaker rupee", "Cheap imports flood in"],
+    "orbt_story": ["constellation launch succeeds", "launch fails; two satellites are lost"],
+    "aqua_story": ["clears a large batch of pending municipal bills", "Municipal payments to AquaPure slip further"],
 }

@@ -208,7 +208,6 @@ label:first-child{margin-top:0;}
           <div class="tab-btn active" onclick="switchTab('leaderboard',this)">Leaderboard</div>
           <div class="tab-btn" onclick="switchTab('news',this)">Inject News</div>
           <div class="tab-btn" onclick="switchTab('chaos',this)">Chaos Events</div>
-          <div class="tab-btn" onclick="switchTab('intel',this)">Secret Intel</div>
           <div class="tab-btn" onclick="switchTab('loans',this)">Players &amp; Loans</div>
         </div>
 
@@ -222,18 +221,9 @@ label:first-child{margin-top:0;}
           <div class="sec-hdr">Inject a News Event</div>
           <div class="form-row">
             <div>
-              <label>Type</label>
-              <select id="news-type">
-                <option value="event">Market Event (Verified)</option>
-                <option value="rumour">Unverified Rumour</option>
-              </select>
-            </div>
-            <div>
               <label>Affects Stock</label>
               <select id="news-stock"></select>
             </div>
-          </div>
-          <div class="form-row" style="margin-top:0">
             <div>
               <label>Direction</label>
               <select id="news-dir">
@@ -241,101 +231,38 @@ label:first-child{margin-top:0;}
                 <option value="-1">Down ↓</option>
               </select>
             </div>
-            <div>
-              <label>Is Real? (price impact)</label>
-              <select id="news-real">
-                <option value="1">Yes — full price impact</option>
-                <option value="0">No — fake/noise only</option>
-              </select>
-            </div>
           </div>
           <label>Strength (0.05–0.25)</label>
           <input type="number" id="news-strength" value="0.10" min="0.01" max="0.30" step="0.01">
-          <label>News Text (optional — leave blank to auto-pick a matching headline)</label>
+                    <label>News Text (optional — leave blank to auto-pick a matching headline)</label>
           <textarea id="news-text" rows="3" placeholder="Leave blank to auto-pick from presets for this stock + direction, or write your own..."></textarea>
           <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="injectNews()">Inject Event</button>
 
-          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-            <div class="sec-hdr" style="font-size:13px">Fake Analyst Report</div>
-            <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Drops to ALL players. You mark it real/fake — only you know.</p>
-            <textarea id="fake-report-text" rows="2" placeholder="e.g. Analyst upgrades Nexus — hidden AI revenue potential..."></textarea>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn btn-gold" style="flex:1" onclick="injectFakeReport(false)">Drop as REAL</button>
-              <button class="btn btn-ghost" style="flex:1" onclick="injectFakeReport(true)">Drop as FAKE</button>
-            </div>
-          </div>
         </div>
 
         <!-- Chaos Events — wired to actual API endpoints -->
         <div class="tab-panel" id="tab-chaos" style="padding:16px">
           <div class="sec-hdr">Chaos Events</div>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Every event below is queued, not instant — cancel it from the Pending panel (bottom-right) before it fires.</p>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Rounds 1–2 are normal. Each of rounds 3–6 has exactly one event, and it fires <b>automatically</b> when that round starts. The buttons are only there if you need to fire one early — each event can happen once per game. Anything you fire is queued first, so you can cancel it from the Pending panel.</p>
           <div class="stage-delay-row">
             <label for="stage-delay">Fire in:</label>
             <select id="stage-delay">
-              <option value="15" selected>15s (undo window)</option>
+              <option value="5" selected>5s (undo window)</option>
+              <option value="15">15s</option>
               <option value="30">30s</option>
               <option value="60">1 min</option>
-              <option value="120">2 min</option>
-              <option value="300">5 min (scheduled)</option>
             </select>
           </div>
-          <div class="chaos-grid">
-            <div class="chaos-btn" onclick="openChaosModal('circuit')">
-              <div class="cb-icon">🚫</div>
-              <div class="cb-name">Regulatory Freeze</div>
-              <div class="cb-desc">Halt all trading in a sector for this round.</div>
-            </div>
-            <div class="chaos-btn" onclick="openChaosModal('dividend')">
-              <div class="cb-icon">💰</div>
-              <div class="cb-name">Dividend</div>
-              <div class="cb-desc">Pay per-share dividend to all holders of one stock.</div>
-            </div>
-            <div class="chaos-btn" onclick="openChaosModal('acquisition')">
-              <div class="cb-icon">🤝</div>
-              <div class="cb-name">Acquisition Rumour</div>
-              <div class="cb-desc">Correlate two stocks' prices for this round.</div>
-            </div>
-            <div class="chaos-btn" onclick="openCompanyMergerModal()">
-              <div class="cb-icon">🏢</div>
-              <div class="cb-name">Company Merger</div>
-              <div class="cb-desc">Permanently combine two companies into a new one.</div>
-            </div>
-            <div class="chaos-btn" onclick="triggerChaosSimple('credit_crunch')">
-              <div class="cb-icon">💸</div>
-              <div class="cb-name">Credit Crunch</div>
-              <div class="cb-desc">+5% on all loan rates for this round's interest calc.</div>
-            </div>
-            <div class="chaos-btn" onclick="openChaosModal('ipo')">
-              <div class="cb-icon">🚀</div>
-              <div class="cb-name">IPO Drop</div>
-              <div class="cb-desc">Manually list Vortex or Skyline. (Both are AUTOMATIC: Vortex at Round 2 start, Skyline at Round 3 start — only use this to override.)</div>
-            </div>
-            <div class="chaos-btn" onclick="openChaosModal('freeze_player')">
-              <div class="cb-icon">🔒</div>
-              <div class="cb-name">Portfolio Freeze</div>
-              <div class="cb-desc">Freeze one player's portfolio (no trades this round).</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Secret intel -->
-        <div class="tab-panel" id="tab-intel" style="padding:16px">
-          <div class="sec-hdr">Secret Intel</div>
-          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Send a private news tip to ONE player only. Nobody else sees it.</p>
-          <label>Target Player</label>
-          <select id="intel-code"></select>
-          <label>Intel Text</label>
-          <textarea id="intel-text" rows="3" placeholder="e.g. Skyline about to announce a surprise buyback. Don't tell anyone."></textarea>
-          <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="sendIntel()">Send Secret Intel</button>
+          <div class="chaos-grid" id="chaos-grid"></div>
+          <div id="tf-panel" style="margin-top:18px"></div>
         </div>
 
         <!-- Players & Loans -->
         <div class="tab-panel" id="tab-loans" style="padding:16px">
           <div class="sec-hdr">Players &amp; Loans</div>
           <p style="font-size:12px;color:var(--muted);margin-bottom:12px">
-            Banks: Bharat 5% · VentureCapX 9% · ShadowCredit 16% — all compounding per round.
-            Credit Crunch adds +5% to all rates. ⚠ = net worth below loan balance.
+            Interest is charged on every loan at the end of every round: Bharat 1–4% · VentureCapX 3–9% · ShadowCredit 6–12%,
+            tiered by balance. ⚠ = net worth below loan balance. 💀 = bankrupt, locked out.
           </p>
           <div id="loans-list"><div style="color:var(--muted);font-size:13px">No active loans.</div></div>
           <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
@@ -363,7 +290,7 @@ label:first-child{margin-top:0;}
 
       <!-- News log -->
       <div>
-        <div class="sec-hdr">News Released <span style="font-size:12px;color:var(--muted);font-family:var(--mono);">(✅ Real · ❌ Fake — visible to host only)</span></div>
+        <div class="sec-hdr">News Released <span style="font-size:12px;color:var(--muted);font-family:var(--mono);">(✅ TRUE · ❌ FALSE — visible to host only)</span></div>
         <div id="news-log" style="display:flex;flex-direction:column;gap:8px">
           <div style="font-size:13px;color:var(--muted)">No news yet.</div>
         </div>
@@ -374,91 +301,6 @@ label:first-child{margin-top:0;}
 </div>
 
 <!-- Modals -->
-<div class="modal-overlay" id="modal-circuit">
-  <div class="modal-box">
-    <div class="modal-title">🚫 Regulatory Freeze</div>
-    <label>Sector to freeze</label>
-    <select id="circuit-sector">
-      <option>Technology</option><option>FMCG</option><option>Defence</option>
-      <option>Renewable Energy</option><option>Pharma</option><option>Logistics</option>
-      <option>Manufacturing</option><option>Media / OTT</option><option>Fintech</option><option>Agriculture</option>
-    </select>
-    <div class="modal-actions">
-      <button class="btn btn-red" onclick="triggerRegFreeze()">Freeze Sector</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-circuit')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-dividend">
-  <div class="modal-box">
-    <div class="modal-title">💰 Dividend</div>
-    <label>Stock</label>
-    <select id="div-stock"></select>
-    <label>Per-share amount (₹)</label>
-    <input type="number" id="div-amount" value="20" min="1">
-    <div class="modal-actions">
-      <button class="btn btn-gold" onclick="triggerDividend()">Pay Dividend</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-dividend')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-acquisition">
-  <div class="modal-box">
-    <div class="modal-title">🤝 Acquisition Rumour</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Both stocks will move in a correlated direction for this round.</p>
-    <label>Stock 1</label>
-    <select id="acq-stock1"></select>
-    <label>Stock 2</label>
-    <select id="acq-stock2"></select>
-    <div class="modal-actions">
-      <button class="btn btn-gold" onclick="triggerAcquisition()">Trigger</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-acquisition')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-company-merger">
-  <div class="modal-box">
-    <div class="modal-title">🏢 Company Merger</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Permanent — the two companies disappear and a new one takes their place. Holdings, stop-losses and insurance on either one get converted or refunded automatically.</p>
-    <label>Merger</label>
-    <select id="company-merger-pair"></select>
-    <div class="modal-actions">
-      <button class="btn btn-gold" onclick="triggerCompanyMerger()">Trigger</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-company-merger')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-ipo">
-  <div class="modal-box">
-    <div class="modal-title">🚀 IPO Drop</div>
-    <label>Which company to list?</label>
-    <select id="ipo-id">
-      <option value="vortex">Vortex Clean Energy (Renewable Energy) — ₹310</option>
-      <option value="skyline">Skyline Infraprojects (Infrastructure) — ₹610</option>
-    </select>
-    <div class="modal-actions">
-      <button class="btn btn-green" onclick="triggerIPO()">List Company</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-ipo')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-freeze-player">
-  <div class="modal-box">
-    <div class="modal-title">🔒 Portfolio Freeze</div>
-    <label>Player to freeze</label>
-    <select id="freeze-player-code"></select>
-    <div class="modal-actions">
-      <button class="btn btn-red" onclick="triggerFreezePlayer()">Freeze Portfolio</button>
-      <button class="btn btn-ghost" onclick="closeModal('modal-freeze-player')">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="modal-reset">
   <div class="modal-box">
     <div class="modal-title" style="color:var(--red)">⚠ Reset Entire Game</div>
@@ -486,7 +328,7 @@ label:first-child{margin-top:0;}
 
 <script>
 let pw='', state=null, board=[], ws=null, nameToCode={};
-const MAX_ROUNDS = 4; // must match MAX_ROUNDS in main.py
+const MAX_ROUNDS = 6; // must match MAX_ROUNDS in main.py
 
 // Auto-load saved password on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -553,8 +395,10 @@ function connectWS() {
       showDiscAlert(msg.code, msg.name || msg.code);
     } else if (msg.type === 'player_online') {
       dismissDiscAlert(msg.code); // reconnected on their own — clear any pending alert
-    } else if (msg.type === 'bm_log_update') {
-      // Optionally refresh BM log on new purchase
+    } else if (msg.type === 'leaderboard') {
+      if (msg.board) { board = msg.board; renderLeaderboard(); }
+    } else if (msg.type === 'round_summary') {
+      showRoundSummary(msg.summary);
     } else if (msg.type === 'reset') { location.reload(); }
   };
   ws.onclose = () => { toast('WS disconnected. Reconnecting...', 'err'); setTimeout(connectWS, 2000); };
@@ -567,7 +411,7 @@ setInterval(ping, 3000);
 function render() {
   if (!state) return;
   renderPhase(); renderPrices(); renderLeaderboard(); renderNewsLog();
-  renderRoundGuide(); populateSelects();
+  renderRoundGuide(); populateSelects(); renderChaos();
   document.getElementById('stat-players').textContent = board.length;
   document.getElementById('stat-round').textContent   = state.round + ' / ' + MAX_ROUNDS;
   document.getElementById('stat-phase').textContent   = {lobby:'Lobby',trading:'Trading',break:'Break',ended:'Ended'}[state.phase] || state.phase;
@@ -607,7 +451,7 @@ function renderPrices() {
     const pct = c.prev_price ? ((chg / c.prev_price) * 100).toFixed(1) : '0.0';
     const dir = chg > 0 ? 'up' : chg < 0 ? 'dn' : 'nc';
     const arr = chg > 0 ? '▲' : chg < 0 ? '▼' : '—';
-    html += `<div class="price-tile"><div class="pt-sym">${cid.toUpperCase()}</div><div class="pt-name">${c.name}</div><div class="pt-price">${fmt(c.price)}</div><div class="pt-chg ${dir}">${arr} ${pct}%</div></div>`;
+    html += `<div class="price-tile"><div class="pt-sym">${esc(c.ticker||cid.toUpperCase())}</div><div class="pt-name">${esc(c.name)}</div><div class="pt-price">${fmt(c.price)}</div><div class="pt-chg ${dir}">${arr} ${pct}%</div></div>`;
   }
   grid.innerHTML = html;
 }
@@ -633,25 +477,74 @@ function renderLeaderboard() {
 function renderNewsLog() {
   if (!state || !state.news || !state.news.length) return;
   document.getElementById('news-log').innerHTML = [...state.news].reverse().map(n => {
-    const tag = n.real !== undefined
-      ? (n.real ? '<span style="color:var(--green);font-size:11px">✅ Real</span>' : '<span style="color:var(--red);font-size:11px">❌ Fake</span>')
-      : '';
+    const kind = n.src === 'rumour' ? 'RUMOUR' : 'NEWS';
+    const tag = n.real === false
+      ? '<span style="color:var(--red);font-size:11px;font-weight:700">❌ FALSE</span>'
+      : '<span style="color:var(--green);font-size:11px;font-weight:700">✅ TRUE</span>';
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-        <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">${n.label||n.type_tag}</span>
+        <span style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase">R${n.round||'–'} · ${kind}</span>
         ${tag}
         <span style="font-size:11px;color:var(--muted);margin-left:auto">${(n.affects||'').toUpperCase()}</span>
       </div>
-      <div style="font-size:13px;color:var(--text);line-height:1.5">${n.text}</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.5">${esc(n.text)}</div>
     </div>`;
   }).join('');
+}
+function esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ── Chaos tab: the four events, their schedule and status ─────────────────────
+const CHAOS_INFO = {
+  ipo_drop:       {icon:'🚀', name:'IPO Drop',          desc:'Voltix Energy and Orbit Aerospace (different sectors) list on the exchange. Until then they do not exist.'},
+  dividend:       {icon:'💰', name:'Dividend Payout',   desc:'The 8 dividend payers pay per-share cash to holders — at round start and again at the 10-minute mark.'},
+  acquisition:    {icon:'🤝', name:'Acquisition Rumour', desc:'Quantix and Glotech (different sectors) get linked and both move to High volatility until the round ends. Fires at the 5-minute mark.'},
+  truth_or_false: {icon:'🎭', name:'Truth or False',    desc:'Real news mixed with false rumours, 5 drops over the round. Players see all of it as normal news; only you see which is which.'},
+};
+const CHAOS_ROUNDS = {ipo_drop:3, dividend:4, acquisition:5, truth_or_false:6};
+function renderChaos() {
+  const grid = document.getElementById('chaos-grid'); if (!grid || !state) return;
+  const done = state.chaos_done || [];
+  grid.innerHTML = Object.entries(CHAOS_INFO).map(([ev, c]) => {
+    const isDone = done.includes(ev), r = CHAOS_ROUNDS[ev];
+    const status = isDone ? '<span style="color:var(--green)">✓ happened</span>'
+      : (state.round === r && state.phase === 'trading') ? '<span style="color:var(--gold)">● this round</span>'
+      : `<span style="color:var(--muted)">Round ${r}</span>`;
+    const canFire = state.phase === 'trading' && !isDone;
+    return `<div class="chaos-btn" style="${canFire?'':'opacity:.55;cursor:default'}" onclick="${canFire?`fireChaos('${ev}')`:''}">
+      <div class="cb-icon">${c.icon}</div>
+      <div class="cb-name">${c.name} <span style="font-size:11px;font-weight:600;margin-left:6px">${status}</span></div>
+      <div class="cb-desc">${c.desc}</div>
+    </div>`;
+  }).join('');
+  // Truth-or-False answer key (host only)
+  const tf = state.truth_log || [], panel = document.getElementById('tf-panel');
+  if (!tf.length) { panel.innerHTML = ''; return; }
+  panel.innerHTML = '<div class="sec-hdr" style="font-size:13px">Truth or False — answer key (host only)</div>' + [...tf].reverse().map(t => {
+    const nm = (state.companies[t.affects] || {}).name || t.affects;
+    return `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--border);font-size:12px">
+      <span style="font-weight:800;min-width:54px;color:${t.real?'var(--green)':'var(--red)'}">${t.real?'✅ TRUE':'❌ FALSE'}</span>
+      <span style="color:var(--muted);min-width:120px">${esc(nm)}</span><span style="flex:1">${esc(t.text)}</span></div>`;
+  }).join('');
+}
+function fireChaos(ev) {
+  const c = CHAOS_INFO[ev];
+  if (!confirm(`Fire "${c.name}" now? (It would normally fire on its own at the start of Round ${CHAOS_ROUNDS[ev]}.)`)) return;
+  stageAction(c.name, async () => { await apiPost('/api/host/chaos/' + ev); });
+}
+function showRoundSummary(sm) {
+  if (!sm) return;
+  const w = sm.winner, l = sm.loser, a = sm.most_active;
+  toast(`Round ${sm.round} done — best: ${w?w.name+' ('+fmt(w.delta)+')':'—'} · worst: ${l?l.name+' ('+fmt(l.delta)+')':'—'} · most active: ${a?a.name+' ('+a.trades+')':'—'}`, 'info');
 }
 
 function populateSelects() {
   if (!state) return;
   const opts = Object.entries(state.companies).map(([k,c]) => `<option value="${k}">${c.name}</option>`).join('');
-  ['news-stock','manual-stock','div-stock','acq-stock1','acq-stock2'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.innerHTML = opts;
+  ['news-stock','manual-stock'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    if (el.dataset.sig === opts) return;               // unchanged — leave the host's selection alone
+    const keep = el.value; el.innerHTML = opts; el.dataset.sig = opts;
+    if (keep && state.companies[keep]) el.value = keep;
   });
 }
 
@@ -749,8 +642,6 @@ async function genCodes() {
 async function loadCodes() {
   try {
     const data = await (await fetch(`/api/codes?pw=${encodeURIComponent(pw)}`)).json();
-    const sel = document.getElementById('intel-code');
-    if (sel) sel.innerHTML = data.codes.map(c => `<option value="${c}">${c}${data.used.includes(c)?'  ✓':''}</option>`).join('');
     const grid = document.getElementById('code-grid');
     if (!data.codes.length) { grid.innerHTML='<div style="font-size:13px;color:var(--muted)">No codes yet.</div>'; return; }
     grid.innerHTML = data.codes.map(c => {
@@ -832,105 +723,14 @@ async function manualPrice() {
 // ── News injection ────────────────────────────────────────────────────────────
 async function injectNews() {
   const text = document.getElementById('news-text').value.trim();
-  const type = document.getElementById('news-type').value;
-  const verified = (type === 'event');
   const affects   = document.getElementById('news-stock').value;
   const direction = parseInt(document.getElementById('news-dir').value);
   const strength  = parseFloat(document.getElementById('news-strength').value)||0.10;
   document.getElementById('news-text').value='';
-  stageAction(`News — ${affects} (${verified?'Event':'Rumour'})`, async()=>{
-    const res = await apiPost('/api/host/inject_news', {verified,text,affects,direction,strength});
+  stageAction(`News — ${affects.toUpperCase()}`, async()=>{
+    const res = await apiPost('/api/host/inject_news', {text,affects,direction,strength});
     toast(text ? 'News injected!' : `Auto-picked: "${res.text}"`, 'ok');
   });
-}
-async function injectFakeReport(isFake) {
-  const text = document.getElementById('fake-report-text').value.trim();
-  if (!text) return toast('Enter report text.','err');
-  const affects = document.getElementById('news-stock').value;
-  document.getElementById('fake-report-text').value='';
-  stageAction(`Report — ${affects} (${isFake?'Fake':'Real'})`, async()=>{
-    await apiPost('/api/host/inject_news', {verified:false,text,affects,direction:isFake?-1:1,strength:0.08});
-  });
-}
-
-// ── Secret intel ──────────────────────────────────────────────────────────────
-async function sendIntel() {
-  const code = document.getElementById('intel-code').value;
-  const text = document.getElementById('intel-text').value.trim();
-  if (!code||!text) return toast('Fill both fields.','err');
-  try { await apiPost('/api/host/secret_intel',{code,text}); document.getElementById('intel-text').value=''; toast('Intel sent privately.','ok'); }
-  catch(e) { toast(e.message,'err'); }
-}
-
-// ── Chaos ─────────────────────────────────────────────────────────────────────
-async function triggerChaosSimple(event) {
-  if (!confirm(`Trigger ${event.replace(/_/g,' ')}?`)) return;
-  const map = { credit_crunch: '/api/chaos/credit_crunch' };
-  if (!map[event]) return;
-  stageAction(event.replace(/_/g,' '), async()=>{ await apiPost(map[event]); });
-}
-function openChaosModal(type) {
-  const m={circuit:'modal-circuit',dividend:'modal-dividend',acquisition:'modal-acquisition',ipo:'modal-ipo',freeze_player:'modal-freeze-player'};
-  if (m[type]) document.getElementById(m[type]).classList.add('open');
-}
-async function triggerRegFreeze() {
-  const sector = document.getElementById('circuit-sector').value;
-  closeModal('modal-circuit');
-  stageAction(`Regulatory Freeze — ${sector}`, async()=>{ await apiPost('/api/chaos/regulatory_freeze',{sector}); });
-}
-async function triggerDividend() {
-  const stock     = document.getElementById('div-stock').value;
-  const per_share = parseInt(document.getElementById('div-amount').value)||20;
-  closeModal('modal-dividend');
-  stageAction(`Dividend — ${stock} ₹${per_share}/share`, async()=>{
-    const d=await apiPost('/api/chaos/dividend',{stock,per_share});
-    toast(`Dividend paid! Total out: ${fmt(d.total_paid)}`,'ok');
-  });
-}
-async function triggerAcquisition() {
-  const stock1 = document.getElementById('acq-stock1').value;
-  const stock2 = document.getElementById('acq-stock2').value;
-  closeModal('modal-acquisition');
-  if (stock1===stock2) return toast('Pick two different stocks.','err');
-  stageAction(`Acquisition Rumour — ${stock1} × ${stock2}`, async()=>{ await apiPost('/api/chaos/acquisition_rumour',{stock1,stock2}); });
-}
-let companyMergerPairs=[];
-async function openCompanyMergerModal(){
-  try{
-    const r = await fetch(`/api/chaos/merger_pairs?pw=${encodeURIComponent(pw)}`);
-    const data = await r.json();
-    if(!r.ok) throw new Error(data.detail||'Could not load merger pairs.');
-    companyMergerPairs = data.pairs||[];
-    const sel = document.getElementById('company-merger-pair');
-    if(!companyMergerPairs.length){
-      sel.innerHTML = '<option value="">No valid pairs currently listed</option>';
-    } else {
-      sel.innerHTML = companyMergerPairs.map((p,i)=>
-        `<option value="${i}">${p.name1} + ${p.name2} → ${p.result_name}</option>`
-      ).join('');
-    }
-    document.getElementById('modal-company-merger').classList.add('open');
-  } catch(e){ toast(e.message,'err'); }
-}
-async function triggerCompanyMerger(){
-  const idx = document.getElementById('company-merger-pair').value;
-  const pair = companyMergerPairs[idx];
-  closeModal('modal-company-merger');
-  if(!pair) return toast('Pick a valid merger.','err');
-  stageAction(`Company Merger — ${pair.name1} + ${pair.name2} → ${pair.result_name}`, async()=>{
-    await apiPost('/api/chaos/company_merger', {stock1: pair.cid1, stock2: pair.cid2});
-  });
-}
-async function triggerIPO() {
-  const ipo_id = document.getElementById('ipo-id').value;
-  closeModal('modal-ipo');
-  stageAction(`IPO Drop — ${ipo_id}`, async()=>{ await apiPost(`/api/chaos/ipo_drop/${ipo_id}`); });
-}
-async function triggerFreezePlayer() {
-  const code = document.getElementById('freeze-player-code').value;
-  closeModal('modal-freeze-player');
-  if (!code) return toast('No player selected.','err');
-  stageAction(`Portfolio Freeze — ${code}`, async()=>{ await apiPost('/api/chaos/portfolio_freeze',{code}); });
 }
 
 // ── Players & Loans ───────────────────────────────────────────────────────────
@@ -939,12 +739,8 @@ async function refreshPlayers() {
     const data = await (await fetch(`/api/players?pw=${encodeURIComponent(pw)}`)).json();
     nameToCode = data.players||{};
     if (data.board) { board=data.board; renderLeaderboard(); }
-    const sel=document.getElementById('intel-code');
-    if (sel) sel.innerHTML=Object.entries(nameToCode).map(([n,c])=>`<option value="${c}">${n} (${c})</option>`).join('');
     const adj=document.getElementById('adj-code');
     if (adj) adj.innerHTML=Object.entries(nameToCode).map(([n,c])=>`<option value="${c}">${n} (${c})</option>`).join('');
-    const fz=document.getElementById('freeze-player-code');
-    if (fz) fz.innerHTML=Object.entries(nameToCode).map(([n,c])=>`<option value="${c}">${n}</option>`).join('');
   } catch(e){}
   refreshLoans();
 }
@@ -952,7 +748,7 @@ async function refreshLoans() {
   try {
     const data = await (await fetch(`/api/players/detail?pw=${encodeURIComponent(pw)}`)).json();
     const list = document.getElementById('loans-list');
-    const withLoans = data.players.filter(p => p.total_loan > 0);
+    const withLoans = data.players.filter(p => p.total_loan > 0 || p.locked_rounds_left > 0);
     if (!withLoans.length) { list.innerHTML='<div style="color:var(--muted);font-size:13px">No active loans.</div>'; return; }
     list.innerHTML = withLoans.map(p => {
       const loansByBank = Object.entries(p.loans||{}).map(([bid,bal]) =>
@@ -968,7 +764,7 @@ async function refreshLoans() {
           <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">NW: ${fmt(p.net_worth)}</div>
         </div>
         ${p.net_worth<p.total_loan?'<div style="font-size:11px;font-weight:700;color:var(--red);padding:3px 8px;background:rgba(229,83,75,.1);border-radius:5px">⚠ MARGIN RISK</div>':''}
-        ${p.frozen?'<div style="font-size:11px;font-weight:700;color:var(--orange);padding:3px 8px;background:rgba(240,136,62,.1);border-radius:5px">🔒 FROZEN</div>':''}
+        ${p.locked_rounds_left>0?'<div style="font-size:11px;font-weight:700;color:var(--orange);padding:3px 8px;background:rgba(240,136,62,.1);border-radius:5px">💀 BANKRUPT · locked '+p.locked_rounds_left+' more round(s)</div>':''}
       </div>`;
     }).join('');
   } catch(e){}
@@ -1002,10 +798,13 @@ async function kickPlayer(name,code) {
 
 // ── Round guide ───────────────────────────────────────────────────────────────
 const ROUND_GUIDE = [
-  {round:1,theme:"Clean Opener",colour:"var(--green)",tips:["Completely normal round — no chaos events","Everyone starts with ₹1.5L; let players learn the board","Watch who borrows from banks early"]},
-  {round:2,theme:"New Listing #1",colour:"var(--orange)",tips:["AUTO: Vortex Clean Energy lists at round start","No manual action needed — just narrate it","Optional: inject a verified news event on Vortex/Aura to make the sector move"]},
-  {round:3,theme:"Listing #2 + Dividends",colour:"var(--blue)",tips:["AUTO: Skyline Infraprojects lists at round start","AUTO: dividends paid on Nexus, Pioneer, Genesis, Apex, Aura","Check the round-2 break summary numbers were sensible"]},
-  {round:4,theme:"Final Round",colour:"var(--red)",tips:["AUTO: dividends paid at round start (all listed stocks)","AUTO: Nexus/Pulse acquisition rumour fires with 15 min left — their prices move in tandem","End Game applies the one-time income tax; reveal which rumours were real"]},
+  {round:1,theme:"Clean Opener",colour:"var(--green)",tips:["Normal round — no chaos event","18 companies are live; Voltix and Orbit don't exist yet","Everyone starts with ₹1.5L; let players learn the board"]},
+  {round:2,theme:"Normal Round",colour:"var(--green)",tips:["Normal round — no chaos event","Watch who borrows early: interest (1–12%) is charged every round","Optional: inject a news item to wake the board up"]},
+  {round:3,theme:"IPO Drop",colour:"var(--orange)",tips:["AUTO: Voltix Energy and Orbit Aerospace list at round start","They're from different sectors (Energy & Power / Aerospace & Defense)","Narrate it — the new names appear in everyone's stock list"]},
+  {round:4,theme:"Dividend Payout",colour:"var(--blue)",tips:["AUTO: the 8 dividend payers pay at round start AND at the 10-minute mark","Payers: URBN, NXGN, HBLX, VRVE, FLXW, APMB, GLTL, AQUA","Everyone else pays nothing"]},
+  {round:5,theme:"Acquisition Rumour",colour:"var(--pink)",tips:["AUTO: at the 5-minute mark Quantix and Glotech become linked","Both run at High volatility until the round ends","Different sectors — players won't expect them to move together"]},
+  {round:6,theme:"Truth or False",colour:"var(--red)",tips:["AUTO: real news and false rumours drop every 4 minutes — players see them all as normal news","Only you know which are which: see the answer key in the Chaos Events tab","End Game after this round liquidates everyone and shows the final standings"]},
+
 ];
 function renderRoundGuide() {
   const el=document.getElementById('round-guide');
